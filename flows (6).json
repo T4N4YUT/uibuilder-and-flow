@@ -1,0 +1,1101 @@
+[
+    {
+        "id": "44b7cf7bb078606f",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "url": "/api/time",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 430,
+        "y": 1380,
+        "wires": [
+            [
+                "6a5c77cabf3a16c7"
+            ]
+        ]
+    },
+    {
+        "id": "6a5c77cabf3a16c7",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Sync Time",
+        "func": "msg.payload = { iso: new Date().toISOString() };\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 1380,
+        "wires": [
+            [
+                "e1c299770742f644"
+            ]
+        ]
+    },
+    {
+        "id": "e1c299770742f644",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 730,
+        "y": 1380,
+        "wires": []
+    },
+    {
+        "id": "c509d4067153f93a",
+        "type": "mqtt in",
+        "z": "c0cdca176eedd227",
+        "name": "Temperature and Humidity",
+        "topic": "esp32/+/dht",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "8301192ec347dbc9",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 470,
+        "y": 1080,
+        "wires": [
+            [
+                "cc87de9b7ee05183",
+                "3f85a92b1eb548ba"
+            ]
+        ]
+    },
+    {
+        "id": "cc87de9b7ee05183",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Data",
+        "func": "// Function node (Node-RED)\n// ส่งเฉพาะฟิลด์สำคัญไปหน้าเว็บ: avg_temp, avg_hum, uptime_pct, timestamp, pin\n// รวมถึงค่าสถานะใหม่: temp_status และ hum_status\n// ไม่ส่ง status, ไม่ map MAC/room, ไม่แก้ topic\n// ถ้ามี mac/room_id จะ pass-through ไปให้หน้าเว็บ map เอง\n\nif (!msg || typeof msg !== 'object') {\n    return null;\n}\nconst p = msg.payload || {};\n\n// ---------- helpers ----------\n/**\n * แปลงค่าเป็นตัวเลข ถ้าแปลงไม่ได้จะคืนค่า null\n * @param {*} v ค่าที่ต้องการแปลง\n * @returns {number|null}\n */\nfunction toNum(v) {\n    if (v === null || v === undefined) return null;\n    const n = Number(v);\n    return Number.isFinite(n) ? n : null;\n}\n\n/**\n * ดึงค่าจาก object โดยใช้ key ที่กำหนด\n * @param {object} obj\n * @param {string[]} keys\n * @returns {*}\n */\nfunction pick(obj, keys) {\n    for (const k of keys) {\n        if (obj?.[k] !== undefined && obj[k] !== null) {\n            return obj[k];\n        }\n    }\n    return undefined;\n}\n\n/**\n * จัดรูปแบบ MAC address ให้เป็นมาตรฐาน\n * @param {string} s\n * @returns {string|undefined}\n */\nfunction normMAC(s) {\n    const hex = String(s || '').toUpperCase().replace(/[^0-9A-F]/g, '');\n    return hex.length === 12 ? hex.match(/.{2}/g).join(':') : undefined;\n}\n\n/**\n * แปลง timestamp เป็นรูปแบบ ISO 8601\n * @param {string|number} ts\n * @returns {string}\n */\nfunction toISO(ts) {\n    if (!ts) return new Date().toISOString();\n    if (typeof ts === 'number') {\n        const ms = ts < 1e11 ? ts * 1000 : ts; // epoch_s -> ms\n        return new Date(ms).toISOString();\n    }\n    const d = new Date(ts);\n    return isNaN(d) ? new Date().toISOString() : d.toISOString();\n}\n\n// ---------- normalize values ----------\nconst avgTemp = toNum(pick(p, ['avg_temp', 'temp', 'temperature', 't']));\nconst avgHum = toNum(pick(p, ['avg_hum', 'humidity', 'hum', 'rh']));\nconst minTemp = toNum(pick(p, ['min_temp', 'min_temperature']));\nconst maxTemp = toNum(pick(p, ['max_temp', 'max_temperature']));\nconst minHum = toNum(pick(p, ['min_hum', 'min_humidity']));\nconst maxHum = toNum(pick(p, ['max_hum', 'max_humidity']));\nconst tempStatus = pick(p, ['temp_status']);\nconst humStatus = pick(p, ['hum_status']);\n\nlet uptime = toNum(pick(p, ['uptime_pct', 'uptime_percent', 'uptime', 'up']));\nif (uptime != null && uptime > 0 && uptime <= 1) {\n    uptime = uptime * 100; // 0..1 -> %\n}\n\nconst ts = pick(p, ['timestamp', 'time', 'ts', 'iso']);\n\nconst pin = pick(p, ['pin']);\n\n// ---------- build minimal output ----------\nconst out = {};\nif (avgTemp !== null) out.avg_temp = avgTemp;\nif (avgHum !== null) out.avg_hum = avgHum;\n\n// เพิ่มค่า min/max temp/hum\nif (minTemp !== null) out.min_temp = minTemp;\nif (maxTemp !== null) out.max_temp = maxTemp;\nif (minHum !== null) out.min_hum = minHum;\nif (maxHum !== null) out.max_hum = maxHum;\n\n// เพิ่มค่าสถานะ\nif (tempStatus !== undefined) out.temp_status = tempStatus;\nif (humStatus !== undefined) out.hum_status = humStatus;\n\nif (uptime !== null) out.uptime_pct = Math.max(0, Math.min(100, uptime));\n\nout.timestamp = toISO(ts);\n\n// เพิ่มค่า pin\nif (pin !== undefined) out.pin = pin;\n\n// pass-through mac / room_id ถ้ามี (หน้าเว็บจะไป map เอง)\nconst mac = normMAC(pick(p, ['mac', 'device_mac', 'eth_mac', 'wifi_mac']));\nif (mac) out.mac = mac;\nif (typeof p.room_id === 'string') out.room_id = p.room_id.toLowerCase();\n\n// ---------- output ----------\nmsg.payload = out;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 1080,
+        "wires": [
+            [
+                "d006acdba87802f0",
+                "0b3358f711e7ed0b"
+            ]
+        ]
+    },
+    {
+        "id": "d006acdba87802f0",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Learn room↔mac",
+        "func": "// Learn room ↔ mac (แทนที่ของเดิมทั้งก้อน)\nlet p = msg.payload || {};\nlet room = String(p.room_id || '').toLowerCase();\n\nfunction normMAC(s) {\n    if (!s) return null;\n    s = String(s).toUpperCase().replace(/[^0-9A-F]/g, '');\n    if (s.length !== 12) return null;\n    return s.match(/.{2}/g).join(':');\n}\nlet mac = normMAC(p.mac);\nif (!room || !mac) return null;\n\nlet room2mac = flow.get('room2mac') || {};\nlet mac2room = flow.get('mac2room') || {};\nlet room_seen = flow.get('room_seen') || {};\n\n// 1) ถ้า MAC เคยอยู่ห้องอื่น → ย้ายบ้าน: ลบห้องเก่า\nconst prevRoom = mac2room[mac];\nif (prevRoom && prevRoom !== room) {\n    delete room2mac[prevRoom];\n}\n\n// 2) ถ้าห้องนี้เคยมี MAC อื่น → ให้ MAC เก่าออกก่อน\nconst prevMac = room2mac[room];\nif (prevMac && prevMac !== mac) {\n    delete mac2room[prevMac];\n}\n\n// 3) ตั้ง mapping ใหม่แบบ one-to-one\nroom2mac[room] = mac;\nmac2room[mac] = room;\nroom_seen[room] = Date.now();\n\nflow.set('room2mac', room2mac);\nflow.set('mac2room', mac2room);\nflow.set('room_seen', room_seen);\nnode.status({ fill: 'green', shape: 'dot', text: `${room} ↔ ${mac}` });\nreturn null;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 910,
+        "y": 1080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ee734c259c52b4d3",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Status",
+        "func": "let states = flow.get('deviceStates') || {};\nconst MQTT_TIMEOUT_MS = 30000;\n\nfunction now() { return Date.now(); }\n\nfunction normalizeMac(s) {\n    if (!s) return null;\n    s = String(s).toUpperCase().replace(/[^0-9A-F]/g, '');\n    if (s.length !== 12) return null;\n    return s.match(/.{2}/g).join(':');\n}\n\nconst ipMap = {\n    '192.168.42.30': '94:B9:7E:CE:01:EF'\n};\n\nlet mac = null;\nlet sourceType = null;\n\nif ((msg.topic || '').includes(\"status\")) {\n    sourceType = \"MQTT\";\n    mac = normalizeMac(msg.payload && msg.payload.mac);\n    if (!mac) {\n        const m = /^esp32\\/([^/]+)\\/status$/.exec(msg.topic || '');\n        if (m && m[1]) mac = normalizeMac(m[1]);\n    }\n} else {\n    sourceType = \"Ping\";\n    mac = normalizeMac(ipMap[msg.topic]);\n}\n\nif (!mac) return null;\n\nif (!states[mac]) {\n    states[mac] = {\n        pingOk: false,\n        mqttOk: false,\n        lastCombinedState: 'offline',\n        ping_ms: null,\n        lastMqttTs: 0\n    };\n}\n\nconst oldState = { ...states[mac] };\n\nif (sourceType === \"MQTT\") {\n    const st = (msg.payload && msg.payload.status || '').toString().toLowerCase();\n    // อัปเดต mqttOk ตาม payload\n    states[mac].mqttOk = (st === 'online');\n    // เก็บ timestamp ล่าสุดที่ได้ MQTT สถานะ\n    states[mac].lastMqttTs = now();\n} else {\n    // อัปเดตจาก Ping\n    states[mac].pingOk = (msg.payload !== false);\n    states[mac].ping_ms = (msg.payload !== false) ? Number(msg.payload) : oldState.ping_ms;\n}\n\n// ตรวจสอบ timeout ของ MQTT ทุกครั้งที่มีข้อความเข้ามา\nif (states[mac].lastMqttTs === 0 || (now() - states[mac].lastMqttTs) > MQTT_TIMEOUT_MS) {\n    states[mac].mqttOk = false;\n}\n\nconst deviceState = states[mac];\nconst newCombinedState = (deviceState.pingOk && deviceState.mqttOk) ? 'online' : 'offline';\n\nif (newCombinedState !== oldState.lastCombinedState || deviceState.ping_ms !== oldState.ping_ms) {\n    states[mac].lastCombinedState = newCombinedState;\n    flow.set('deviceStates', states);\n    return { payload: { mac, status: newCombinedState, ping_ms: deviceState.ping_ms } };\n}\n\nreturn null;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 1140,
+        "wires": [
+            [
+                "0b3358f711e7ed0b"
+            ]
+        ]
+    },
+    {
+        "id": "f7b0efa12a5835ce",
+        "type": "ping",
+        "z": "c0cdca176eedd227",
+        "protocol": "Automatic",
+        "mode": "timed",
+        "name": "94:B9:7E:CE:01:EF",
+        "host": "192.168.42.30",
+        "timer": "3",
+        "inputs": 0,
+        "x": 450,
+        "y": 1320,
+        "wires": [
+            [
+                "6739dc0b051f9fbe",
+                "ee734c259c52b4d3"
+            ]
+        ]
+    },
+    {
+        "id": "6739dc0b051f9fbe",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Status",
+        "func": "// Get devices context\nlet devices = flow.get('devices') || {};\n\n// Map IP to MAC and Room Name\nconst ipMap = {\n  '192.168.42.30': { mac: '94:B9:7E:CE:01:EF', room: 'Server Room 1' }\n};\n\nconst ip = msg.topic;\nif (!ipMap[ip]) return null;\n\nconst mac = ipMap[ip].mac;\nconst room = ipMap[ip].room;\nconst now = Date.now();\n\nlet device = devices[mac] || { status: null, lastCheck: 0, room: room };\n\nconst newStatus = (msg.payload === false) ? 'offline' : 'online';\n\nif (newStatus !== device.status) {\n    device.status = newStatus;\n    device.lastCheck = now;\n    devices[mac] = device;\n    flow.set('devices', devices);\n    return {\n        payload: {\n            mac: mac,\n            room: room,\n            status: newStatus,\n            event_time: new Date().toISOString()\n        }\n    };\n}\n\ndevice.lastCheck = now;\ndevices[mac] = device;\nflow.set('devices', devices);\nreturn null;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 1320,
+        "wires": [
+            [
+                "3ae00b0b9c817b49"
+            ]
+        ]
+    },
+    {
+        "id": "3ae00b0b9c817b49",
+        "type": "switch",
+        "z": "c0cdca176eedd227",
+        "name": "Status Switch",
+        "property": "payload.status",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "online",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "offline",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 800,
+        "y": 1320,
+        "wires": [
+            [
+                "2b09c3574f132664"
+            ],
+            [
+                "2b09c3574f132664"
+            ]
+        ]
+    },
+    {
+        "id": "2b09c3574f132664",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "SQL",
+        "func": "function toLocalSqlDate(d) {\n  d = d || new Date();\n  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);\n  return local.toISOString().slice(0,19).replace('T',' ');\n}\nlet data = msg.payload;\nlet time = data.event_time\n  ? toLocalSqlDate(new Date(data.event_time))\n  : toLocalSqlDate();\n\nmsg.topic = `\n  INSERT INTO esp_status_log\n    (mac, room, status, time)\n  VALUES\n    (\n      '${data.mac}',\n      '${data.room.replace(/'/g,\"''\")}',\n      '${data.status}',\n      '${time}'\n    );\n`.replace(/\\s+/g,' ');\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 1320,
+        "wires": [
+            [
+                "a91727186c0af3ef"
+            ]
+        ]
+    },
+    {
+        "id": "22bf0bfd3fc236ce",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "mydb": "5e560f07cfec117a",
+        "name": "Dht22",
+        "x": 830,
+        "y": 1020,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3f85a92b1eb548ba",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "SQL",
+        "func": "\nlet d = msg.payload;\n\nif (!d.mac || !d.timestamp) {\n    node.error(\"❌ Missing mac or timestamp\", d);\n    return null;\n}\n\nmsg.topic = \"INSERT INTO `dht_22` (mac, pin, timestamp, min_temp, max_temp, avg_temp, min_hum, max_hum, avg_hum, temp_status,hum_status) VALUES (?,?,?,?,?,?,?,?,?,?,?);\";\n\nmsg.payload = [\n    d.mac,\n    d.pin,\n    d.timestamp,\n    d.min_temp,\n    d.max_temp,\n    d.avg_temp,\n    d.min_hum,\n    d.max_hum,\n    d.avg_hum,\n    d.temp_status,\n    d.hum_status\n];\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 1020,
+        "wires": [
+            [
+                "22bf0bfd3fc236ce"
+            ]
+        ]
+    },
+    {
+        "id": "a91727186c0af3ef",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "mydb": "5e560f07cfec117a",
+        "name": "Status log",
+        "x": 1080,
+        "y": 1320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5d68e475bf5db0b5",
+        "type": "mqtt in",
+        "z": "c0cdca176eedd227",
+        "name": "GET Config",
+        "topic": "esp32/response/+/config",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "8301192ec347dbc9",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 710,
+        "y": 1260,
+        "wires": [
+            [
+                "5bc8eadaccc70a3a"
+            ]
+        ]
+    },
+    {
+        "id": "8b6efb0e29bbed7a",
+        "type": "mqtt in",
+        "z": "c0cdca176eedd227",
+        "name": "Check MQTT",
+        "topic": "esp32/status",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "8301192ec347dbc9",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 430,
+        "y": 1140,
+        "wires": [
+            [
+                "ee734c259c52b4d3",
+                "9edd6e1755ad0a49"
+            ]
+        ]
+    },
+    {
+        "id": "c2dcfab533c6773d",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "ONLINE/OFFLINE",
+        "func": "let expected = [\"25\",\"26\",\"32\",\"33\"];\nlet seen = Array.isArray(msg.payload) ? msg.payload : [];\nlet now = new Date();\n\nlet result = expected.map(pin => {\n    let found = seen.find(r => r.pin === pin);\n    if (!found || !found.last_seen) {\n        return { pin, status: \"OFFLINE\", last_seen: null };\n    }\n\n    let last = new Date(found.last_seen);\n    if (isNaN(last)) {\n        return { pin, status: \"OFFLINE\", last_seen: found.last_seen };\n    }\n\n    let diff = (now.getTime() - last.getTime()) / 20000;\n    return {\n        pin,\n        last_seen: found.last_seen,\n        status: diff > 5 ? \"OFFLINE\" : \"ONLINE\"\n    };\n});\n\nmsg.payload = result;\nmsg.topic = 'pin_status_update';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1070,
+        "y": 1440,
+        "wires": [
+            [
+                "0b3358f711e7ed0b"
+            ]
+        ]
+    },
+    {
+        "id": "b317ef4ea4bf5b4d",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "mydb": "5e560f07cfec117a",
+        "name": "dht_22",
+        "x": 870,
+        "y": 1440,
+        "wires": [
+            [
+                "c2dcfab533c6773d"
+            ]
+        ]
+    },
+    {
+        "id": "427cc88e159279d8",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Check DHT22 Offline",
+        "func": "msg.topic = `\nSELECT pin, MAX(timestamp) AS last_seen\nFROM dht_22\nWHERE pin != 'OVERALL'\nGROUP BY pin;\n`\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 1440,
+        "wires": [
+            [
+                "b317ef4ea4bf5b4d"
+            ]
+        ]
+    },
+    {
+        "id": "cd44e81db7091f14",
+        "type": "inject",
+        "z": "c0cdca176eedd227",
+        "name": "Every 1 sec",
+        "props": [],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "x": 450,
+        "y": 1440,
+        "wires": [
+            [
+                "427cc88e159279d8"
+            ]
+        ]
+    },
+    {
+        "id": "bfe5f4fd3202f9dd",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Check reboot",
+        "func": "// Check reboot (single + all) — robust pending (by actionId & by mac)\nconst p = msg.payload || {};\nconst cmd = String(p.cmd || p.command || '').toLowerCase();\nconst actionId = String(p.actionId || '').trim();\nconst room = String(p.room_id || '').toLowerCase();\n\nif (!actionId) {\n  return [null, { payload: { actionId: null, status: 'error', message: 'missing actionId' } }];\n}\n\n// helpers\nfunction normMAC(s){\n  if(!s) return null;\n  s = String(s).toUpperCase().replace(/[^0-9A-F]/g,'');\n  if (s.length !== 12) return null;\n  return s.match(/.{2}/g).join(':');\n}\n\nconst now = Date.now();\nconst TTL_MS = 120000;      // mapping room↔mac สดภายใน 2 นาที\nconst ACK_TIMEOUT_MS = 60000;\n\n// contexts\nconst pendingByAction = flow.get('reboot_pending_by_action') || {}; // actionId -> { targets:Set, seen:Set }\nconst pendingByMac    = flow.get('reboot_pending_by_mac')    || {}; // mac -> actionId\nconst timers          = flow.get('reboot_timers')             || {}; // actionId -> timer\n\n// ========= Reboot All =========\nif (cmd === 'reboot_all' || room === 'all' || Array.isArray(p.mac_list)) {\n  let macs = Array.isArray(p.mac_list) ? p.mac_list.map(normMAC).filter(Boolean) : null;\n  if (!macs || macs.length === 0) {\n    const room2mac = flow.get('room2mac') || {};\n    macs = Object.values(room2mac).map(normMAC).filter(Boolean);\n  }\n  if (!macs.length) {\n    return [null, { payload: { actionId, status: 'error', message: 'no target MACs' } }];\n  }\n\n  // register pending (by actionId + by mac)\n  pendingByAction[actionId] = { targets: new Set(macs), seen: new Set() };\n  macs.forEach(m => { pendingByMac[m] = actionId; });\n\n  // timeout per actionId\n  if (timers[actionId]) clearTimeout(timers[actionId]);\n  timers[actionId] = setTimeout(() => {\n    const _pAct = flow.get('reboot_pending_by_action') || {};\n    const _tim  = flow.get('reboot_timers') || {};\n    const st = _pAct[actionId];\n    if (st) {\n      // cleanup mac->action\n      st.targets.forEach(m => { \n        let map = flow.get('reboot_pending_by_mac') || {};\n        if (map[m] === actionId) { delete map[m]; flow.set('reboot_pending_by_mac', map); }\n      });\n      delete _pAct[actionId];\n      delete _tim[actionId];\n      flow.set('reboot_pending_by_action', _pAct);\n      flow.set('reboot_timers', _tim);\n      node.send([null, { topic:'actions/ack', payload: { actionId, status:'timeout', message:'reboot_all partial/timeout' } }]);\n    }\n  }, ACK_TIMEOUT_MS);\n\n  flow.set('reboot_pending_by_action', pendingByAction);\n  flow.set('reboot_pending_by_mac', pendingByMac);\n  flow.set('reboot_timers', timers);\n\n  const outMsgs = macs.map(m => ({\n    topic: `esp32/control/${m}/reboot`,\n    payload: { cmd:'reboot', room_id:null, mac:m, actionId, ts:now }\n  }));\n  const ack = { payload:{ actionId, status:'accepted', message:`broadcast to ${macs.length} devices`} };\n  return [outMsgs, ack];\n}\n\n// ========= Reboot Single =========\nlet mac = normMAC(p.mac);\nif (!mac && room) {\n  const room2mac = flow.get('room2mac') || {};\n  const room_seen = flow.get('room_seen') || {};\n  const m = normMAC(room2mac[room]);\n  const ts = room_seen[room] || 0;\n  if (m && (Date.now()-ts) <= TTL_MS) mac = m;\n}\nif (!mac) {\n  return [null, { payload: { actionId, status:'error', message:`no fresh mapping for ${room}` } }];\n}\n\npendingByAction[actionId] = { targets: new Set([mac]), seen: new Set() };\npendingByMac[mac] = actionId;\n\n// timeout per actionId\nif (timers[actionId]) clearTimeout(timers[actionId]);\ntimers[actionId] = setTimeout(() => {\n  const _pAct = flow.get('reboot_pending_by_action') || {};\n  const _pMac = flow.get('reboot_pending_by_mac') || {};\n  const _tim  = flow.get('reboot_timers') || {};\n  const st = _pAct[actionId];\n  if (st) {\n    st.targets.forEach(m => { if (_pMac[m] === actionId) delete _pMac[m]; });\n    delete _pAct[actionId];\n    delete _tim[actionId];\n    flow.set('reboot_pending_by_mac', _pMac);\n    flow.set('reboot_pending_by_action', _pAct);\n    flow.set('reboot_timers', _tim);\n    node.send([null, { topic:'actions/ack', payload:{ actionId, status:'timeout', message:`no response from ${mac}` } }]);\n  }\n}, ACK_TIMEOUT_MS);\n\nflow.set('reboot_pending_by_action', pendingByAction);\nflow.set('reboot_pending_by_mac', pendingByMac);\nflow.set('reboot_timers', timers);\n\nconst mqttMsg = {\n  topic: `esp32/control/${mac}/reboot`,\n  payload: { cmd:'reboot', room_id:room||null, mac, actionId, ts:now }\n};\nconst ack = { payload:{ actionId, status:'accepted', message:`reboot sent to ${mac}` } };\nreturn [[mqttMsg], ack];\n",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1070,
+        "y": 1260,
+        "wires": [
+            [
+                "a2f0abb3f14cbb78"
+            ],
+            [
+                "0b3358f711e7ed0b"
+            ]
+        ]
+    },
+    {
+        "id": "a2f0abb3f14cbb78",
+        "type": "mqtt out",
+        "z": "c0cdca176eedd227",
+        "name": "Send Reboot",
+        "topic": "",
+        "qos": "1",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8301192ec347dbc9",
+        "x": 1250,
+        "y": 1260,
+        "wires": []
+    },
+    {
+        "id": "cab21781f804764e",
+        "type": "mqtt in",
+        "z": "c0cdca176eedd227",
+        "name": "Reboot",
+        "topic": "esp32/ack/+/reboot",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "8301192ec347dbc9",
+        "nl": false,
+        "rap": false,
+        "rh": 0,
+        "inputs": 0,
+        "x": 410,
+        "y": 1200,
+        "wires": [
+            [
+                "9fd63c9526930868"
+            ]
+        ]
+    },
+    {
+        "id": "9fd63c9526930868",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Ack: match & reply",
+        "func": "function normMAC(s) {\n  if (!s) return null;\n  s = String(s).toUpperCase().replace(/[^0-9A-F]/g, '');\n  if (s.length !== 12) return null;\n  return s.match(/.{2}/g).join(':');\n}\n\nconst topic = String(msg.topic || '');\n\n// ---------- parse payload ----------\nlet data = msg.payload;\nif (typeof data === 'string') { try { data = JSON.parse(data); } catch { return null; } }\nif (!data || typeof data !== 'object') return null;\n\nconst actionId = String(data.actionId || '').trim();\nconst status = String(data.status || (data.ok === true ? 'ok' : '')).toLowerCase() || 'ok';\nconst macPL = normMAC(data.mac);\n\nlet macTP = null, roomTP = null;\nlet m = topic.match(/^esp32\\/ack\\/([0-9A-F:]{17})\\/[^/]+$/i);\nif (m) macTP = normMAC(m[1]);\nm = topic.match(/^esp32\\/ack\\/(room-[abcd])\\/[^/]+$/i);\nif (m) roomTP = m[1].toLowerCase();\n\nlet mac = macPL || macTP || null;\nif (!mac && roomTP) {\n  const room2mac = flow.get('room2mac') || {};\n  mac = normMAC(room2mac[roomTP]);\n}\n\n// ---------- contexts ----------\nlet pByAct = flow.get('reboot_pending_by_action') || {}; // actionId -> {targets:Set, seen:Set}\nlet pByMac = flow.get('reboot_pending_by_mac') || {}; // mac -> actionId\nlet timers = flow.get('reboot_timers') || {};\n\nconst RECENT_TTL_MS = 30000; // กันซ้ำภายใน 30s หลังปิดงาน\nlet recent = flow.get('ack_recent') || {};        // actionId -> { ts:number, seen:Set }\n\n// ---------- DE-DUP GUARD ----------\n// ถ้า actionId นี้ถูกปิดไปแล้วเมื่อไม่นานนี้ ให้ drop เงียบๆ (ห้ามขึ้น unmatched)\nif (actionId && !pByAct[actionId]) {\n  const r = recent[actionId];\n  if (r && (Date.now() - r.ts) <= RECENT_TTL_MS) {\n    // ถ้าอยาก log เงียบๆ ให้ใช้ node.status สีเทา\n    node.status({ fill: 'grey', shape: 'ring', text: `late/dup ACK: ${actionId}` });\n    // บันทึก mac ที่เห็นไว้ (กันลูป)\n    if (mac) { r.seen = r.seen || new Set(); r.seen.add(mac); recent[actionId] = r; flow.set('ack_recent', recent); }\n    return null;\n  }\n}\n\n// ---------- PRIORITY 1: match by actionId ----------\nif (actionId && pByAct[actionId]) {\n  const st = pByAct[actionId]; // {targets:Set, seen:Set}\n  if (!st.seen) st.seen = new Set();\n  if (mac) st.seen.add(mac);\n\n  if (mac && pByMac[mac] === actionId) delete pByMac[mac];\n\n  const done = st.seen.size;\n  const total = st.targets.size;\n\n  // ครบ → cleanup + บันทึก recent เพื่อกันซ้ำ\n  if (done >= total) {\n    if (timers[actionId]) { clearTimeout(timers[actionId]); delete timers[actionId]; }\n    delete pByAct[actionId];\n    recent[actionId] = { ts: Date.now(), seen: st.seen };\n  }\n\n  flow.set('reboot_pending_by_action', pByAct);\n  flow.set('reboot_pending_by_mac', pByMac);\n  flow.set('reboot_timers', timers);\n  flow.set('ack_recent', recent);\n\n  node.status({ fill: 'green', shape: 'dot', text: `ACK ${done}/${total}${mac ? ` from ${mac}` : ''}` });\n  return {\n    topic: 'actions/ack',\n    payload: {\n      actionId, status,\n      message: data.message || (done >= total ? 'ok' : `ACK ${done}/${total}`),\n      mac, done, total\n    }\n  };\n}\n\n// ---------- PRIORITY 2: match by mac ----------\nif (mac && pByMac[mac]) {\n  const aid = pByMac[mac];\n\n  if (pByAct[aid]) {\n    const st = pByAct[aid];\n    if (!st.seen) st.seen = new Set();\n    st.seen.add(mac);\n    if (st.seen.size >= st.targets.size) {\n      if (timers[aid]) { clearTimeout(timers[aid]); delete timers[aid]; }\n      delete pByAct[aid];\n      recent[aid] = { ts: Date.now(), seen: st.seen };\n    } else {\n      pByAct[aid] = st;\n    }\n  }\n  delete pByMac[mac];\n\n  flow.set('reboot_pending_by_action', pByAct);\n  flow.set('reboot_pending_by_mac', pByMac);\n  flow.set('reboot_timers', timers);\n  flow.set('ack_recent', recent);\n\n  node.status({ fill: 'green', shape: 'dot', text: `ACK by mac ${mac}` });\n  return {\n    topic: 'actions/ack',\n    payload: { actionId: aid, status, message: data.message || 'rebooting', mac }\n  };\n}\n\n// ---------- unmatched (เช็คอีกชั้น: late/dup หลังไม่มี pending) ----------\nif (actionId) {\n  // บันทึกไว้เป็น late เพื่อกันขึ้น unmatched รอบต่อไป\n  recent[actionId] = { ts: Date.now(), seen: mac ? new Set([mac]) : new Set() };\n  flow.set('ack_recent', recent);\n  node.status({ fill: 'grey', shape: 'ring', text: `late ACK: ${actionId}` });\n  return null; // ✨ ไม่ปล่อย unmatched ออกไปอีก\n}\n\n// ถ้าไม่มี actionId จริง ๆ ค่อยถือว่า unmatched เบา ๆ\nnode.status({ fill: 'yellow', shape: 'ring', text: `ACK unmatched: ${mac || 'n/a'}` });\nreturn { topic: 'actions/ack', payload: { actionId: null, status, message: data.message || 'ACK unmatched', mac } };\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 1200,
+        "wires": [
+            [
+                "0b3358f711e7ed0b"
+            ]
+        ]
+    },
+    {
+        "id": "0be150f8cda21a27",
+        "type": "switch",
+        "z": "c0cdca176eedd227",
+        "name": "Check Command",
+        "property": "payload.command",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "get_config",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "set_config",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 1490,
+        "y": 1160,
+        "wires": [
+            [
+                "5d3a283c24fdb1d4"
+            ],
+            [
+                "93a9b1e0e79ecae9"
+            ]
+        ]
+    },
+    {
+        "id": "93a9b1e0e79ecae9",
+        "type": "mqtt out",
+        "z": "c0cdca176eedd227",
+        "name": "SET Config",
+        "topic": "esp32/set_config",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8301192ec347dbc9",
+        "x": 1670,
+        "y": 1200,
+        "wires": []
+    },
+    {
+        "id": "5d3a283c24fdb1d4",
+        "type": "mqtt out",
+        "z": "c0cdca176eedd227",
+        "name": "Config Request",
+        "topic": "esp32/commands",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8301192ec347dbc9",
+        "x": 1680,
+        "y": 1120,
+        "wires": []
+    },
+    {
+        "id": "api-data-in",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "GET /api/data",
+        "url": "/api/data",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 430,
+        "y": 1500,
+        "wires": [
+            [
+                "api-data-build-sql"
+            ]
+        ]
+    },
+    {
+        "id": "api-data-build-sql",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Build SQL (range + mac + pins + dewpoint)",
+        "func": "// อ่าน query params\nconst q = msg.req && msg.req.query ? msg.req.query : {};\nlet { start, end, mac, room, pins } = q;\n\n// helper: แปลงเวลา ISO → MySQL DATETIME (local)\nfunction toSqlLocal(iso) {\n    if (!iso) return null;\n    const d = new Date(iso);\n    if (isNaN(d)) return null;\n    const tzFix = new Date(d.getTime() - d.getTimezoneOffset()*60000);\n    return tzFix.toISOString().slice(0,19).replace('T',' ');\n}\n\n// default ช่วงเวลา: 24 ชั่วโมงล่าสุด\nconst now = new Date();\nconst defEnd = now.toISOString();\nconst defStart = new Date(now.getTime() - 24*60*60*1000).toISOString();\n\n// ถ้าไม่กรอก ให้ใช้ดีฟอลต์ 24 ชม.\nstart = toSqlLocal(start || defStart);\nend   = toSqlLocal(end   || defEnd);\n\n// รองรับกรณีส่ง room มา → map เป็น mac จาก context เดิม (ถ้ามี)\nif (!mac && room) {\n    try {\n        const r2m = flow.get('room2mac') || {};\n        const key = String(room).toLowerCase();\n        mac = r2m[key];\n    } catch(e) {}\n}\n\n// ตรวจความถูกต้องขั้นต่ำ\nif (!mac || !start || !end) {\n    // ส่ง error กลับทันที (จะให้ MySQL ข้ามไป)\n    msg.statusCode = 400;\n    msg.payload = { error: \"missing mac/start/end\", hint: \"GET /api/data?mac=AA:BB:CC:DD:EE:FF&start=ISO&end=ISO\" };\n    // ติดธงให้ http response โหนดปลายทางรู้ว่าไม่ต้องคิวรี\n    msg._skipQuery = true;\n    return msg;\n}\n\n// เตรียม pins ถ้าส่งมา เช่น pins=OVERALL,25,26\nlet pinsArr = [];\nif (typeof pins === 'string' && pins.trim() !== '') {\n    pinsArr = pins.split(',').map(s => s.trim())\n        .filter(s => s.length)\n        .map(s => (/^\\d+$/.test(s) ? s : s.toUpperCase()));\n}\n\n// สร้าง SQL (คิวรีคอลัมน์ avg/min/max + dewpoint คำนวณใน SQL)\n// Magnus formula: dp = (b*gamma)/(a-gamma)\n// gamma = ln(RH/100) + (a*T)/(b+T), a=17.62, b=243.12\nlet sql = `\nSELECT \n  mac,\n  pin,\n  timestamp,\n  min_temp,\n  max_temp,\n  avg_temp,\n  min_hum,\n  max_hum,\n  avg_hum,\n  (243.12 * (\n      LN(GREATEST(1e-6, avg_hum/100)) + (17.62*avg_temp)/(243.12+avg_temp)\n   ) ) / (\n      17.62 - (\n        LN(GREATEST(1e-6, avg_hum/100)) + (17.62*avg_temp)/(243.12+avg_temp)\n      )\n   ) AS dewpoint\nFROM dht_22\nWHERE mac = ?\n  AND timestamp BETWEEN ? AND ?\n`;\n\nconst params = [mac, start, end];\n\nif (pinsArr.length > 0) {\n    const qs = pinsArr.map(_ => '?').join(',');\n    sql += ` AND pin IN (${qs})`;\n    params.push(...pinsArr);\n}\n\nsql += ` ORDER BY timestamp ASC, pin ASC`;\n\nmsg.topic = sql;\nmsg.payload = params; // parameterized\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 1500,
+        "wires": [
+            [
+                "api-data-mysql"
+            ]
+        ]
+    },
+    {
+        "id": "api-data-mysql",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "mydb": "5e560f07cfec117a",
+        "name": "Query dht_22",
+        "x": 980,
+        "y": 1500,
+        "wires": [
+            [
+                "api-data-out"
+            ]
+        ]
+    },
+    {
+        "id": "api-data-out",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "JSON",
+        "statusCode": "",
+        "headers": {
+            "content-type": "application/json; charset=utf-8"
+        },
+        "x": 1170,
+        "y": 1500,
+        "wires": []
+    },
+    {
+        "id": "1143feaf4788fd3f",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "requestId",
+        "func": "// remember_cfg_request (ใช้แทนของเดิม)\nconst p = msg.payload || {};\nconst now = Date.now();\nconst TTL_MS = 120000; // 120s\n\nfunction normMAC(s){\n  if(!s) return null;\n  s = String(s).toUpperCase().replace(/[^0-9A-F]/g,'');\n  if(s.length !== 12) return null;\n  return s.match(/.{2}/g).join(':').toLowerCase();\n}\n\nconst keyMac = normMAC(p.mac);\nconst keyRoom = p.room ? String(p.room).toLowerCase() : (p.room_id ? String(p.room_id).toLowerCase() : null);\nconst key = keyMac || keyRoom;\n\nif (p.command === 'get_config' && p.requestId && key) {\n  const pending = flow.get('cfg_pending') || {};\n\n  // normalize existing value -> ensure it's an array\n  let list = pending[key];\n  if (list && !Array.isArray(list)) {\n    // legacy single object -> convert to array\n    if (typeof list === 'object' && list.requestId) {\n      list = [{ requestId: list.requestId, ts: list.ts || now }];\n    } else {\n      list = [];\n    }\n  }\n  if (!Array.isArray(list)) list = [];\n\n  // push new request (FIFO)\n  list.push({ requestId: p.requestId, ts: now });\n\n  // cleanup expired entries\n  pending[key] = list.filter(it => (now - (it.ts || 0)) <= TTL_MS);\n\n  flow.set('cfg_pending', pending);\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1260,
+        "y": 1160,
+        "wires": [
+            [
+                "0be150f8cda21a27",
+                "bfe5f4fd3202f9dd"
+            ]
+        ]
+    },
+    {
+        "id": "5bc8eadaccc70a3a",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "requestId",
+        "func": "// attach_cfg_requestId (ใช้แทนของเดิม)\nconst now = Date.now();\nconst TTL_MS = 120000;\n\nfunction normMAC(s){\n  if(!s) return null;\n  s = String(s).toUpperCase().replace(/[^0-9A-F]/g,'');\n  if(s.length !== 12) return null;\n  return s.match(/.{2}/g).join(':').toLowerCase();\n}\n\nfunction findMac(obj) {\n  if (!obj) return null;\n  if (typeof obj === 'string') {\n    const raw = obj.trim();\n    const noSym = raw.replace(/[^0-9A-Fa-f]/g,'');\n    if (/^[0-9A-Fa-f]{12}$/.test(noSym)) return normMAC(noSym);\n  }\n  if (typeof obj === 'object') {\n    for (const k of Object.keys(obj)) {\n      try {\n        const v = obj[k];\n        const found = findMac(v);\n        if (found) return found;\n      } catch(e){}\n    }\n  }\n  return null;\n}\n\nconst topic = String(msg.topic || '');\nlet keyFromTopic = null;\nconst m = topic.match(/^esp32\\/response\\/([^/]+)\\/config$/i);\nif (m && m[1]) {\n  // topic may contain MAC or room token\n  const maybe = m[1];\n  const nm = normMAC(maybe);\n  keyFromTopic = nm || maybe.toLowerCase();\n}\n\nconst p = msg.payload || {};\nconst macFromPayload = findMac(p); // normalized mac (lowercase with colons) or null\nconst keyRoomPayload = (p.room_id || p.room) ? String(p.room_id || p.room).toLowerCase() : null;\n\nconst candidates = [];\nif (macFromPayload) candidates.push(macFromPayload);\nif (keyFromTopic) candidates.push(keyFromTopic);\nif (keyRoomPayload) candidates.push(keyRoomPayload);\n\nconst pending = flow.get('cfg_pending') || {};\nlet attached = false;\n\nfor (const key of candidates) {\n  if (!key) continue;\n\n  // handle array form\n  if (Array.isArray(pending[key]) && pending[key].length) {\n    // remove expired first\n    const fresh = pending[key].filter(it => (now - (it.ts || 0)) <= TTL_MS);\n    if (fresh.length) {\n      const it = fresh.shift(); // FIFO\n      p.requestId = it.requestId;\n      msg.payload = p;\n      pending[key] = fresh.length ? fresh : undefined;\n      if (!pending[key]) delete pending[key];\n      flow.set('cfg_pending', pending);\n      attached = true;\n      break;\n    } else {\n      delete pending[key];\n      flow.set('cfg_pending', pending);\n    }\n  }\n\n  // support legacy single object\n  if (pending[key] && pending[key].requestId) {\n    if ((now - (pending[key].ts || 0)) <= TTL_MS) {\n      p.requestId = pending[key].requestId;\n      msg.payload = p;\n      delete pending[key];\n      flow.set('cfg_pending', pending);\n      attached = true;\n      break;\n    } else {\n      delete pending[key];\n      flow.set('cfg_pending', pending);\n    }\n  }\n}\n\nif (!attached) {\n  // optional debug: node.warn({note:'no pending match', topic, macFromPayload, keyRoomPayload, pendingKeys: Object.keys(pending)});\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 1260,
+        "wires": [
+            [
+                "0b3358f711e7ed0b"
+            ]
+        ]
+    },
+    {
+        "id": "e9f2b1a3.d8c9a",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "GET /api/device-map",
+        "url": "/api/device-map",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 460,
+        "y": 1560,
+        "wires": [
+            [
+                "f3a1d4b.c9b8c28"
+            ]
+        ]
+    },
+    {
+        "id": "f3a1d4b.c9b8c28",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Load Device Map",
+        "func": "const deviceMap = flow.get('device_map', 'file') || {};\nmsg.payload = deviceMap;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 1560,
+        "wires": [
+            [
+                "a1b2c3d4.e5f6g7"
+            ]
+        ]
+    },
+    {
+        "id": "a1b2c3d4.e5f6g7",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "200 OK (Map)",
+        "statusCode": "200",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 880,
+        "y": 1560,
+        "wires": []
+    },
+    {
+        "id": "h8i9j0k1.l2m3n4",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "POST /api/device-map",
+        "url": "/api/device-map",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 460,
+        "y": 1600,
+        "wires": [
+            [
+                "o5p6q7r8.s9t0u1"
+            ]
+        ]
+    },
+    {
+        "id": "o5p6q7r8.s9t0u1",
+        "type": "json",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 660,
+        "y": 1600,
+        "wires": [
+            [
+                "v1w2x3y4.z5a6b7"
+            ]
+        ]
+    },
+    {
+        "id": "v1w2x3y4.z5a6b7",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Save Device Map",
+        "func": "let data = msg.payload;\n\n// ถ้าเป็น string ให้ลอง parse เป็น JSON\nif (typeof data === 'string') {\n  try {\n    data = JSON.parse(data);\n  } catch (e) {\n    msg.statusCode = 400;\n    msg.payload = { ok: false, error: 'Cannot parse JSON string' };\n    return msg;\n  }\n}\n\n// ตรวจสอบว่าเป็น object จริงๆ\nif (typeof data !== 'object' || data === null) {\n  msg.statusCode = 400;\n  msg.payload = { ok: false, error: 'Invalid data format. Expected JSON object.' };\n  return msg;\n}\n\n// (Optional) ตรวจสอบ key ว่ายอมรับได้\nconst validKeys = ['roomA','nameA','roomB','nameB','roomC','nameC','roomD','nameD'];\nfor (const key of Object.keys(data)) {\n  if (!validKeys.includes(key)) {\n    msg.statusCode = 400;\n    msg.payload = { ok: false, error: `Invalid key in payload: ${key}` };\n    return msg;\n  }\n}\n\nflow.set('device_map', data, 'file');\nmsg.payload = { ok: true };\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 1600,
+        "wires": [
+            [
+                "c8d9e0f1.g2h3i4"
+            ]
+        ]
+    },
+    {
+        "id": "c8d9e0f1.g2h3i4",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "200/400 Response",
+        "statusCode": "",
+        "headers": {},
+        "x": 1060,
+        "y": 1600,
+        "wires": []
+    },
+    {
+        "id": "PIN_MAP_GET_HTTP",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "GET /api/pin-map",
+        "url": "/api/pin-map",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 440,
+        "y": 1680,
+        "wires": [
+            [
+                "PIN_MAP_GET_FUNC"
+            ]
+        ]
+    },
+    {
+        "id": "PIN_MAP_GET_FUNC",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Load Pin Map",
+        "func": "const pinMap = global.get('mac_pin_names') || {};\nmsg.payload = pinMap;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 1680,
+        "wires": [
+            [
+                "PIN_MAP_GET_RESP"
+            ]
+        ]
+    },
+    {
+        "id": "PIN_MAP_GET_RESP",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 810,
+        "y": 1680,
+        "wires": []
+    },
+    {
+        "id": "PIN_MAP_POST_HTTP",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "POST /api/pin-map",
+        "url": "/api/pin-map",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 450,
+        "y": 1740,
+        "wires": [
+            [
+                "PIN_MAP_POST_FUNC"
+            ]
+        ]
+    },
+    {
+        "id": "PIN_MAP_POST_FUNC",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Save Pin Map",
+        "func": "// ตอนนี้ msg.payload ที่เข้ามาจาก Frontend ที่แก้ไขแล้ว จะเป็น { mac: \"XX:XX:..\", name_pin_25: \"...\" }\nconst incomingData = msg.payload;\nconst mac = incomingData.mac;\n\n// 1. ตรวจสอบว่า Client ส่ง mac address มาด้วยหรือไม่\nif (!mac) {\n    msg.statusCode = 400;\n    msg.payload = { ok: false, error: \"MAC address is required in payload\" };\n    return msg;\n}\n\n// 2. อ่านข้อมูล pin map ทั้งหมดที่เคยบันทึกไว้ออกมา จากตัวแปรใหม่\nconst allPinMaps = global.get(\"mac_pin_names\") || {};\n\n// 3. สร้าง Object ใหม่สำหรับข้อมูลของอุปกรณ์นี้\nconst devicePinData = {\n    name_pin_25: incomingData.name_pin_25 || '',\n    name_pin_26: incomingData.name_pin_26 || '',\n    name_pin_32: incomingData.name_pin_32 || '',\n    name_pin_33: incomingData.name_pin_33 || ''\n};\n\n// 4. อัปเดตข้อมูลโดยใช้ MAC address เป็น Key\nallPinMaps[mac] = devicePinData;\n\n// 5. บันทึกข้อมูลทั้งหมดกลับเข้าไปใน global context ตัวใหม่\nglobal.set(\"mac_pin_names\", allPinMaps);\n\n// 6. ส่ง response กลับไปว่าทำสำเร็จ\nmsg.statusCode = 200;\nmsg.payload = { ok: true };\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 1740,
+        "wires": [
+            [
+                "PIN_MAP_POST_RESP"
+            ]
+        ]
+    },
+    {
+        "id": "PIN_MAP_POST_RESP",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "200/400 Response",
+        "statusCode": "",
+        "headers": {},
+        "x": 850,
+        "y": 1740,
+        "wires": []
+    },
+    {
+        "id": "summary-http-in",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "GET /api/summary",
+        "url": "/api/summary",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 450,
+        "y": 1800,
+        "wires": [
+            [
+                "summary-build-sql"
+            ]
+        ]
+    },
+    {
+        "id": "summary-build-sql",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Build SQL for Summary",
+        "func": "// อ่าน query params\nconst q = msg.req && msg.req.query ? msg.req.query : {};\nlet { start, end, mac } = q;\n\n// helper: แปลงเวลา ISO → MySQL DATETIME (local)\nfunction toSqlLocal(iso) {\n    if (!iso) return null;\n    const d = new Date(iso);\n    if (isNaN(d)) return null;\n    const tzFix = new Date(d.getTime() - d.getTimezoneOffset() * 60000);\n    return tzFix.toISOString().slice(0, 19).replace('T', ' ');\n}\n\n// ตรวจความถูกต้องขั้นต่ำ\nif (!mac || !start || !end) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"missing mac/start/end\" };\n    msg._skip = true;\n    return msg;\n}\n\n// สร้าง SQL สำหรับคำนวณค่าสรุป\nconst sql = `\nSELECT\n    MIN(avg_temp) AS min_temp,\n    AVG(avg_temp) AS avg_temp,\n    MAX(avg_temp) AS max_temp,\n    MIN(avg_hum) AS min_hum,\n    AVG(avg_hum) AS avg_hum,\n    MAX(avg_hum) AS max_hum,\n    AVG(\n        (243.12 * (LN(GREATEST(1e-6, avg_hum / 100)) + (17.62 * avg_temp) / (243.12 + avg_temp))) / \n        (17.62 - (LN(GREATEST(1e-6, avg_hum / 100)) + (17.62 * avg_temp) / (243.12 + avg_temp)))\n    ) AS avg_dew\nFROM dht_22\nWHERE mac = ?\n  AND timestamp BETWEEN ? AND ?\n  AND pin = 'OVERALL';\n`;\n\nconst params = [mac, toSqlLocal(start), toSqlLocal(end)];\n\nmsg.topic = sql;\nmsg.payload = params;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 1800,
+        "wires": [
+            [
+                "summary-mysql-query"
+            ]
+        ]
+    },
+    {
+        "id": "summary-mysql-query",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "mydb": "5e560f07cfec117a",
+        "name": "Query Summary",
+        "x": 920,
+        "y": 1800,
+        "wires": [
+            [
+                "summary-shape-json"
+            ]
+        ]
+    },
+    {
+        "id": "summary-shape-json",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Shape Summary JSON",
+        "func": "if (msg._skip) return msg;\n\nconst r = (Array.isArray(msg.payload) && msg.payload[0]) || {};\n\nconst out = {\n    temp: {\n        min: r.min_temp,\n        avg: r.avg_temp,\n        max: r.max_temp\n    },\n    hum: {\n        min: r.min_hum,\n        avg: r.avg_hum,\n        max: r.max_hum\n    },\n    dew: {\n        avg: r.avg_dew\n    }\n};\n\nmsg.payload = out;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 1800,
+        "wires": [
+            [
+                "summary-http-out"
+            ]
+        ]
+    },
+    {
+        "id": "summary-http-out",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {
+            "content-type": "application/json; charset=utf-8"
+        },
+        "x": 1340,
+        "y": 1800,
+        "wires": []
+    },
+    {
+        "id": "fb6c117c73967af6",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "name": "GET /api/uptime",
+        "url": "/api/uptime",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 460,
+        "y": 1860,
+        "wires": [
+            [
+                "e94228a423a2e4d9"
+            ]
+        ]
+    },
+    {
+        "id": "e94228a423a2e4d9",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Build SQL (uptime from esp_status_log)",
+        "func": "// Query params\nconst q = (msg.req && msg.req.query) ? msg.req.query : {};\nlet { start, end, mac, room } = q;\n\n// helper: ISO -> SQL DATETIME (local)\nfunction toSqlLocal(iso) {\n  if (!iso) return null;\n  const d = new Date(iso);\n  if (isNaN(d)) return null;\n  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);\n  return local.toISOString().slice(0, 19).replace('T', ' ');\n}\n\n// defaults: last 24h\nconst now = new Date();\nconst defEnd = now.toISOString();\nconst defStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();\nstart = toSqlLocal(start || defStart);\nend = toSqlLocal(end || defEnd);\n\n// Validate params\nif (!start || !end || !mac) {\n  msg.statusCode = 400;\n  msg.payload = { error: \"missing params\", hint: \"GET /api/uptime?mac=AA:BB:...\" };\n  msg._skip = true; // Mark to skip MySQL\n  return msg;\n}\n\n// MySQL 8 query using LEAD() to form segments, and union the last state before window start\nconst sql = `\nWITH params AS (\n  SELECT CAST(? AS DATETIME) AS start_t, CAST(? AS DATETIME) AS end_t\n), base AS (\n  SELECT mac, room, status, time\n  FROM esp_status_log\n  WHERE mac = ?\n    AND time >= (SELECT start_t FROM params)\n    AND time <  (SELECT end_t   FROM params)\n  UNION ALL\n  SELECT mac, room, status, time\n  FROM (\n    SELECT mac, room, status, time\n    FROM esp_status_log\n    WHERE mac = ?\n      AND time < (SELECT start_t FROM params)\n    ORDER BY time DESC\n    LIMIT 1\n  ) t\n), seg AS (\n  SELECT\n    status,\n    GREATEST(time, (SELECT start_t FROM params)) AS t1,\n    LEAST(\n      COALESCE(LEAD(time) OVER (ORDER BY time), (SELECT end_t FROM params)),\n      (SELECT end_t FROM params)\n    ) AS t2\n  FROM base\n  WHERE time < (SELECT end_t FROM params)\n)\nSELECT\n  SUM(CASE WHEN status='online' THEN GREATEST(0, TIMESTAMPDIFF(SECOND, t1, t2)) ELSE 0 END) AS online_sec,\n  SUM(GREATEST(0, TIMESTAMPDIFF(SECOND, t1, t2)))                                             AS total_sec,\n  EXISTS(SELECT 1 FROM esp_status_log WHERE mac = ?) AS has_log,\n  (SELECT start_t FROM params) AS start_t,\n  (SELECT end_t   FROM params) AS end_t\nFROM seg;`;\n\nconst params = [start, end, mac, mac, mac];\n\nmsg.topic = sql;\nmsg.payload = params;\nmsg._range = { start, end, mac: mac, room: room || null };\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 770,
+        "y": 1860,
+        "wires": [
+            [
+                "5842af98cd0fbc9a"
+            ]
+        ]
+    },
+    {
+        "id": "73f7c5a694b4065a",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "Shape JSON",
+        "func": "// ...\nconst r = (Array.isArray(msg.payload) && msg.payload[0]) || {};\nconst hasLog = r.has_log === 1 || r.has_log === true;\n\n// Helper function to convert UTC string to local ISO string\nfunction toLocalISO(utcString) {\n    if (!utcString) return null;\n    const d = new Date(utcString);\n    if (isNaN(d)) return null;\n    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();\n}\n\nconst out = {\n    mac: msg._range.mac,\n    room: msg._range.room,\n    // แปลงเวลาจาก UTC string (Z) เป็น Local time string\n    start: toLocalISO(r.start_t), \n    end: toLocalISO(r.end_t)\n};\n\nif (!hasLog) {\n    out.status = \"unknown\";\n    out.uptime_pct = null;\n    out.online_sec = null;\n    out.total_sec = null;\n} else {\n    const online = Number(r.online_sec ?? 0);\n    const total  = Number(r.total_sec  ?? 0);\n    out.uptime_pct = total > 0 ? Number(((online/total)*100).toFixed(2)) : 0;\n    out.online_sec = online;\n    out.total_sec  = total;\n}\n\nmsg.payload = out;\nmsg.headers = {\n    'content-type': 'application/json; charset=utf-8',\n    'cache-control': 'no-store, no-cache, must-revalidate, max-age=0'\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1260,
+        "y": 1860,
+        "wires": [
+            [
+                "e176d6bb795b1c09"
+            ]
+        ]
+    },
+    {
+        "id": "e176d6bb795b1c09",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "name": "JSON",
+        "statusCode": "",
+        "headers": {},
+        "x": 1450,
+        "y": 1860,
+        "wires": []
+    },
+    {
+        "id": "5842af98cd0fbc9a",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "mydb": "5e560f07cfec117a",
+        "name": "Query esp_status_log",
+        "x": 1070,
+        "y": 1860,
+        "wires": [
+            [
+                "73f7c5a694b4065a"
+            ]
+        ]
+    },
+    {
+        "id": "9edd6e1755ad0a49",
+        "type": "debug",
+        "z": "c0cdca176eedd227",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1400,
+        "y": 1380,
+        "wires": []
+    },
+    {
+        "id": "0b3358f711e7ed0b",
+        "type": "uibuilder",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "topic": "",
+        "url": "dashboard",
+        "okToGo": true,
+        "fwdInMessages": false,
+        "allowScripts": true,
+        "allowStyles": true,
+        "templateFolder": "blank",
+        "extTemplate": "",
+        "reload": false,
+        "sourceFolder": "src",
+        "deployedVersion": "7.4.3",
+        "showMsgUib": false,
+        "title": "",
+        "descr": "",
+        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
+        "x": 1050,
+        "y": 1160,
+        "wires": [
+            [
+                "1143feaf4788fd3f"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "8301192ec347dbc9",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "192.168.42.9",
+        "port": "18831",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "5e560f07cfec117a",
+        "type": "MySQLdatabase",
+        "name": "",
+        "host": "192.168.42.10",
+        "port": "33061",
+        "db": "Server Monitoring",
+        "tz": "",
+        "charset": "UTF8"
+    }
+]
