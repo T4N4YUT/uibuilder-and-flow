@@ -6015,7 +6015,7 @@
                     row.className = 'border-b border-[var(--border)]';
                     row.innerHTML = `
             <td class="p-3 text-center"><input type="checkbox" class="ack-checkbox" data-event-id="${alert.event_id}" ${alert.status !== 'open' ? 'disabled' : ''}></td>
-            <td class="p-3">${new Date(alert.opened_at).toLocaleString('th-TH')}</td>
+            <td class="p-3">${new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}</td>
             <td class="p-3">${alert.room_name}</td>
             <td class="p-3">${alert.sensor_name}</td>
             <td class="p-3">${alert.metric}</td>
@@ -6095,6 +6095,7 @@
                     if (!res.ok) throw new Error('Server returned an error');
 
                     showPopup('Sensor rule has been reset to inherit.', { type: 'success' });
+                    await loadSensorRuleData(mac, sensorName);
                     const overrideToggle = document.getElementById('toggle-override');
                     if (overrideToggle) {
                         overrideToggle.checked = false;
@@ -6264,6 +6265,63 @@
                     }
                 }
             });
+            async function handleSaveSensorRule() {
+                const mac = drawerEl.dataset.mac;
+                const sensorName = drawerEl.dataset.sensor;
+                const overrideEnabled = overrideToggle.checked;
+
+                if (!mac || !sensorName) {
+                    showPopup('Error: Cannot identify the sensor.', { type: 'fail' });
+                    return;
+                }
+
+                // รวบรวมค่าจากฟอร์ม
+                const getVal = id => {
+                    const val = document.getElementById(id).value;
+                    return val === '' ? null : parseFloat(val);
+                };
+
+                const tempRule = {
+                    scope: 'sensor', mac, sensor_name: sensorName, metric: 'temp',
+                    active: overrideEnabled ? 1 : 0, // ถ้าปิด Override ให้ส่ง active=0 เพื่อลบ Rule
+                    crit_min: getVal('rule-temp-crit-low'),
+                    warn_min: getVal('rule-temp-warn-low'),
+                    warn_max: getVal('rule-temp-warn-high'),
+                    crit_max: getVal('rule-temp-crit-high')
+                };
+                const humRule = {
+                    scope: 'sensor', mac, sensor_name: sensorName, metric: 'hum',
+                    active: overrideEnabled ? 1 : 0, // ถ้าปิด Override ให้ส่ง active=0 เพื่อลบ Rule
+                    crit_min: getVal('rule-hum-crit-low'),
+                    warn_min: getVal('rule-hum-warn-low'),
+                    warn_max: getVal('rule-hum-warn-high'),
+                    crit_max: getVal('rule-hum-crit-high')
+                };
+
+                try {
+                    const res = await fetch('/api/alert-rules', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify([tempRule, humRule]) // ส่งไปเป็น Array
+                    });
+
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        throw new Error(errData.error || 'Server returned an error');
+                    }
+
+                    showPopup('✅ Sensor rules saved successfully!', { type: 'success' });
+                    closeModal('modal-sensor-rules'); // ปิดหน้าต่างเมื่อสำเร็จ
+
+                    // Reload rules in the background for immediate effect
+                    await loadPinMapFromServer();
+
+                } catch (err) {
+                    showPopup(`❌ Failed to save rules: ${err.message}`, { type: 'fail' });
+                    console.error('Failed to save sensor rule:', err);
+                }
+            }
+            document.getElementById('btn-save-rule')?.addEventListener('click', handleSaveSensorRule);
         });
 
     </script>
