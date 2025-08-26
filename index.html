@@ -5087,15 +5087,22 @@
                 const listEl = document.getElementById('detail-sensor-list');
                 if (!listEl) return;
 
+                // ✨ จุดที่แก้ไข: ตรวจสอบข้อมูลก่อน ถ้าไม่มีข้อมูลเลย ให้ออกจากฟังก์ชันทันที
+                // โดยไม่ไปยุ่งกับ HTML เดิมที่แสดงอยู่
+                if (!liveData || Object.keys(liveData).length === 0) {
+                    // ถ้า listEl ยังว่างอยู่ (เช่น เปิดครั้งแรกสุด) ให้แสดงข้อความ Waiting...
+                    if (!listEl.hasChildNodes()) {
+                        listEl.innerHTML = '<li class="text-center text-[var(--muted)] mt-4">Waiting for live data...</li>';
+                    }
+                    return; // ออกจากฟังก์ชันไปเลย
+                }
+
                 roomId = roomId || document.getElementById('detail-room-name')?.dataset?.currentRoom || null;
 
+                // ✨ ย้ายมาไว้ตรงนี้! จะล้างข้อมูลก็ต่อเมื่อมี liveData ใหม่แล้วเท่านั้น
                 listEl.innerHTML = '';
                 const pins = ['25', '26', '32', '33'];
 
-                if (!liveData || Object.keys(liveData).length === 0) {
-                    listEl.innerHTML = '<li class="text-center text-[var(--muted)] mt-4">Waiting for live data...</li>';
-                    return;
-                }
 
                 const isNum = v => typeof v === 'number' && Number.isFinite(v);
                 const fmt1 = v => isNum(v) ? v.toFixed(1) : '—';
@@ -5110,10 +5117,7 @@
 
                 pins.forEach(pin => {
                     const pkt = liveData[pin] || {};
-                    const s1 = window.pinStatuses?.[roomId]?.[pin];
-                    const s2 = window.pinStatuses?.[pin];
-                    const status = (s1 || s2 || 'OFFLINE');
-                    const isOffline = String(status).toUpperCase() === 'OFFLINE';
+                    const isOffline = !pkt.timestamp;
 
                     const tmin = get(pkt, ['min_temp', 'tmin']);
                     const tavg = get(pkt, ['avg_temp', 'tavg', 'temp']);
@@ -5125,15 +5129,10 @@
 
                     const li = document.createElement('li');
 
-                    // --- ✨ จุดที่แก้ไข ✨ ---
-                    // 1. เพิ่ม class 'clickable-sensor-row'
-                    // 2. เพิ่ม data-mac และ data-sensor
                     li.className = 'live-row text-sm p-3 py-2 bg-[var(--panel)] rounded-md border border-[var(--border)] clickable-sensor-row';
                     li.dataset.mac = mac;
                     li.dataset.sensor = customName;
 
-                    // --- ✨ จุดที่แก้ไข ✨ ---
-                    // 3. ลบ <div class="actions">...</div> ที่เคยมีปุ่มออกไป
                     li.innerHTML = `
             <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -5705,15 +5704,11 @@
                             updateSensorList(store.live);
                         }
                     }
-
-                    // โชว์การ์ดทันที ไม่บังคับต้องมี config ก่อน
                     if (typeof ensurePanel === 'function') ensurePanel(roomId);
                     if (typeof checkAndFetchConfig === 'function') checkAndFetchConfig(roomId);
                     updateRoomUI(roomId, data);
                     updateKPIs(data);
                     updateAlertCards(data);
-
-                    // ต่ออายุ timeout ทุกครั้งที่มี data
                     if (window._roomTimeouts[roomId]) clearTimeout(window._roomTimeouts[roomId]);
                     window._roomTimeouts[roomId] = setTimeout(() => {
                         resetRoomUI(roomId);
