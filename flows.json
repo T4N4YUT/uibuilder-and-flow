@@ -50,11 +50,12 @@
             "b317ef4ea4bf5b4d",
             "427cc88e159279d8",
             "cd44e81db7091f14",
-            "041d83a054861f33"
+            "041d83a054861f33",
+            "d8234858d19d261e"
         ],
         "x": 74,
         "y": 159,
-        "w": 712,
+        "w": 832,
         "h": 242
     },
     {
@@ -99,7 +100,7 @@
             "9fd63c9526930868",
             "82371d5eeec7e5a8"
         ],
-        "x": 874,
+        "x": 1074,
         "y": 159,
         "w": 412,
         "h": 182
@@ -291,6 +292,30 @@
         "h": 162
     },
     {
+        "id": "e0c8d7b3e0c8d7b3",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "name": "Sync Alerts from Device to DB",
+        "style": {
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": false
+        },
+        "nodes": [
+            "d1d9a0d8c7c9d1d9",
+            "60c32d43196f7e41",
+            "b5a4a350a2b8e5c2",
+            "f2e9d2c2b3d1e2f3",
+            "c3d9b0e1f4a5c6d7",
+            "8a7b6c5d4e3f2d1c",
+            "aeb84f0b8e14ba41"
+        ],
+        "x": 1494,
+        "y": 1879,
+        "w": 772,
+        "h": 182
+    },
+    {
         "id": "44b7cf7bb078606f",
         "type": "http in",
         "z": "c0cdca176eedd227",
@@ -380,8 +405,9 @@
         "y": 300,
         "wires": [
             [
-                "d006acdba87802f0",
-                "0b3358f711e7ed0b"
+                "0b3358f711e7ed0b",
+                "d8234858d19d261e",
+                "c2dcfab533c6773d"
             ]
         ]
     },
@@ -398,7 +424,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 670,
+        "x": 790,
         "y": 300,
         "wires": [
             []
@@ -701,7 +727,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1190,
+        "x": 1390,
         "y": 300,
         "wires": [
             [
@@ -727,7 +753,7 @@
         "correl": "",
         "expiry": "",
         "broker": "8301192ec347dbc9",
-        "x": 1190,
+        "x": 1390,
         "y": 240,
         "wires": []
     },
@@ -745,7 +771,7 @@
         "rap": false,
         "rh": 0,
         "inputs": 0,
-        "x": 970,
+        "x": 1170,
         "y": 240,
         "wires": [
             [
@@ -766,7 +792,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 970,
+        "x": 1170,
         "y": 300,
         "wires": [
             [
@@ -1703,8 +1729,7 @@
         "y": 1420,
         "wires": [
             [
-                "6daf156cc54d455a",
-                "a94792975840c856"
+                "6daf156cc54d455a"
             ],
             [
                 "c1b46b6a99be15d8"
@@ -1718,8 +1743,8 @@
         "z": "c0cdca176eedd227",
         "mydb": "5e560f07cfec117a",
         "name": "DB: alert_events",
-        "x": 3850,
-        "y": 1260,
+        "x": 3630,
+        "y": 1360,
         "wires": [
             []
         ]
@@ -1728,9 +1753,9 @@
         "id": "1bf671abeb440373",
         "type": "inject",
         "z": "c0cdca176eedd227",
-        "name": "Load Rules every 5 mins",
+        "name": "Load Rules every 1 mins",
         "props": [],
-        "repeat": "300",
+        "repeat": "60",
         "crontab": "",
         "once": true,
         "onceDelay": 0.1,
@@ -1945,8 +1970,8 @@
         "name": "200 OK",
         "statusCode": "200",
         "headers": {},
-        "x": 3630,
-        "y": 2560,
+        "x": 3680,
+        "y": 2580,
         "wires": []
     },
     {
@@ -2071,7 +2096,7 @@
         "targetType": "msg",
         "statusVal": "payload.type",
         "statusType": "msg",
-        "x": 3630,
+        "x": 3640,
         "y": 1420,
         "wires": []
     },
@@ -2319,7 +2344,7 @@
         "g": "d820c8238ecd0f44",
         "name": "Reboot Device",
         "info": "",
-        "x": 980,
+        "x": 1180,
         "y": 200,
         "wires": []
     },
@@ -2441,20 +2466,167 @@
         ]
     },
     {
-        "id": "a94792975840c856",
-        "type": "debug",
+        "id": "d1d9a0d8c7c9d1d9",
+        "type": "inject",
         "z": "c0cdca176eedd227",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 3980,
-        "y": 1460,
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Every 5 minutes",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "60",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 1630,
+        "y": 1960,
+        "wires": [
+            [
+                "60c32d43196f7e41"
+            ]
+        ]
+    },
+    {
+        "id": "60c32d43196f7e41",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Request Config from Devices",
+        "func": "// ส่งคำขอ config ไปยังทุกอุปกรณ์ที่ Node-RED รู้จัก\nconst roomToMac = flow.get('room2mac') || {};\nconst macs = Object.values(roomToMac);\n\nif (macs.length === 0) {\n    node.warn('No devices found in room2mac context. Cannot request config.');\n    return null;\n}\n\nconst messages = macs.map(mac => ({\n    topic: `esp32/control/${mac}/request_config`,\n    payload: {\n        command: \"get_config\",\n        mac: mac,\n        requestId: new Date().getTime()\n    }\n}));\n\nreturn [messages];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1940,
+        "y": 1960,
+        "wires": [
+            [
+                "b5a4a350a2b8e5c2"
+            ]
+        ]
+    },
+    {
+        "id": "b5a4a350a2b8e5c2",
+        "type": "mqtt out",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Request Config",
+        "topic": "esp32/commands",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8301192ec347dbc9",
+        "x": 2160,
+        "y": 1960,
         "wires": []
+    },
+    {
+        "id": "f2e9d2c2b3d1e2f3",
+        "type": "mqtt in",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Receive Config",
+        "topic": "esp32/response/+/config",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "8301192ec347dbc9",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 1630,
+        "y": 2020,
+        "wires": [
+            [
+                "c3d9b0e1f4a5c6d7"
+            ]
+        ]
+    },
+    {
+        "id": "c3d9b0e1f4a5c6d7",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Process Config to DB",
+        "func": "const config = msg.payload || {};\nconst mac = config.mac_address || null;\nif (!mac || !config.alerts) {\n    node.warn('Invalid config payload received. Skipping DB update.');\n    return null;\n}\n\n// จัดรูปแบบข้อมูลให้ตรงกับ API /api/alert-rules\nconst rulePayload = [\n    {\n        scope: \"room\",\n        mac: mac,\n        sensor_name: \"overall\",\n        metric: \"temp\",\n        active: 1,\n        crit_min: config.alerts.temp_crit_low,\n        warn_min: config.alerts.temp_warn_low,\n        warn_max: config.alerts.temp_warn_high,\n        crit_max: config.alerts.temp_crit_high\n    },\n    {\n        scope: \"room\",\n        mac: mac,\n        sensor_name: \"overall\",\n        metric: \"hum\",\n        active: 1,\n        crit_min: config.alerts.hum_crit_low,\n        warn_min: config.alerts.hum_warn_low,\n        warn_max: config.alerts.hum_warn_high,\n        crit_max: config.alerts.hum_crit_high\n    }\n];\n\n// เตรียม msg object สำหรับ HTTP Request node\nmsg.method = \"PUT\";\nmsg.url = \"http://localhost:1880/api/alert-rules\";\nmsg.headers = { \"Content-Type\": \"application/json\" };\nmsg.payload = rulePayload;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1860,
+        "y": 2020,
+        "wires": [
+            [
+                "8a7b6c5d4e3f2d1c"
+            ]
+        ]
+    },
+    {
+        "id": "8a7b6c5d4e3f2d1c",
+        "type": "http request",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "PUT /api/alert-rules",
+        "method": "PUT",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://localhost:1880/api/alert-rules",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "basic",
+        "senderr": false,
+        "headers": [],
+        "x": 2070,
+        "y": 2020,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "aeb84f0b8e14ba41",
+        "type": "comment",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Sync Alerts from Device to DB",
+        "info": "",
+        "x": 1640,
+        "y": 1920,
+        "wires": []
+    },
+    {
+        "id": "d8234858d19d261e",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "1d2e66c6fab5df07",
+        "name": "GET",
+        "func": "const payload = msg.payload;\n\n// 1. ดึงข้อมูล Device Map จาก file context\nconst deviceMap = flow.get('device_map', 'file') || {};\n\n// 2. ดึง MAC address จาก payload ที่เข้ามา\nconst mac = payload.mac;\n\nif (mac) {\n    // 3. วนลูปหา room_id ที่ตรงกับ MAC address ใน Device Map\n    for (const key in deviceMap) {\n        // คีย์ที่เก็บ MAC จะขึ้นต้นด้วย \"room\" เช่น \"roomA\"\n        if (key.startsWith('room') && deviceMap[key] === mac) {\n            // 4. ได้ room_id แล้ว (จาก key: \"roomA\" -> \"room-a\")\n            const room_id = `room-${key.slice(-1).toLowerCase()}`;\n\n            // 5. เติม room_id ลงใน payload\n            payload.room_id = room_id;\n            msg.payload = payload;\n            node.status({ fill: 'blue', shape: 'dot', text: `Enriched with room: ${room_id}` });\n            return msg;\n        }\n    }\n}\n\n// ถ้าไม่เจอ MAC ใน Device Map หรือไม่มี MAC เลย ให้ส่งต่อโดยไม่เติม room_id\nnode.warn(\"Cannot find a matching room_id for MAC: \" + mac);\nnode.status({ fill: 'yellow', shape: 'dot', text: 'No room match' });\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 610,
+        "y": 300,
+        "wires": [
+            [
+                "d006acdba87802f0"
+            ]
+        ]
     },
     {
         "id": "8301192ec347dbc9",
