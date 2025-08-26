@@ -6030,17 +6030,26 @@
                 });
             }
 
-            // Handle single and bulk ACK
-            alertCenterModalEl.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('btn-ack-single')) {
-                    const eventId = e.target.dataset.eventId;
-                    const note = prompt("Optional note for acknowledging this alert:");
-                    if (note !== null) { // Handle cancel button
-                        await handleAck([eventId], note);
-                        loadAlerts();
-                    }
+            // Handle single ACK by listening on the table body
+            alertTableBodyEl.addEventListener('click', async (e) => {
+                // ใช้ .closest() เพื่อหาปุ่มที่ถูกคลิก แม้ว่าผู้ใช้จะคลิกโดนไอคอน <i> ข้างในปุ่มก็ตาม
+                const btn = e.target.closest('.btn-ack-single');
+
+                // ถ้าสิ่งที่คลิกไม่ใช่ปุ่ม ACK หรือไม่มีปุ่ม ACK อยู่ใกล้ๆ ก็ไม่ต้องทำอะไรต่อ
+                if (!btn) return;
+
+                const eventId = btn.dataset.eventId;
+                const note = prompt("Optional note for acknowledging this alert:");
+
+                if (note !== null) { // ตรวจสอบว่าผู้ใช้ไม่ได้กด Cancel
+                    await handleAck([eventId], note);
+
+                    // โหลดข้อมูลล่าสุดในสถานะปัจจุบันที่เลือกไว้ (เช่น Open, Ack)
+                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
+                    loadAlerts(currentStatusFilter);
                 }
             });
+
 
             bulkAckButton?.addEventListener('click', async () => {
                 const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
