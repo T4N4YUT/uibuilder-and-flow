@@ -338,8 +338,8 @@
             "567974a4dfa73696",
             "c02a461451435191"
         ],
-        "x": 3174,
-        "y": 3319,
+        "x": 74,
+        "y": 899,
         "w": 1252,
         "h": 82
     },
@@ -729,7 +729,7 @@
         "g": "1d2e66c6fab5df07",
         "name": "Every 1 sec",
         "props": [],
-        "repeat": "1",
+        "repeat": "5",
         "crontab": "",
         "once": true,
         "onceDelay": "5",
@@ -1836,7 +1836,7 @@
         "z": "c0cdca176eedd227",
         "name": "Check Offline every minute",
         "props": [],
-        "repeat": "60",
+        "repeat": "120",
         "crontab": "",
         "once": true,
         "onceDelay": "10",
@@ -2586,26 +2586,6 @@
         "wires": []
     },
     {
-        "id": "58f2fc5a47414e69",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "name": "eval_alert_v2",
-        "func": "// Function: eval_alert_v2 (FIXED + DB OUTPUTS + QUOTED IDENTIFIERS)\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\nvar now_ts = now.getTime();\nvar now_sql = new Date().toISOString().slice(0, 19).replace('T', ' ');\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    node.warn({ note: \"!!! Payload ที่เข้ามาไม่สมบูรณ์, ข้ามการทำงาน\", payload: p });\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    var roomKeyPrefix = Object.keys(deviceMap).find(key => deviceMap[key] === mac && key.startsWith('room'));\n    if (roomKeyPrefix) {\n        var nameKey = `name${roomKeyPrefix.slice(-1).toUpperCase()}`;\n        return deviceMap[nameKey] || mac;\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    node.warn(`!!! ไม่พบ Rule ที่เหมาะสมสำหรับ ${dedup_key}`);\n    return null;\n}\n\nvar state = states[dedup_key] || {\n    status: 'closed',       // 'closed' | 'open'\n    level: 'normal',        // 'normal' | 'warning' | 'critical'\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    last_level: 'normal',\n    last_sample_ts: 0,\n    event_id: null,\n    last_notified_ts: 0\n};\n\nvar isContinuous = (now_ts - state.last_sample_ts) <= 90 * 1000;\nif (!isContinuous) {\n    state.warn_count = 0;\n    state.crit_count = 0;\n    state.clear_count = 0;\n}\nstate.last_sample_ts = now_ts;\n\nvar rawLevel = determineRawLevel(value, rule);\n\n// นับแบบไม่ปน และ consecutive จริง\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else { // 'critical'\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\n// ===== DEBUG สรุปบรรทัดเดียว =====\nnode.warn(`[SUM] ${dedup_key} raw=${rawLevel} w=${state.warn_count} c=${state.crit_count} clr=${state.clear_count} status=${state.status} level=${state.level}`);\n\n// เตรียม outputs: [0]=MySQL, [1]=notify เปิด/ยกระดับ, [2]=notify recovery\nvar outputs = [null, null, null];\n\n// ===== SQL Templates (ใส่ backtick ครบ) =====\n// ตาราง: alert_events\n// คอลัมน์: event_id, dedup_key, mac, room_name, sensor_name, metric,\n//          level, trigger_value, status, rule_id, opened_at, closed_at,\n//          last_updated, last_notified\n\nfunction buildOpenMsg(event_id, level) {\n    var room = getRoomName(mac);\n    return {\n        topic:\n            `INSERT INTO \\`alert_events\\`\n(\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`,\n \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`, \\`closed_at\\`,\n \\`last_updated\\`, \\`last_notified\\`)\nVALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, NULL, ?, NULL)\nON DUPLICATE KEY UPDATE\n  \\`level\\`=VALUES(\\`level\\`),\n  \\`trigger_value\\`=VALUES(\\`trigger_value\\`),\n  \\`status\\`='open',\n  \\`rule_id\\`=VALUES(\\`rule_id\\`),\n  \\`opened_at\\`=COALESCE(\\`opened_at\\`, VALUES(\\`opened_at\\`)),\n  \\`closed_at\\`=NULL,\n  \\`last_updated\\`=VALUES(\\`last_updated\\`)`,\n        payload: [ // <<-- เดิมใช้ params: []\n            event_id, dedup_key, mac, room, sensor, metric, level, value,\n            rule.id, now_sql, now_sql\n        ]\n    };\n}\n\nfunction buildRecoverMsg(event_id) {\n    return {\n        topic:\n            `UPDATE \\`alert_events\\`\nSET \\`status\\`='closed', \\`closed_at\\`=?, \\`last_updated\\`=?, \\`trigger_value\\`=?, \\`level\\`='normal'\nWHERE \\`event_id\\`=?`,\n        payload: [now_sql, now_sql, value, event_id]  // <<-- ใช้ payload\n    };\n}\n\n\n\n// A) RECOVERY\nif (state.status !== 'closed' && rawLevel === 'normal' && state.clear_count >= (rule.clear_consec || 1)) {\n    var prevEvent = state.event_id;\n    state.status = 'closed';\n    state.level = 'normal';\n    state.event_id = null;\n\n    outputs[0] = buildRecoverMsg(prevEvent);\n    outputs[2] = { payload: { type: 'recovery', event_id: prevEvent, mac, sensor, metric, ts: now_iso } };\n    node.warn(`[DEC] ${dedup_key} action=RECOVERY event=${prevEvent}`);\n}\n\n// B) OPEN NEW EVENT\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= (rule.crit_open_consec || 1)) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= (rule.warn_open_consec || 1)) newLevel = 'warning';\n\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = state.event_id || uuidv4();\n\n        outputs[0] = buildOpenMsg(state.event_id, newLevel);\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, mac, sensor, metric, value, ts: now_iso } };\n        node.warn(`[DEC] ${dedup_key} action=OPEN level=${newLevel} event=${state.event_id}`);\n    }\n}\n\n// C) UPDATE EXISTING (รวมยกระดับ)\nelse if (state.status !== 'closed' && rawLevel !== 'normal') {\n    if (state.level === 'warning' && rawLevel === 'critical' &&\n        state.crit_count >= (rule.crit_open_consec || 1)) {\n        state.level = 'critical';\n        // เดิม: outputs[0] = buildUpdateMsg(state.event_id, 'critical');\n        outputs[0] = buildOpenMsg(state.event_id, 'critical');  // ใช้ UPSERT\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: state.event_id, mac, sensor, metric, value, ts: now_iso } };\n        node.warn(`[DEC] ${dedup_key} action=UPGRADE -> level=critical event=${state.event_id}`);\n    } else {\n        // เดิม: outputs[0] = buildUpdateMsg(state.event_id, state.level);\n        outputs[0] = buildOpenMsg(state.event_id, state.level); // ใช้ UPSERT\n        node.warn(`[DEC] ${dedup_key} action=UPDATE level=${state.level} event=${state.event_id}`);\n    }\n}\n\n// บันทึก state กลับ\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\n// ส่งออก\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
-        "outputs": 3,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1010,
-        "y": 960,
-        "wires": [
-            [],
-            [],
-            []
-        ]
-    },
-    {
         "id": "205b806eb2540670",
         "type": "http response",
         "z": "c0cdca176eedd227",
@@ -2647,8 +2627,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 3300,
-        "y": 3360,
+        "x": 200,
+        "y": 940,
         "wires": [
             [
                 "5d8604a6669913c8"
@@ -2668,8 +2648,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3530,
-        "y": 3360,
+        "x": 430,
+        "y": 940,
         "wires": [
             [
                 "af80623dd7235371"
@@ -2686,8 +2666,8 @@
         "g": "1a652f4dd7e8c0ad",
         "mydb": "5e560f07cfec117a",
         "name": "DB: Ack",
-        "x": 3720,
-        "y": 3360,
+        "x": 620,
+        "y": 940,
         "wires": [
             [
                 "47efcc195369a022"
@@ -2709,8 +2689,8 @@
         "joinerType": "str",
         "accumulate": false,
         "timeout": "5",
-        "x": 3900,
-        "y": 3360,
+        "x": 800,
+        "y": 940,
         "wires": [
             [
                 "567974a4dfa73696"
@@ -2730,8 +2710,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 4140,
-        "y": 3360,
+        "x": 1040,
+        "y": 940,
         "wires": [
             [
                 "c02a461451435191"
@@ -2746,8 +2726,8 @@
         "name": "200 OK",
         "statusCode": "200",
         "headers": {},
-        "x": 4340,
-        "y": 3360,
+        "x": 1240,
+        "y": 940,
         "wires": []
     },
     {
