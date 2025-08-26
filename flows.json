@@ -376,29 +376,6 @@
         "h": 189.5
     },
     {
-        "id": "1c9684d00c28d451",
-        "type": "group",
-        "z": "c0cdca176eedd227",
-        "g": "e0c8d7b3e0c8d7b3",
-        "name": "",
-        "style": {
-            "stroke": "#ff0000",
-            "fill": "#ffbfbf",
-            "label": true
-        },
-        "nodes": [
-            "1bf671abeb440373",
-            "155f14d9caf7f584",
-            "5254f9b4133929d9",
-            "6a53bd4692157e10",
-            "635f66dcda15ad8f"
-        ],
-        "x": 2314,
-        "y": 1159,
-        "w": 452,
-        "h": 182
-    },
-    {
         "id": "936233020b891e13",
         "type": "group",
         "z": "c0cdca176eedd227",
@@ -419,6 +396,29 @@
         "x": 74,
         "y": 1119,
         "w": 532,
+        "h": 182
+    },
+    {
+        "id": "1c9684d00c28d451",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "",
+        "style": {
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": true
+        },
+        "nodes": [
+            "1bf671abeb440373",
+            "155f14d9caf7f584",
+            "5254f9b4133929d9",
+            "6a53bd4692157e10",
+            "635f66dcda15ad8f"
+        ],
+        "x": 2314,
+        "y": 1159,
+        "w": 452,
         "h": 182
     },
     {
@@ -2678,35 +2678,6 @@
         "wires": []
     },
     {
-        "id": "0b3358f711e7ed0b",
-        "type": "uibuilder",
-        "z": "c0cdca176eedd227",
-        "name": "",
-        "topic": "",
-        "url": "dashboard",
-        "okToGo": true,
-        "fwdInMessages": false,
-        "allowScripts": true,
-        "allowStyles": true,
-        "templateFolder": "blank",
-        "extTemplate": "",
-        "reload": false,
-        "sourceFolder": "src",
-        "deployedVersion": "7.4.3",
-        "showMsgUib": false,
-        "title": "",
-        "descr": "",
-        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
-        "x": 1110,
-        "y": 620,
-        "wires": [
-            [
-                "1143feaf4788fd3f"
-            ],
-            []
-        ]
-    },
-    {
         "id": "dcd35d84b27f2f80",
         "type": "http in",
         "z": "c0cdca176eedd227",
@@ -2730,7 +2701,7 @@
         "z": "c0cdca176eedd227",
         "g": "878839870f21c18f",
         "name": "Insert ack",
-        "func": "const eventId = msg.req.params.id;\nconst body = msg.payload || {};\nconst ackBy = body.ack_by || msg.req.ip || 'unknown';\n\nconst httpReq = msg.req; // preserve\nconst httpRes = msg.res; // preserve\n\nconst eventUpdateMsg = {\n    payload: [\n        ackBy,\n        new Date().toISOString().slice(0,19).replace('T',' '),\n        eventId\n    ],\n    topic: \"UPDATE alert_events SET status = 'ack', acknowledged_by = ?, acknowledged_at = ? WHERE event_id = ? AND status = 'open'\",\n    ack_type: 'event_update',\n    req: httpReq,\n    res: httpRes\n};\n\nconst ackMsg = {\n    topic: 'INSERT INTO alert_acks (event_id, ack_note, ack_by) VALUES (?, ?, ?)',\n    payload: [\n        eventId,\n        body.ack_note || null,\n        ackBy\n    ],\n    ack_type: 'ack_insert',\n    req: httpReq,\n    res: httpRes\n};\n\nreturn [eventUpdateMsg, ackMsg];",
+        "func": "// Function: eval_alert_v2 (FIXED Timezone)\n\n// --- [FIX START] ---\n// Helper function ใหม่สำหรับแปลงเวลาเป็น Local Time ของ Server\nfunction toLocalSqlDatetime(date) {\n    const pad = (num) => String(num).padStart(2, '0');\n    const year = date.getFullYear();\n    const month = pad(date.getMonth() + 1);\n    const day = pad(date.getDate());\n    const hours = pad(date.getHours());\n    const minutes = pad(date.getMinutes());\n    const seconds = pad(date.getSeconds());\n    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;\n}\n// --- [FIX END] ---\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\nvar now_ts = now.getTime();\n\n// --- [FIX START] ---\n// ใช้ฟังก์ชันใหม่ที่เราสร้างขึ้น\nvar now_sql = new Date().toISOString().slice(0, 19).replace('T', ' ');\n// --- [FIX END] ---\n\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    var roomKeyPrefix = Object.keys(deviceMap).find(key => deviceMap[key] === mac && key.startsWith('room'));\n    if (roomKeyPrefix) {\n        var nameKey = `name${roomKeyPrefix.slice(-1).toUpperCase()}`;\n        return deviceMap[nameKey] || mac;\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    return null;\n}\n\nvar state = states[dedup_key] || {\n    status: 'closed',\n    level: 'normal',\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    last_level: 'normal',\n    last_sample_ts: 0,\n    event_id: null,\n    last_notified_ts: 0\n};\n\nvar isContinuous = (now_ts - state.last_sample_ts) <= 90 * 1000;\nif (!isContinuous) {\n    state.warn_count = 0;\n    state.crit_count = 0;\n    state.clear_count = 0;\n}\nstate.last_sample_ts = now_ts;\n\nvar rawLevel = determineRawLevel(value, rule);\n\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else { // 'critical'\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\nvar outputs = [null, null, null];\n\nfunction buildOpenMsg(event_id, level) {\n    var room = getRoomName(mac);\n    return {\n        topic:\n            `INSERT INTO \\`alert_events\\` (\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`, \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`, \\`closed_at\\`, \\`last_updated\\`, \\`last_notified\\`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, NULL, ?, NULL) ON DUPLICATE KEY UPDATE \\`level\\`=VALUES(\\`level\\`), \\`trigger_value\\`=VALUES(\\`trigger_value\\`), \\`status\\`='open', \\`rule_id\\`=VALUES(\\`rule_id\\`), \\`opened_at\\`=COALESCE(\\`opened_at\\`, VALUES(\\`opened_at\\`)), \\`closed_at\\`=NULL, \\`last_updated\\`=VALUES(\\`last_updated\\`)`,\n        payload: [\n            event_id, dedup_key, mac, room, sensor, metric, level, value,\n            rule.id, now_sql, now_sql\n        ]\n    };\n}\n\nfunction buildRecoverMsg(event_id) {\n    return {\n        topic:\n            `UPDATE \\`alert_events\\`\nSET \\`status\\`='closed', \\`closed_at\\`=?, \\`last_updated\\`=?, \\`trigger_value\\`=?, \\`level\\`='normal'\nWHERE \\`event_id\\`=?`,\n        payload: [now_sql, now_sql, value, event_id]\n    };\n}\n\nif (state.status !== 'closed' && rawLevel === 'normal' && state.clear_count >= (rule.clear_consec || 1)) {\n    var prevEvent = state.event_id;\n    state.status = 'closed';\n    state.level = 'normal';\n    state.event_id = null;\n    outputs[0] = buildRecoverMsg(prevEvent);\n    outputs[2] = { payload: { type: 'recovery', event_id: prevEvent, mac, sensor, metric, ts: now_iso } };\n}\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= (rule.crit_open_consec || 1)) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= (rule.warn_open_consec || 1)) newLevel = 'warning';\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = state.event_id || uuidv4();\n        outputs[0] = buildOpenMsg(state.event_id, newLevel);\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, mac, sensor, metric, value, ts: now_iso } };\n    }\n}\nelse if (state.status !== 'closed' && rawLevel !== 'normal') {\n    if (state.level === 'warning' && rawLevel === 'critical' &&\n        state.crit_count >= (rule.crit_open_consec || 1)) {\n        state.level = 'critical';\n        outputs[0] = buildOpenMsg(state.event_id, 'critical');\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: state.event_id, mac, sensor, metric, value, ts: now_iso } };\n    } else {\n        outputs[0] = buildOpenMsg(state.event_id, state.level);\n    }\n}\n\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
@@ -2905,6 +2876,35 @@
         "x": 210,
         "y": 1160,
         "wires": []
+    },
+    {
+        "id": "0b3358f711e7ed0b",
+        "type": "uibuilder",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "topic": "",
+        "url": "dashboard",
+        "okToGo": true,
+        "fwdInMessages": false,
+        "allowScripts": true,
+        "allowStyles": true,
+        "templateFolder": "blank",
+        "extTemplate": "",
+        "reload": false,
+        "sourceFolder": "src",
+        "deployedVersion": "7.4.3",
+        "showMsgUib": false,
+        "title": "",
+        "descr": "",
+        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
+        "x": 1110,
+        "y": 620,
+        "wires": [
+            [
+                "1143feaf4788fd3f"
+            ],
+            []
+        ]
     },
     {
         "id": "8301192ec347dbc9",
