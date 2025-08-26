@@ -3652,30 +3652,74 @@
             }
             document.getElementById('btn-save-settings')?.addEventListener('click', async () => {
                 const room = currentCfgRoom;
-
                 const roomToMac = (typeof getRoomToMacFromStorage === 'function') ? getRoomToMacFromStorage() : {};
                 const mac = normalizeMAC(roomToMac?.[room] || '');
+
                 if (!mac) {
-                    showQAStatus(`❌ ห้อง ${room.toUpperCase()} ยังไม่มี MAC (กรุณาตั้งค่าใน Device Map)`);
+                    showPopup(`❌ ห้อง ${room.toUpperCase()} ยังไม่มี MAC (กรุณาตั้งค่าใน Device Map)`, { type: 'fail' });
                     return;
                 }
 
-                const v1 = validateEthernet(room); if (!v1.ok) { showQAStatus(v1.msg); return; }
-                const v2 = validateMqtt(); if (!v2.ok) { showQAStatus(v2.msg); return; }
-                const v3 = validateAlerts(); if (!v3.ok) { showQAStatus(v3.msg); return; }
-                const v4 = validateNotifications(); if (!v4.ok) { showQAStatus(v4.msg); return; }
+                const v1 = validateEthernet(room); if (!v1.ok) { showPopup(v1.msg); return; }
+                const v2 = validateMqtt(); if (!v2.ok) { showPopup(v2.msg); return; }
+                const v3 = validateAlerts(); if (!v3.ok) { showPopup(v3.msg); return; }
 
+                // collectAllSettings ถูกแก้ไขแล้วให้รวมค่าทั้งหมด
                 const settings = collectAllSettings(room);
-                const requestId = uuid();
 
-                if (typeof uibuilder !== 'undefined') {
+                // จัดรูปแบบ Alert Rules ให้พร้อมสำหรับ API
+                const alertRules = [
+                    {
+                        scope: "room",
+                        mac: mac,
+                        sensor_name: "overall",
+                        metric: "temp",
+                        active: 1, // กำหนดให้ Rule นี้เป็น Active
+                        crit_min: settings.alerts.temp.critLow,
+                        warn_min: settings.alerts.temp.warnLow,
+                        warn_max: settings.alerts.temp.warnHigh,
+                        crit_max: settings.alerts.temp.critHigh,
+                    },
+                    {
+                        scope: "room",
+                        mac: mac,
+                        sensor_name: "overall",
+                        metric: "hum",
+                        active: 1, // กำหนดให้ Rule นี้เป็น Active
+                        crit_min: settings.alerts.hum.critLow,
+                        warn_min: settings.alerts.hum.warnLow,
+                        warn_max: settings.alerts.hum.warnHigh,
+                        crit_max: settings.alerts.hum.critHigh,
+                    }
+                ];
+
+                try {
+                    // ขั้นตอนที่ 1: ส่งค่าการตั้งค่าทั้งหมดไปให้อุปกรณ์ ESP32 ผ่าน MQTT
+                    const mqttPayload = { command: "set_config", room, mac, requestId: uuid(), settings };
                     uibuilder.send({
-                        topic: `esp32/control/${room}/set_config`,
-                        payload: { command: "set_config", room, mac, requestId, settings }
+                        topic: `esp32/control/${mac}/set_config`,
+                        payload: mqttPayload
                     });
+
+                    // ขั้นตอนที่ 2: ส่งค่า Alert Rules ไปบันทึกในฐานข้อมูลผ่าน HTTP PUT API
+                    const response = await fetch('/api/alert-rules', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(alertRules)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || "Failed to save rules to database.");
+                    }
+
+                    showPopup(`✅ บันทึกการตั้งค่าทั้งหมดสำเร็จ!`, { type: 'success' });
+                    hideConfigPopup();
+
+                } catch (error) {
+                    console.error("Failed to save settings:", error);
+                    showPopup(`❌ บันทึกไม่สำเร็จ: ${error.message}`, { type: 'fail' });
                 }
-                showQAStatus(`✅ ส่งตั้งค่าไปยัง ${room.toUpperCase()} (${mac}) เรียบร้อย`);
-                hideConfigPopup();
             });
             function collectAllSettings(room) {
                 const ethernet = {
@@ -5161,11 +5205,8 @@
                 const defaultName = roomId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const finalName = window.ROOM_NAMES?.[roomId] || defaultName;
 
-                // --- ✨ จุดที่แก้ไข: เพิ่มโค้ดสร้างกราฟเมื่อเปิดครั้งแรก ✨ ---
-                // เช็คว่ากราฟเคยถูกสร้างแล้วหรือยัง ถ้ายัง ให้สร้างใหม่
                 if (!window._detailCharts.temp || !window._detailCharts.rh) {
                     console.log('[ChartJS] Initializing detail charts for the first time...');
-
                     const tempCtx = document.getElementById('detail-chart-temp')?.getContext('2d');
                     const rhCtx = document.getElementById('detail-chart-rh')?.getContext('2d');
                     if (!tempCtx || !rhCtx) {
@@ -5173,7 +5214,6 @@
                         showPopup("Error: Cannot initialize charts.", { type: 'fail' });
                         return;
                     }
-
                     const createTimeScaleOptions = (chartType, containerId) => ({
                         responsive: true,
                         maintainAspectRatio: false,
@@ -5204,7 +5244,7 @@
                                 enabled: false,
                                 mode: 'index',
                                 intersect: false,
-                                external: customTooltipHandler, // ใช้ชื่อที่ถูกต้อง
+                                external: customTooltipHandler,
                                 usePointStyle: true,
                                 callbacks: {
                                     label: function (context) {
@@ -5235,29 +5275,23 @@
                         interaction: { intersect: false, mode: 'index' },
                         elements: { point: { radius: 0 } }
                     });
-
                     const tempOptions = createTimeScaleOptions('temp', 'legend-container-temp');
                     const rhOptions = createTimeScaleOptions('rh', 'legend-container-rh');
-
                     tempOptions.scales.y.min = 0;
                     tempOptions.scales.y.max = 40;
-
                     window._detailCharts.temp = new Chart(tempCtx, {
                         type: 'line',
                         data: { datasets: [] },
                         options: tempOptions
                     });
-
                     rhOptions.scales.y.min = 0;
                     rhOptions.scales.y.max = 100;
-
                     window._detailCharts.rh = new Chart(rhCtx, {
                         type: 'line',
                         data: { datasets: [] },
                         options: rhOptions
                     });
                 }
-                // --- สิ้นสุดจุดที่แก้ไข ---
 
                 // ล้างข้อมูลกราฟเก่าออกทุกครั้งที่เปิด Modal
                 if (window._detailCharts.temp && window._detailCharts.rh) {
@@ -6085,7 +6119,7 @@
                 });
                 alertCenterModalEl.dispatchEvent(new Event('change'));
             });
-            const drawerEl = document.getElementById('drawer-sensor-rules');
+            const drawerEl = document.getElementById('modal-sensor-rules');
             const ruleFormFields = document.getElementById('sensor-rule-form-fields');
             const overrideToggle = document.getElementById('toggle-override');
 
