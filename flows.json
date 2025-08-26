@@ -22,11 +22,13 @@
             "44b7cf7bb078606f",
             "6a5c77cabf3a16c7",
             "e1c299770742f644",
-            "d0f6ddd65049943e"
+            "d0f6ddd65049943e",
+            "b6294b7b45eb69cc",
+            "d954e3e7f76c543a"
         ],
         "x": 1494,
         "y": 739,
-        "w": 492,
+        "w": 792,
         "h": 122
     },
     {
@@ -456,7 +458,8 @@
         "y": 820,
         "wires": [
             [
-                "e1c299770742f644"
+                "e1c299770742f644",
+                "b6294b7b45eb69cc"
             ]
         ]
     },
@@ -468,7 +471,7 @@
         "name": "Response",
         "statusCode": "",
         "headers": {},
-        "x": 1900,
+        "x": 1940,
         "y": 820,
         "wires": []
     },
@@ -1985,7 +1988,7 @@
         "z": "c0cdca176eedd227",
         "g": "936233020b891e13",
         "name": "Query alert evet lists",
-        "func": "const q = (msg.req && msg.req.query) ? msg.req.query : {};\nlet sql = 'SELECT * FROM alert_events';\nconst conditions = [];\nconst params = [];\n\nif (q.status) {\n    const statuses = q.status.split(',').map(s => s.trim());\n    conditions.push(`status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\nif (q.mac) {\n    conditions.push('mac = ?');\n    params.push(q.mac);\n}\n// Add other filters like level, sensor_name, etc. similarly\n\nif (q.start && q.end) {\n    conditions.push('opened_at BETWEEN ? AND ?');\n    params.push(new Date(q.start).toISOString().slice(0, 19).replace('T', ' '));\n    params.push(new Date(q.end).toISOString().slice(0, 19).replace('T', ' '));\n}\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY opened_at DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\n\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
+        "func": "// รับ query params\nconst q = (msg.req && msg.req.query) ? msg.req.query : {};\n\n// ✨ FIX: เพิ่ม LEFT JOIN เพื่อดึง ack_note จากตาราง alert_acks\nlet sql = `\n    SELECT \n        ae.*, \n        aa.ack_note \n    FROM \n        alert_events AS ae \n    LEFT JOIN \n        alert_acks AS aa ON ae.event_id = aa.event_id\n`;\n\nconst conditions = [];\nconst params = [];\n\nif (q.status) {\n    const statuses = q.status.split(',').map(s => s.trim());\n    conditions.push(`ae.status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\n// ... (เงื่อนไขอื่นๆ สามารถเพิ่มได้ตามต้องการ)\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY ae.opened_at DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\n\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -2876,6 +2879,59 @@
         "x": 210,
         "y": 1160,
         "wires": []
+    },
+    {
+        "id": "0a86bc6539a2f158",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "d": true,
+        "name": "Query alert evet lists",
+        "func": "const q = (msg.req && msg.req.query) ? msg.req.query : {};\nlet sql = 'SELECT * FROM alert_events';\nconst conditions = [];\nconst params = [];\n\nif (q.status) {\n    const statuses = q.status.split(',').map(s => s.trim());\n    conditions.push(`status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\nif (q.mac) {\n    conditions.push('mac = ?');\n    params.push(q.mac);\n}\n// Add other filters like level, sensor_name, etc. similarly\n\nif (q.start && q.end) {\n    conditions.push('opened_at BETWEEN ? AND ?');\n    params.push(new Date(q.start).toISOString().slice(0, 19).replace('T', ' '));\n    params.push(new Date(q.end).toISOString().slice(0, 19).replace('T', ' '));\n}\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY opened_at DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\n\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 920,
+        "y": 1220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b6294b7b45eb69cc",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "6bdd339e33ee4610",
+        "name": "Update Room Name in DB",
+        "func": "const newMap = msg.payload; // ข้อมูล Map ใหม่ที่เพิ่งบันทึก\nconst oldMap = flow.get('device_map', 'file') || {}; // ข้อมูล Map เก่าก่อนบันทึก\n\nconst updates = [];\n\n// หา MAC ที่มีการเปลี่ยนชื่อห้อง\nfor (const key of ['roomA', 'roomB', 'roomC', 'roomD']) {\n    const nameKey = `name${key.slice(-1).toUpperCase()}`;\n    const oldName = oldMap[nameKey];\n    const newName = newMap[nameKey];\n    const mac = newMap[key];\n\n    if (mac && newName && oldName !== newName) {\n        updates.push({ mac: mac, newName: newName });\n    }\n}\n\nif (updates.length > 0) {\n    // สร้าง msg object ใหม่สำหรับส่งไปอัปเดตฐานข้อมูล\n    const sqlMsg = {\n        topic: updates.map(u => `UPDATE alert_events SET room_name = '${u.newName.replace(/'/g, \"''\")}' WHERE mac = '${u.mac}';`).join(' '),\n        payload: null // ไม่ต้องใช้ payload เพราะเราสร้าง SQL แบบสมบูรณ์แล้ว\n    };\n    return sqlMsg;\n}\n\nreturn null; // ถ้าไม่มีอะไรเปลี่ยนแปลง ก็ไม่ต้องทำอะไร",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1980,
+        "y": 780,
+        "wires": [
+            [
+                "d954e3e7f76c543a"
+            ]
+        ]
+    },
+    {
+        "id": "d954e3e7f76c543a",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "g": "6bdd339e33ee4610",
+        "mydb": "5e560f07cfec117a",
+        "name": "alert_events",
+        "x": 2190,
+        "y": 800,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "0b3358f711e7ed0b",
