@@ -321,6 +321,29 @@
         "h": 242
     },
     {
+        "id": "1a652f4dd7e8c0ad",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "name": "Acknowledge Alert Flow",
+        "style": {
+            "stroke": "#009933",
+            "fill": "#e6ffe6",
+            "label": true
+        },
+        "nodes": [
+            "bb573b50ab60c857",
+            "5d8604a6669913c8",
+            "af80623dd7235371",
+            "47efcc195369a022",
+            "567974a4dfa73696",
+            "c02a461451435191"
+        ],
+        "x": 3174,
+        "y": 3319,
+        "w": 1252,
+        "h": 82
+    },
+    {
         "id": "44b7cf7bb078606f",
         "type": "http in",
         "z": "c0cdca176eedd227",
@@ -1917,73 +1940,6 @@
         "wires": []
     },
     {
-        "id": "7c22576f73385e38",
-        "type": "http in",
-        "z": "c0cdca176eedd227",
-        "name": "POST /api/alerts/:id/ack",
-        "url": "/api/alerts/:id/ack",
-        "method": "post",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 3190,
-        "y": 2520,
-        "wires": [
-            [
-                "8f8c7edf7839064d"
-            ]
-        ]
-    },
-    {
-        "id": "8f8c7edf7839064d",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "name": "alerts-ack",
-        "func": "const eventId = msg.req.params.id;\nconst body = msg.payload;\nconst ackBy = body.ack_by || msg.req.ip; // Use provided user or fallback to IP\n\n// 1. Create a message to INSERT into alert_acks\nconst ackData = {\n    event_id: eventId,\n    ack_note: body.ack_note || null,\n    ack_by: ackBy\n};\nconst ackMsg = { \n    topic: 'INSERT INTO alert_acks SET ?',\n    payload: ackData\n};\n\n// 2. Create a message to UPDATE the alert_events status\nconst eventUpdateMsg = {\n    topic: \"UPDATE alert_events SET status = 'ack' WHERE event_id = ? AND status = 'open'\",\n    payload: [eventId]\n};\n\n// 3. Update the in-memory state in flow context\nconst states = flow.get('alert_states') || {};\nlet dedup_key_to_update = null;\nfor(const key in states) {\n    if(states[key].event_id === eventId) {\n        states[key].status = 'ack';\n        dedup_key_to_update = key;\n        break;\n    }\n}\nif(dedup_key_to_update) {\n    flow.set('alert_states', states);\n}\n\n// Send the two DB messages sequentially (or in parallel if your DB node supports it)\n// For simplicity, we send them to the same DB node.\n// A more robust flow might use a join node to wait for both to complete.\nnode.send([eventUpdateMsg, ackMsg, {payload: {ok: true}}]);\n\nreturn;",
-        "outputs": 3,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 3420,
-        "y": 2520,
-        "wires": [
-            [
-                "c73664e6e245d4fe"
-            ],
-            [
-                "c73664e6e245d4fe"
-            ],
-            [
-                "395537e3d85564c7",
-                "0b3358f711e7ed0b"
-            ]
-        ]
-    },
-    {
-        "id": "c73664e6e245d4fe",
-        "type": "mysql",
-        "z": "c0cdca176eedd227",
-        "mydb": "5e560f07cfec117a",
-        "name": "DB: Ack",
-        "x": 3630,
-        "y": 2520,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "395537e3d85564c7",
-        "type": "http response",
-        "z": "c0cdca176eedd227",
-        "name": "200 OK",
-        "statusCode": "200",
-        "headers": {},
-        "x": 3680,
-        "y": 2580,
-        "wires": []
-    },
-    {
         "id": "026c467c401782aa",
         "type": "http in",
         "z": "c0cdca176eedd227",
@@ -2619,35 +2575,6 @@
         ]
     },
     {
-        "id": "0b3358f711e7ed0b",
-        "type": "uibuilder",
-        "z": "c0cdca176eedd227",
-        "name": "",
-        "topic": "",
-        "url": "dashboard",
-        "okToGo": true,
-        "fwdInMessages": false,
-        "allowScripts": true,
-        "allowStyles": true,
-        "templateFolder": "blank",
-        "extTemplate": "",
-        "reload": false,
-        "sourceFolder": "src",
-        "deployedVersion": "7.4.3",
-        "showMsgUib": false,
-        "title": "",
-        "descr": "",
-        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
-        "x": 1110,
-        "y": 620,
-        "wires": [
-            [
-                "1143feaf4788fd3f"
-            ],
-            []
-        ]
-    },
-    {
         "id": "de59cdc9edf29480",
         "type": "http response",
         "z": "c0cdca176eedd227",
@@ -2689,6 +2616,168 @@
         "x": 2290,
         "y": 2080,
         "wires": []
+    },
+    {
+        "id": "3a4e67cc192826b8",
+        "type": "join",
+        "z": "c0cdca176eedd227",
+        "name": "Wait for DB Updates",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "5",
+        "x": 3440,
+        "y": 3100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "bb573b50ab60c857",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "g": "1a652f4dd7e8c0ad",
+        "name": "POST /api/alerts/:id/ack",
+        "url": "/api/alerts/:id/ack",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 3300,
+        "y": 3360,
+        "wires": [
+            [
+                "5d8604a6669913c8"
+            ]
+        ]
+    },
+    {
+        "id": "5d8604a6669913c8",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "1a652f4dd7e8c0ad",
+        "name": "Prepare DB Statements",
+        "func": "const eventId = msg.req.params.id;\nconst body = msg.payload;\nconst ackBy = body.ack_by || msg.req.ip; \n\n// 1. Message to UPDATE the alert_events status\nconst eventUpdateMsg = {\n    payload: [ackBy, new Date().toISOString().slice(0, 19).replace('T', ' '), eventId],\n    topic: \"UPDATE alert_events SET status = 'ack', acknowledged_by = ?, acknowledged_at = ? WHERE event_id = ? AND status = 'open'\",\n    ack_type: 'event_update'\n};\n\n// 2. Message to INSERT into alert_acks\nconst ackMsg = { \n    payload: {\n        event_id: eventId,\n        ack_note: body.ack_note || null,\n        ack_by: ackBy\n    },\n    topic: 'INSERT INTO alert_acks SET ?',\n    ack_type: 'ack_insert'\n};\n\n// 3. Update the in-memory state in flow context\nconst states = flow.get('alert_states') || {};\nif (states[eventId]) {\n    states[eventId].status = 'ack';\n    flow.set('alert_states', states);\n}\n\n// Return both messages to be processed by the DB node\nreturn [eventUpdateMsg, ackMsg];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 3530,
+        "y": 3360,
+        "wires": [
+            [
+                "af80623dd7235371"
+            ],
+            [
+                "af80623dd7235371"
+            ]
+        ]
+    },
+    {
+        "id": "af80623dd7235371",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "g": "1a652f4dd7e8c0ad",
+        "mydb": "5e560f07cfec117a",
+        "name": "DB: Ack",
+        "x": 3720,
+        "y": 3360,
+        "wires": [
+            [
+                "47efcc195369a022"
+            ]
+        ]
+    },
+    {
+        "id": "47efcc195369a022",
+        "type": "join",
+        "z": "c0cdca176eedd227",
+        "g": "1a652f4dd7e8c0ad",
+        "name": "Wait for DB Updates",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "ack_type",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "5",
+        "x": 3900,
+        "y": 3360,
+        "wires": [
+            [
+                "567974a4dfa73696"
+            ]
+        ]
+    },
+    {
+        "id": "567974a4dfa73696",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "1a652f4dd7e8c0ad",
+        "name": "Prepare Success Response",
+        "func": "msg.payload = { ok: true, message: 'Alert acknowledged successfully.' };\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 4140,
+        "y": 3360,
+        "wires": [
+            [
+                "c02a461451435191"
+            ]
+        ]
+    },
+    {
+        "id": "c02a461451435191",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "g": "1a652f4dd7e8c0ad",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {},
+        "x": 4340,
+        "y": 3360,
+        "wires": []
+    },
+    {
+        "id": "0b3358f711e7ed0b",
+        "type": "uibuilder",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "topic": "",
+        "url": "dashboard",
+        "okToGo": true,
+        "fwdInMessages": false,
+        "allowScripts": true,
+        "allowStyles": true,
+        "templateFolder": "blank",
+        "extTemplate": "",
+        "reload": false,
+        "sourceFolder": "src",
+        "deployedVersion": "7.4.3",
+        "showMsgUib": false,
+        "title": "",
+        "descr": "",
+        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
+        "x": 1110,
+        "y": 620,
+        "wires": [
+            [
+                "1143feaf4788fd3f"
+            ],
+            []
+        ]
     },
     {
         "id": "8301192ec347dbc9",
