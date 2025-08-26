@@ -6141,7 +6141,16 @@
             }
             // Load rule data into the drawer
             async function loadSensorRuleData(mac, sensorName) {
-                // 1. Fetch the specific override rule (if it exists)
+                // --- จุดที่ 1: ดึงข้อมูลพร้อมกัน 2 อย่าง ---
+                const [resTemp, resHum] = await Promise.all([
+                    fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${sensorName}&metric=temp`),
+                    fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${sensorName}&metric=hum`)
+                ]);
+
+                const effectiveTempRule = await resTemp.json();
+                const effectiveHumRule = await resHum.json();
+
+                // --- จุดที่ 2: ดึงข้อมูล Override (เหมือนเดิม) ---
                 const resOverride = await fetch(`/api/alert-rules?scope=sensor&mac=${mac}&sensor_name=${sensorName}`);
                 const overrideData = await resOverride.json();
                 const tempRule = overrideData.find(r => r.metric === 'temp' && r.active) || {};
@@ -6152,43 +6161,64 @@
                 ruleFormFields.classList.toggle('opacity-50', !hasOverride);
                 ruleFormFields.classList.toggle('pointer-events-none', !hasOverride);
 
-                // 2. Fetch the effective rule to pre-fill and display
-                const resEffective = await fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${sensorName}&metric=temp`); // metric doesn't matter much for thresholds
-                const effectiveData = await resEffective.json();
+                // --- จุดที่ 3: กรอกข้อมูลลงฟอร์ม (อัปเดตเล็กน้อย) ---
+                document.getElementById('rule-temp-crit-low').value = tempRule.crit_min ?? effectiveTempRule.crit_min ?? '';
+                document.getElementById('rule-temp-warn-low').value = tempRule.warn_min ?? effectiveTempRule.warn_min ?? '';
+                document.getElementById('rule-temp-warn-high').value = tempRule.warn_max ?? effectiveTempRule.warn_max ?? '';
+                document.getElementById('rule-temp-crit-high').value = tempRule.crit_max ?? effectiveTempRule.crit_max ?? '';
 
-                // 3. Populate form fields
-                document.getElementById('rule-temp-crit-low').value = tempRule.crit_min ?? effectiveData.crit_min ?? '';
-                document.getElementById('rule-temp-warn-low').value = tempRule.warn_min ?? effectiveData.warn_min ?? '';
-                document.getElementById('rule-temp-warn-high').value = tempRule.warn_max ?? effectiveData.warn_max ?? '';
-                document.getElementById('rule-temp-crit-high').value = tempRule.crit_max ?? effectiveData.crit_max ?? '';
+                document.getElementById('rule-hum-crit-low').value = humRule.crit_min ?? effectiveHumRule.crit_min ?? '';
+                document.getElementById('rule-hum-warn-low').value = humRule.warn_min ?? effectiveHumRule.warn_min ?? '';
+                document.getElementById('rule-hum-warn-high').value = humRule.warn_max ?? effectiveHumRule.warn_max ?? '';
+                document.getElementById('rule-hum-crit-high').value = humRule.crit_max ?? effectiveHumRule.crit_max ?? '';
 
-                document.getElementById('rule-hum-crit-low').value = humRule.crit_min ?? effectiveData.crit_min ?? '';
-                document.getElementById('rule-hum-warn-low').value = humRule.warn_min ?? effectiveData.warn_min ?? '';
-                document.getElementById('rule-hum-warn-high').value = humRule.warn_max ?? effectiveData.warn_max ?? '';
-                document.getElementById('rule-hum-crit-high').value = humRule.crit_max ?? effectiveData.crit_max ?? '';
-
-                // 4. Display effective rule with origins
-                displayEffectiveRule(effectiveData);
+                // --- จุดที่ 4: ส่งข้อมูลทั้ง 2 ชุดไปให้ฟังก์ชันแสดงผล ---
+                displayEffectiveRule(effectiveTempRule, effectiveHumRule);
             }
 
-            function displayEffectiveRule(rule) {
+            function displayEffectiveRule(tempRule, humRule) {
                 const container = document.getElementById('effective-rule-display');
-                container.innerHTML = '';
-                const fields = {
-                    'Temp Crit Low': 'crit_min', 'Temp Warn Low': 'warn_min', 'Temp Warn High': 'warn_max', 'Temp Crit High': 'crit_max',
-                    'Dwell to Open (Warn)': 'warn_open_consec', 'Dwell to Open (Crit)': 'crit_open_consec', 'Dwell to Clear': 'clear_consec'
+                container.innerHTML = ''; // ล้างของเก่าทิ้ง
+
+                // --- สร้างฟังก์ชันย่อยเพื่อไม่ให้โค้ดซ้ำซ้อน ---
+                const renderSection = (title, rule, metricFields) => {
+                    let sectionHtml = `<h6 class="font-semibold text-base mb-1 ${title.includes('Temp') ? 'text-red-400' : 'text-blue-400'}">${title}</h6>`;
+
+                    for (const [label, key] of Object.entries(metricFields)) {
+                        const value = rule[key] ?? 'N/A';
+                        const origin = rule.origins?.[key] ?? 'system';
+                        sectionHtml += `
+                <div class="effective-rule-item">
+                    <span>${label}: <strong>${value}</strong></span>
+                    <span class="origin-badge origin-${origin}">${origin}</span>
+                </div>
+            `;
+                    }
+                    return sectionHtml;
                 };
 
-                for (const [label, key] of Object.entries(fields)) {
-                    const value = rule[key] ?? 'N/A';
-                    const origin = rule.origins?.[key] ?? 'system';
-                    container.innerHTML += `
-            <div class="effective-rule-item">
-                <span>${label}: <strong>${value}</strong></span>
-                <span class="origin-badge origin-${origin}">${origin}</span>
-            </div>
-        `;
-                }
+                const tempFields = {
+                    'Crit Low': 'crit_min', 'Warn Low': 'warn_min',
+                    'Warn High': 'warn_max', 'Crit High': 'crit_max'
+                };
+
+                const humFields = {
+                    'Crit Low': 'crit_min', 'Warn Low': 'warn_min',
+                    'Warn High': 'warn_max', 'Crit High': 'crit_max'
+                };
+
+                const sharedFields = {
+                    'Dwell to Open (Warn)': 'warn_open_consec',
+                    'Dwell to Open (Crit)': 'crit_open_consec',
+                    'Dwell to Clear': 'clear_consec'
+                };
+
+                // --- นำมาประกอบร่างแล้วแสดงผล ---
+                container.innerHTML += renderSection('🌡️ Temperature', tempRule, tempFields);
+                container.innerHTML += '<div class="border-t border-dashed border-[var(--border)] my-3"></div>';
+                container.innerHTML += renderSection('💧 Humidity', humRule, humFields);
+                container.innerHTML += '<div class="border-t border-dashed border-[var(--border)] my-3"></div>';
+                container.innerHTML += renderSection('⚙️ Shared Settings', tempRule, sharedFields); // Dwell time ใช้จาก Temp เป็นหลัก
             }
 
             // Toggle override fields
