@@ -2109,7 +2109,8 @@
                                 <th class="p-3">Level</th>
                                 <th class="p-3">Value</th>
                                 <th class="p-3">Status</th>
-                                <th class="p-3">Actions</th>
+                                <th class="p-3">Note</th>
+                                <th class="p-3 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="alert-table-body">
@@ -5973,7 +5974,16 @@
                 openModal('modal-alert-center');
                 loadAlerts();
             });
-
+            alertTableBodyEl.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.btn-ack-single');
+                if (!btn) return;
+                const eventId = btn.dataset.eventId;
+                const note = prompt("Optional note for acknowledging this alert:");
+                if (note !== null) {
+                    await handleAck([eventId], note);
+                    loadAlerts();
+                }
+            });
             // Fetch and render alerts
             async function loadAlerts(status = 'open,ack') {
                 try {
@@ -6007,22 +6017,28 @@
             function renderAlertTable(alerts) {
                 alertTableBodyEl.innerHTML = '';
                 if (!alerts || alerts.length === 0) {
-                    alertTableBodyEl.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-[var(--muted)]">No alerts found.</td></tr>';
+                    alertTableBodyEl.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-[var(--muted)]">No alerts found.</td></tr>';
                     return;
                 }
                 alerts.forEach(alert => {
                     const row = document.createElement('tr');
                     row.className = 'border-b border-[var(--border)]';
+                    const formattedTime = new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+                    const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
+                    const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
+                    const ackNoteDisplay = alert.ack_note || '<i class="opacity-50">No note</i>';
+
                     row.innerHTML = `
             <td class="p-3 text-center"><input type="checkbox" class="ack-checkbox" data-event-id="${alert.event_id}" ${alert.status !== 'open' ? 'disabled' : ''}></td>
-            <td class="p-3">${new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}</td>
+            <td class="p-3 whitespace-nowrap">${formattedTime}</td>
             <td class="p-3">${alert.room_name}</td>
-            <td class="p-3">${alert.sensor_name}</td>
+            <td class="p-3">${customSensorName}</td>
             <td class="p-3">${alert.metric}</td>
             <td class="p-3"><span class="badge badge-${alert.level}">${alert.level}</span></td>
             <td class="p-3">${alert.trigger_value !== null ? Number(alert.trigger_value).toFixed(2) : 'N/A'}</td>
             <td class="p-3">${alert.status}</td>
-            <td class="p-3">
+            <td class="p-3 truncate max-w-xs">${ackNoteDisplay}</td>
+            <td class="p-3 text-center">
                 ${alert.status === 'open' ? `<button class="btn text-xs py-1 px-2 btn-ack-single" data-event-id="${alert.event_id}">ACK</button>` : ''}
             </td>
         `;
