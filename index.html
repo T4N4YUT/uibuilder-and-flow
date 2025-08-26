@@ -5956,10 +5956,8 @@
                 });
             });
             // =================================================================
-            // ✨ ALERT & NOTIFICATION FRONTEND LOGIC ✨
+            // ✨ ALERT CENTER LOGIC (CORRECTED & ENHANCED) ✨
             // =================================================================
-
-            // --- SECTION A: Alert Center ---
 
             const qaAlertsButton = document.getElementById('qa-alerts');
             const alertCenterModalEl = document.getElementById('modal-alert-center');
@@ -5969,19 +5967,87 @@
             const bulkAckNoteInput = document.getElementById('bulk-ack-note');
             const ackAllCheckbox = document.getElementById('ack-all-checkbox');
 
-            // Open Alert Center
+            // --- Open/Close and Data Loading ---
             qaAlertsButton?.addEventListener('click', () => {
                 openModal('modal-alert-center');
-                loadAlerts();
+                const currentStatusFilter = document.getElementById('alert-filter-status').value;
+                loadAlerts(currentStatusFilter);
             });
+
+            // --- Single ACK Handler (FIXED) ---
             alertTableBodyEl.addEventListener('click', async (e) => {
                 const btn = e.target.closest('.btn-ack-single');
                 if (!btn) return;
+
+                e.preventDefault();
                 const eventId = btn.dataset.eventId;
-                const note = prompt("Optional note for acknowledging this alert:");
-                if (note !== null) {
-                    await handleAck([eventId], note);
-                    loadAlerts();
+                if (!eventId) {
+                    console.error('ACK button is missing data-event-id');
+                    return;
+                }
+
+                // Disable button to prevent double-clicking
+                btn.disabled = true;
+                const oldText = btn.textContent;
+                btn.textContent = '...';
+
+                const note = prompt("Optional note for acknowledging this alert:", "");
+                if (note === null) { // User clicked Cancel
+                    btn.disabled = false;
+                    btn.textContent = oldText;
+                    return;
+                }
+
+                try {
+                    const success = await handleAck([eventId], note);
+                    if (!success) throw new Error('API returned an error');
+
+                    showPopup('✅ Alert acknowledged successfully!', { type: 'success' });
+
+                    // Immediately update the UI for this row
+                    const row = btn.closest('tr');
+                    if (row) {
+                        row.querySelector('.ack-checkbox').disabled = true;
+                        row.querySelector('.ack-checkbox').checked = false;
+                        const statusCell = Array.from(row.cells).find(cell => cell.previousElementSibling?.textContent === 'Value');
+                        if (statusCell) statusCell.textContent = 'ack';
+                        btn.parentElement.innerHTML = ''; // Remove the button
+                    }
+
+                    // Then, reload all data
+                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
+                    await loadAlerts(currentStatusFilter);
+
+                } catch (err) {
+                    console.error(err);
+                    showPopup('❌ Failed to acknowledge alert.', { type: 'fail' });
+                    btn.disabled = false;
+                    btn.textContent = oldText;
+                }
+            });
+
+            // --- Bulk ACK Handler ---
+            bulkAckButton?.addEventListener('click', async () => {
+                const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
+                const note = bulkAckNoteInput.value;
+                if (selectedIds.length === 0) {
+                    showPopup('⚠️ Please select alerts to acknowledge.', { type: 'warn' });
+                    return;
+                }
+
+                try {
+                    const success = await handleAck(selectedIds, note);
+                    if (!success) throw new Error('API returned an error');
+
+                    showPopup(`✅ Acknowledged ${selectedIds.length} alert(s).`, { type: 'success' });
+
+                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
+                    await loadAlerts(currentStatusFilter);
+                    bulkAckNoteInput.value = '';
+
+                } catch (err) {
+                    console.error(err);
+                    showPopup('❌ Failed to acknowledge selected alerts.', { type: 'fail' });
                 }
             });
             // Fetch and render alerts
@@ -6046,46 +6112,25 @@
                 });
             }
 
-            // Handle single ACK by listening on the table body
-            alertTableBodyEl.addEventListener('click', async (e) => {
-                // ใช้ .closest() เพื่อหาปุ่มที่ถูกคลิก แม้ว่าผู้ใช้จะคลิกโดนไอคอน <i> ข้างในปุ่มก็ตาม
-                const btn = e.target.closest('.btn-ack-single');
-
-                // ถ้าสิ่งที่คลิกไม่ใช่ปุ่ม ACK หรือไม่มีปุ่ม ACK อยู่ใกล้ๆ ก็ไม่ต้องทำอะไรต่อ
-                if (!btn) return;
-
-                const eventId = btn.dataset.eventId;
-                const note = prompt("Optional note for acknowledging this alert:");
-
-                if (note !== null) { // ตรวจสอบว่าผู้ใช้ไม่ได้กด Cancel
-                    await handleAck([eventId], note);
-
-                    // โหลดข้อมูลล่าสุดในสถานะปัจจุบันที่เลือกไว้ (เช่น Open, Ack)
-                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
-                    loadAlerts(currentStatusFilter);
-                }
-            });
-
-
-            bulkAckButton?.addEventListener('click', async () => {
-                const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
-                const note = bulkAckNoteInput.value;
-                if (selectedIds.length > 0) {
-                    await handleAck(selectedIds, note);
-                    loadAlerts();
-                    bulkAckNoteInput.value = '';
-                }
-            });
-
             async function handleAck(eventIds, note) {
+                let allSuccess = true;
                 for (const eventId of eventIds) {
-                    await fetch(`/api/alerts/${eventId}/ack`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ack_note: note, ack_by: 'WebAppUser' }) // You can make ack_by more dynamic
-                    });
+                    try {
+                        const response = await fetch(`/api/alerts/${eventId}/ack`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ack_note: note, ack_by: 'WebAppUser' })
+                        });
+                        if (!response.ok) {
+                            console.error(`Failed to ACK event ${eventId}. Status: ${response.status}`);
+                            allSuccess = false;
+                        }
+                    } catch (error) {
+                        console.error(`Network error while acknowledging event ${eventId}:`, error);
+                        allSuccess = false;
+                    }
                 }
-                showPopup(`Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
+                return allSuccess;
             }
             async function handleDeleteSensorRule() {
                 const mac = drawerEl.dataset.mac;
