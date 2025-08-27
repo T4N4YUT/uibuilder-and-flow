@@ -6260,18 +6260,10 @@
                     'Warn High': 'warn_max', 'Crit High': 'crit_max'
                 };
 
-                const sharedFields = {
-                    'Dwell to Open (Warn)': 'warn_open_consec',
-                    'Dwell to Open (Crit)': 'crit_open_consec',
-                    'Dwell to Clear': 'clear_consec'
-                };
-
                 // --- นำมาประกอบร่างแล้วแสดงผล ---
                 container.innerHTML += renderSection('🌡️ Temperature', tempRule, tempFields);
                 container.innerHTML += '<div class="border-t border-dashed border-[var(--border)] my-3"></div>';
                 container.innerHTML += renderSection('💧 Humidity', humRule, humFields);
-                container.innerHTML += '<div class="border-t border-dashed border-[var(--border)] my-3"></div>';
-                container.innerHTML += renderSection('⚙️ Shared Settings', tempRule, sharedFields); // Dwell time ใช้จาก Temp เป็นหลัก
             }
 
             // Toggle override fields
