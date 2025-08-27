@@ -5974,7 +5974,7 @@
                 loadAlerts(currentStatusFilter);
             });
 
-            // --- Single ACK Handler (FIXED) ---
+            // --- Single ACK Handler (FIXED & CORRECTED) ---
             alertTableBodyEl.addEventListener('click', async (e) => {
                 const btn = e.target.closest('.btn-ack-single');
                 if (!btn) return;
@@ -5988,33 +5988,24 @@
 
                 // Disable button to prevent double-clicking
                 btn.disabled = true;
-                const oldText = btn.textContent;
-                btn.textContent = '...';
+                const oldText = btn.innerHTML; // ใช้ innerHTML เผื่อมี icon
+                btn.innerHTML = '...';
 
                 const note = prompt("Optional note for acknowledging this alert:", "");
                 if (note === null) { // User clicked Cancel
                     btn.disabled = false;
-                    btn.textContent = oldText;
+                    btn.innerHTML = oldText;
                     return;
                 }
 
                 try {
+                    // เรียกใช้ handleAck ที่มีอยู่แล้ว
                     const success = await handleAck([eventId], note);
                     if (!success) throw new Error('API returned an error');
 
                     showPopup('✅ Alert acknowledged successfully!', { type: 'success' });
 
-                    // Immediately update the UI for this row
-                    const row = btn.closest('tr');
-                    if (row) {
-                        row.querySelector('.ack-checkbox').disabled = true;
-                        row.querySelector('.ack-checkbox').checked = false;
-                        const statusCell = Array.from(row.cells).find(cell => cell.previousElementSibling?.textContent === 'Value');
-                        if (statusCell) statusCell.textContent = 'ack';
-                        btn.parentElement.innerHTML = ''; // Remove the button
-                    }
-
-                    // Then, reload all data
+                    // Reload ข้อมูลทั้งหมดเพื่อให้ UI สดใหม่และถูกต้องที่สุด
                     const currentStatusFilter = document.getElementById('alert-filter-status').value;
                     await loadAlerts(currentStatusFilter);
 
@@ -6022,7 +6013,7 @@
                     console.error(err);
                     showPopup('❌ Failed to acknowledge alert.', { type: 'fail' });
                     btn.disabled = false;
-                    btn.textContent = oldText;
+                    btn.innerHTML = oldText;
                 }
             });
 
