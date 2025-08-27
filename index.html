@@ -2068,9 +2068,41 @@
             </div>
         </div>
         </div>
+        <div id="modal-ack" class="fixed inset-0 z-[70] hidden">
+            <div class="absolute inset-0 bg-transparent" data-close="modal-ack"></div>
+            <div class="config-panel w-[30rem] max-w-[95vw]"
+                style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                <div class="config-header">
+                    <h5 class="font-semibold text-lg">Acknowledge Alert</h5>
+                    <button class="flex items-center justify-center h-10 w-10 rounded-lg btn-close-custom"
+                        data-close="modal-ack">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div class="config-body">
+                    <form id="form-ack" class="space-y-4">
+                        <div>
+                            <label for="ack-by-input" class="config-label">Acknowledged By <span
+                                    class="text-red-400">*</span></label>
+                            <input type="text" id="ack-by-input" class="config-input" required
+                                placeholder="Enter your name">
+                            <p id="ack-by-error" class="text-red-400 text-sm mt-1 hidden">This field is required.</p>
+                        </div>
+                        <div>
+                            <label for="ack-note-input" class="config-label">Note (Optional)</label>
+                            <textarea id="ack-note-input" class="config-input" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="config-footer flex justify-end">
+                    <button id="btn-confirm-ack" class="btn btn-primary"><i
+                            class="fa-solid fa-check mr-2"></i>Confirm</button>
+                </div>
+            </div>
+        </div>
         <div id="modal-alert-center" class="fixed inset-0 z-[60] hidden">
             <div class="absolute inset-0 bg-transparent"></div>
-            <div class="alert-center-panel w-[60rem] max-w-[95vw] bg-[var(--panel)] border border-[var(--border)] rounded-xl flex flex-col max-h-[90vh]"
+            <div class="alert-center-panel w-[80rem] max-w-[95vw] bg-[var(--panel)] border border-[var(--border)] rounded-xl flex flex-col max-h-[90vh]"
                 onclick="event.stopPropagation()">
 
                 <div class="flex-shrink-0 p-4 border-b border-[var(--border)] flex justify-between items-center">
@@ -2109,6 +2141,7 @@
                                 <th class="p-3">Level</th>
                                 <th class="p-3">Value</th>
                                 <th class="p-3">Status</th>
+                                <th class="p-3">Ack By</th>
                                 <th class="p-3">Note</th>
                                 <th class="p-3 text-center">Actions</th>
                             </tr>
@@ -2121,8 +2154,6 @@
                 <div class="flex-shrink-0 p-3 border-t border-[var(--border)] flex items-center gap-4">
                     <button id="btn-bulk-ack" class="btn btn-primary" disabled><i
                             class="fa-solid fa-check-double mr-2"></i>Acknowledge Selected</button>
-                    <input type="text" id="bulk-ack-note" class="config-input flex-grow"
-                        placeholder="Add an optional note...">
                 </div>
 
             </div>
@@ -5974,48 +6005,6 @@
                 loadAlerts(currentStatusFilter);
             });
 
-            // --- Single ACK Handler (FIXED & CORRECTED) ---
-            alertTableBodyEl.addEventListener('click', async (e) => {
-                const btn = e.target.closest('.btn-ack-single');
-                if (!btn) return;
-
-                e.preventDefault();
-                const eventId = btn.dataset.eventId;
-                if (!eventId) {
-                    console.error('ACK button is missing data-event-id');
-                    return;
-                }
-
-                // Disable button to prevent double-clicking
-                btn.disabled = true;
-                const oldText = btn.innerHTML; // ใช้ innerHTML เผื่อมี icon
-                btn.innerHTML = '...';
-
-                const note = prompt("Optional note for acknowledging this alert:", "");
-                if (note === null) { // User clicked Cancel
-                    btn.disabled = false;
-                    btn.innerHTML = oldText;
-                    return;
-                }
-
-                try {
-                    // เรียกใช้ handleAck ที่มีอยู่แล้ว
-                    const success = await handleAck([eventId], note);
-                    if (!success) throw new Error('API returned an error');
-
-                    showPopup('✅ Alert acknowledged successfully!', { type: 'success' });
-
-                    // Reload ข้อมูลทั้งหมดเพื่อให้ UI สดใหม่และถูกต้องที่สุด
-                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
-                    await loadAlerts(currentStatusFilter);
-
-                } catch (err) {
-                    console.error(err);
-                    showPopup('❌ Failed to acknowledge alert.', { type: 'fail' });
-                    btn.disabled = false;
-                    btn.innerHTML = oldText;
-                }
-            });
 
             // --- Bulk ACK Handler ---
             bulkAckButton?.addEventListener('click', async () => {
@@ -6077,23 +6066,54 @@
                     alertTableBodyEl.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-[var(--muted)]">No alerts found.</td></tr>';
                     return;
                 }
+
+                // ✨ เพิ่ม Header ใหม่
+                const headerRow = document.querySelector('#modal-alert-center thead tr');
+                headerRow.innerHTML = `
+        <th class="p-3 text-center w-12"><input type="checkbox" id="ack-all-checkbox"></th>
+        <th class="p-3">Time</th>
+        <th class="p-3">Room</th>
+        <th class="p-3">Sensor</th>
+        <th class="p-3">Metric</th>
+        <th class="p-3">Level</th>
+        <th class="p-3">Value</th>
+        <th class="p-3">Status</th>
+        <th class="p-3">Ack By</th>
+        <th class="p-3">Note</th>
+        <th class="p-3 text-center">Actions</th>
+    `;
+                const ackAllEl = document.getElementById('ack-all-checkbox');
+                if (ackAllEl) {
+                    ackAllEl.addEventListener('change', (e) => {
+                        const isChecked = e.target.checked;
+                        document.querySelectorAll('.ack-checkbox:not(:disabled)').forEach(cb => {
+                            cb.checked = isChecked;
+                        });
+                        updateBulkAckButtonState?.();
+                    });
+                }
                 alerts.forEach(alert => {
                     const row = document.createElement('tr');
                     row.className = 'border-b border-[var(--border)]';
-                    const formattedTime = new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+
+                    // ✨ แก้ไขเรื่องเวลาให้ถูกต้อง
+                    const openedAt = alert.opened_at ? new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
+
                     const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
                     const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
                     const ackNoteDisplay = alert.ack_note || '<i class="opacity-50">No note</i>';
+                    const ackByDisplay = alert.ack_by || '-';
 
                     row.innerHTML = `
             <td class="p-3 text-center"><input type="checkbox" class="ack-checkbox" data-event-id="${alert.event_id}" ${alert.status !== 'open' ? 'disabled' : ''}></td>
-            <td class="p-3 whitespace-nowrap">${formattedTime}</td>
+            <td class="p-3 whitespace-nowrap">${openedAt}</td>
             <td class="p-3">${alert.room_name}</td>
             <td class="p-3">${customSensorName}</td>
             <td class="p-3">${alert.metric}</td>
             <td class="p-3"><span class="badge badge-${alert.level}">${alert.level}</span></td>
             <td class="p-3">${alert.trigger_value !== null ? Number(alert.trigger_value).toFixed(2) : 'N/A'}</td>
             <td class="p-3">${alert.status}</td>
+            <td class="p-3">${ackByDisplay}</td>
             <td class="p-3 truncate max-w-xs">${ackNoteDisplay}</td>
             <td class="p-3 text-center">
                 ${alert.status === 'open' ? `<button class="btn text-xs py-1 px-2 btn-ack-single" data-event-id="${alert.event_id}">ACK</button>` : ''}
@@ -6122,6 +6142,73 @@
                     }
                 }
                 return allSuccess;
+            }
+            // =================================================================
+            // ✨ ALERT ACK MODAL LOGIC (Vanilla JS) ✨
+            // =================================================================
+
+            function openAckModal(eventIds) {
+                if (!Array.isArray(eventIds)) eventIds = [eventIds];
+                if (eventIds.length === 0) return;
+
+                const modal = document.getElementById('modal-ack');
+                modal.dataset.eventIds = JSON.stringify(eventIds); // เก็บ event_id ไว้ที่ modal
+
+                // Reset form
+                document.getElementById('ack-by-input').value = '';
+                document.getElementById('ack-note-input').value = '';
+                document.getElementById('ack-by-error').classList.add('hidden');
+
+                openModal('modal-ack');
+                document.getElementById('ack-by-input').focus();
+            }
+
+            async function handleConfirmAck() {
+                const ackByInput = document.getElementById('ack-by-input');
+                const ackNoteInput = document.getElementById('ack-note-input');
+                const errorEl = document.getElementById('ack-by-error');
+                const modal = document.getElementById('modal-ack');
+
+                const ackBy = ackByInput.value.trim();
+                const ackNote = ackNoteInput.value.trim();
+                const eventIds = JSON.parse(modal.dataset.eventIds || '[]');
+
+                // Validation
+                if (!ackBy) {
+                    errorEl.classList.remove('hidden');
+                    ackByInput.focus();
+                    return;
+                } else {
+                    errorEl.classList.add('hidden');
+                }
+
+                const btn = document.getElementById('btn-confirm-ack');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Processing...';
+
+                const payload = { ack_by: ackBy, ack_note: ackNote };
+                const promises = eventIds.map(id =>
+                    fetch(`/api/alerts/${id}/ack`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                );
+
+                try {
+                    await Promise.all(promises);
+                    showPopup(`✅ Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
+                    closeModal('modal-ack');
+                    // Reload alerts to show updated status
+                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
+                    loadAlerts(currentStatusFilter);
+                } catch (err) {
+                    showPopup(`❌ Failed to acknowledge alerts.`, { type: 'fail' });
+                    console.error("ACK Error:", err);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Confirm';
+                }
             }
             async function handleDeleteSensorRule() {
                 const mac = drawerEl.dataset.mac;
@@ -6159,22 +6246,46 @@
                     console.error('Failed to reset/delete sensor rule:', err);
                 }
             }
+            // --- Event Listeners for new ACK Modal ---
+            document.getElementById('btn-confirm-ack')?.addEventListener('click', handleConfirmAck);
 
-            alertCenterModalEl.addEventListener('change', () => {
-                const selectedCount = document.querySelectorAll('.ack-checkbox:checked').length;
-                bulkAckButton.disabled = selectedCount === 0;
-
-                if (ackAllCheckbox) {
-                    const totalCheckboxes = document.querySelectorAll('.ack-checkbox:not(:disabled)').length;
-                    ackAllCheckbox.checked = selectedCount > 0 && selectedCount === totalCheckboxes;
+            document.getElementById('alert-table-body').addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-ack-single');
+                if (btn) {
+                    const eventId = btn.dataset.eventId;
+                    openAckModal([eventId]);
                 }
             });
 
+            document.getElementById('btn-bulk-ack')?.addEventListener('click', () => {
+                const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
+                if (selectedIds.length > 0) {
+                    openAckModal(selectedIds);
+                }
+            });
+
+            function updateBulkAckButtonState() {
+                const selectedCount = document.querySelectorAll('.ack-checkbox:checked').length;
+                bulkAckButton.disabled = selectedCount === 0;
+            }
+
             ackAllCheckbox?.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
                 document.querySelectorAll('.ack-checkbox:not(:disabled)').forEach(cb => {
-                    cb.checked = e.target.checked;
+                    cb.checked = isChecked;
                 });
-                alertCenterModalEl.dispatchEvent(new Event('change'));
+                updateBulkAckButtonState();
+            });
+
+            alertTableBodyEl.addEventListener('change', (e) => {
+                if (e.target.classList.contains('ack-checkbox')) {
+                    const totalCheckboxes = document.querySelectorAll('.ack-checkbox:not(:disabled)').length;
+                    const selectedCount = document.querySelectorAll('.ack-checkbox:checked').length;
+
+                    ackAllCheckbox.checked = totalCheckboxes > 0 && selectedCount === totalCheckboxes;
+
+                    updateBulkAckButtonState();
+                }
             });
             const drawerEl = document.getElementById('modal-sensor-rules');
             const ruleFormFields = document.getElementById('sensor-rule-form-fields');
