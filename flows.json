@@ -26,8 +26,8 @@
             "b6294b7b45eb69cc",
             "d954e3e7f76c543a"
         ],
-        "x": 1494,
-        "y": 739,
+        "x": 1654,
+        "y": 379,
         "w": 792,
         "h": 122
     },
@@ -122,8 +122,8 @@
             "5bc8eadaccc70a3a",
             "a67c29edf77c1d43"
         ],
-        "x": 1234,
-        "y": 519,
+        "x": 1394,
+        "y": 159,
         "w": 232,
         "h": 182
     },
@@ -145,8 +145,8 @@
             "c924836e4f60e8d4",
             "605cf649e4eeb495"
         ],
-        "x": 1494,
-        "y": 499,
+        "x": 1654,
+        "y": 139,
         "w": 572,
         "h": 222
     },
@@ -170,8 +170,8 @@
             "c8d9e0f1.g2h3i4",
             "d3123281480fadda"
         ],
-        "x": 1494,
-        "y": 879,
+        "x": 1654,
+        "y": 519,
         "w": 742,
         "h": 162
     },
@@ -194,8 +194,8 @@
             "PIN_MAP_POST_RESP",
             "ebdc3decf5882e80"
         ],
-        "x": 1494,
-        "y": 1059,
+        "x": 1654,
+        "y": 699,
         "w": 612,
         "h": 162
     },
@@ -216,8 +216,8 @@
             "api-data-out",
             "46c6359a47b15228"
         ],
-        "x": 1494,
-        "y": 1239,
+        "x": 1654,
+        "y": 879,
         "w": 612,
         "h": 122
     },
@@ -239,8 +239,8 @@
             "uptime-history-http-out",
             "13fe947532570883"
         ],
-        "x": 1494,
-        "y": 1379,
+        "x": 1654,
+        "y": 1019,
         "w": 932,
         "h": 122
     },
@@ -263,8 +263,8 @@
             "c433287035665bc3",
             "309f08f53143e317"
         ],
-        "x": 1494,
-        "y": 1519,
+        "x": 1654,
+        "y": 1159,
         "w": 622,
         "h": 162
     },
@@ -288,8 +288,8 @@
             "09d57fa6c2fd292a",
             "6d8fcd263813fe92"
         ],
-        "x": 1494,
-        "y": 1699,
+        "x": 1654,
+        "y": 1339,
         "w": 932,
         "h": 162
     },
@@ -322,35 +322,10 @@
             "c3d4e5f6.g7h8i9j0",
             "1c9684d00c28d451"
         ],
-        "x": 2288,
-        "y": 859,
+        "x": 2448,
+        "y": 499,
         "w": 898,
         "h": 508
-    },
-    {
-        "id": "878839870f21c18f",
-        "type": "group",
-        "z": "c0cdca176eedd227",
-        "name": "",
-        "style": {
-            "stroke": "#ff0000",
-            "fill": "#ffbfbf",
-            "label": false
-        },
-        "nodes": [
-            "dcd35d84b27f2f80",
-            "08e8135dea0646fc",
-            "7902bafc02d7c331",
-            "6648cf51d547305f",
-            "c1f4a8e11a42a76e",
-            "b7f1ae01a628fb46",
-            "214bd2f562bea0dd",
-            "2e371fe608dab1c9"
-        ],
-        "x": 74,
-        "y": 919,
-        "w": 792,
-        "h": 182
     },
     {
         "id": "c786c427801548b2",
@@ -401,6 +376,30 @@
         "h": 182
     },
     {
+        "id": "d202e0ad46fe14a1",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "style": {
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": false
+        },
+        "nodes": [
+            "df0843b9df45b9a1",
+            "ab55c792c2f49101",
+            "0910021c59de5f54",
+            "d1a9de5ab288941b",
+            "44406ddf7ea6600a",
+            "3eb5c949a433deea",
+            "b132c12befc8a3b9"
+        ],
+        "x": 74,
+        "y": 899,
+        "w": 1012,
+        "h": 182
+    },
+    {
         "id": "1c9684d00c28d451",
         "type": "group",
         "z": "c0cdca176eedd227",
@@ -418,8 +417,8 @@
             "6a53bd4692157e10",
             "635f66dcda15ad8f"
         ],
-        "x": 2314,
-        "y": 1159,
+        "x": 2474,
+        "y": 799,
         "w": 452,
         "h": 182
     },
@@ -433,8 +432,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1590,
-        "y": 820,
+        "x": 1750,
+        "y": 460,
         "wires": [
             [
                 "6a5c77cabf3a16c7"
@@ -454,8 +453,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1750,
-        "y": 820,
+        "x": 1910,
+        "y": 460,
         "wires": [
             [
                 "e1c299770742f644",
@@ -471,8 +470,8 @@
         "name": "Response",
         "statusCode": "",
         "headers": {},
-        "x": 1940,
-        "y": 820,
+        "x": 2100,
+        "y": 460,
         "wires": []
     },
     {
@@ -716,8 +715,8 @@
         "nl": false,
         "rap": false,
         "inputs": 0,
-        "x": 1810,
-        "y": 680,
+        "x": 1970,
+        "y": 320,
         "wires": [
             [
                 "5bc8eadaccc70a3a"
@@ -932,8 +931,8 @@
         "checkall": "true",
         "repair": false,
         "outputs": 2,
-        "x": 1610,
-        "y": 600,
+        "x": 1770,
+        "y": 240,
         "wires": [
             [
                 "c924836e4f60e8d4"
@@ -958,8 +957,8 @@
         "correl": "",
         "expiry": "",
         "broker": "8301192ec347dbc9",
-        "x": 1790,
-        "y": 620,
+        "x": 1950,
+        "y": 260,
         "wires": []
     },
     {
@@ -977,8 +976,8 @@
         "correl": "",
         "expiry": "",
         "broker": "8301192ec347dbc9",
-        "x": 1960,
-        "y": 580,
+        "x": 2120,
+        "y": 220,
         "wires": []
     },
     {
@@ -991,8 +990,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1590,
-        "y": 1320,
+        "x": 1750,
+        "y": 960,
         "wires": [
             [
                 "api-data-build-sql"
@@ -1012,8 +1011,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1760,
-        "y": 1320,
+        "x": 1920,
+        "y": 960,
         "wires": [
             [
                 "api-data-mysql"
@@ -1027,8 +1026,8 @@
         "g": "1519d0b809bfff5d",
         "mydb": "5e560f07cfec117a",
         "name": "dht22",
-        "x": 1910,
-        "y": 1320,
+        "x": 2070,
+        "y": 960,
         "wires": [
             [
                 "api-data-out"
@@ -1045,8 +1044,8 @@
         "headers": {
             "content-type": "application/json; charset=utf-8"
         },
-        "x": 2030,
-        "y": 1320,
+        "x": 2190,
+        "y": 960,
         "wires": []
     },
     {
@@ -1062,8 +1061,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1360,
-        "y": 600,
+        "x": 1520,
+        "y": 240,
         "wires": [
             [
                 "0be150f8cda21a27",
@@ -1084,8 +1083,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1360,
-        "y": 660,
+        "x": 1520,
+        "y": 300,
         "wires": [
             [
                 "0b3358f711e7ed0b"
@@ -1102,8 +1101,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1620,
-        "y": 960,
+        "x": 1780,
+        "y": 600,
         "wires": [
             [
                 "f3a1d4b.c9b8c28"
@@ -1123,8 +1122,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1840,
-        "y": 960,
+        "x": 2000,
+        "y": 600,
         "wires": [
             [
                 "a1b2c3d4.e5f6g7"
@@ -1141,8 +1140,8 @@
         "headers": {
             "content-type": "application/json"
         },
-        "x": 2000,
-        "y": 960,
+        "x": 2160,
+        "y": 600,
         "wires": []
     },
     {
@@ -1155,8 +1154,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1620,
-        "y": 1000,
+        "x": 1780,
+        "y": 640,
         "wires": [
             [
                 "o5p6q7r8.s9t0u1"
@@ -1172,8 +1171,8 @@
         "property": "payload",
         "action": "",
         "pretty": false,
-        "x": 1800,
-        "y": 1000,
+        "x": 1960,
+        "y": 640,
         "wires": [
             [
                 "v1w2x3y4.z5a6b7"
@@ -1193,8 +1192,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1960,
-        "y": 1000,
+        "x": 2120,
+        "y": 640,
         "wires": [
             [
                 "c8d9e0f1.g2h3i4"
@@ -1210,8 +1209,8 @@
         "name": "OK or NOT",
         "statusCode": "",
         "headers": {},
-        "x": 2140,
-        "y": 1000,
+        "x": 2300,
+        "y": 640,
         "wires": []
     },
     {
@@ -1224,8 +1223,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1600,
-        "y": 1140,
+        "x": 1760,
+        "y": 780,
         "wires": [
             [
                 "PIN_MAP_GET_FUNC"
@@ -1245,8 +1244,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1800,
-        "y": 1140,
+        "x": 1960,
+        "y": 780,
         "wires": [
             [
                 "PIN_MAP_GET_RESP"
@@ -1263,8 +1262,8 @@
         "headers": {
             "content-type": "application/json"
         },
-        "x": 1970,
-        "y": 1140,
+        "x": 2130,
+        "y": 780,
         "wires": []
     },
     {
@@ -1277,8 +1276,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1610,
-        "y": 1180,
+        "x": 1770,
+        "y": 820,
         "wires": [
             [
                 "PIN_MAP_POST_FUNC"
@@ -1298,8 +1297,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1800,
-        "y": 1180,
+        "x": 1960,
+        "y": 820,
         "wires": [
             [
                 "PIN_MAP_POST_RESP",
@@ -1315,97 +1314,8 @@
         "name": "200/400 Response",
         "statusCode": "",
         "headers": {},
-        "x": 1990,
-        "y": 1180,
-        "wires": []
-    },
-    {
-        "id": "summary-http-in",
-        "type": "http in",
-        "z": "c0cdca176eedd227",
-        "d": true,
-        "name": "GET /api/summary",
-        "url": "/api/summary",
-        "method": "get",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 7230,
-        "y": 40,
-        "wires": [
-            [
-                "summary-build-sql"
-            ]
-        ]
-    },
-    {
-        "id": "summary-build-sql",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "d": true,
-        "name": "Query for summary by timeline",
-        "func": "// อ่าน query params\nconst q = msg.req && msg.req.query ? msg.req.query : {};\nlet { start, end, mac } = q;\n\n// helper: แปลงเวลา ISO → MySQL DATETIME (local)\nfunction toSqlLocal(iso) {\n    if (!iso) return null;\n    const d = new Date(iso);\n    if (isNaN(d)) return null;\n    const tzFix = new Date(d.getTime() - d.getTimezoneOffset() * 60000);\n    return tzFix.toISOString().slice(0, 19).replace('T', ' ');\n}\n\n// ตรวจความถูกต้องขั้นต่ำ\nif (!mac || !start || !end) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"missing mac/start/end\" };\n    msg._skip = true;\n    return msg;\n}\n\n// สร้าง SQL สำหรับคำนวณค่าสรุป\nconst sql = `\nSELECT\n    MIN(avg_temp) AS min_temp,\n    AVG(avg_temp) AS avg_temp,\n    MAX(avg_temp) AS max_temp,\n    MIN(avg_hum) AS min_hum,\n    AVG(avg_hum) AS avg_hum,\n    MAX(avg_hum) AS max_hum,\n    AVG(\n        (243.12 * (LN(GREATEST(1e-6, avg_hum / 100)) + (17.62 * avg_temp) / (243.12 + avg_temp))) / \n        (17.62 - (LN(GREATEST(1e-6, avg_hum / 100)) + (17.62 * avg_temp) / (243.12 + avg_temp)))\n    ) AS avg_dew\nFROM dht_22\nWHERE mac = ?\n  AND timestamp BETWEEN ? AND ?\n  AND pin = 'OVERALL';\n`;\n\nconst params = [mac, toSqlLocal(start), toSqlLocal(end)];\n\nmsg.topic = sql;\nmsg.payload = params;\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 7470,
-        "y": 40,
-        "wires": [
-            [
-                "summary-mysql-query"
-            ]
-        ]
-    },
-    {
-        "id": "summary-mysql-query",
-        "type": "mysql",
-        "z": "c0cdca176eedd227",
-        "d": true,
-        "mydb": "5e560f07cfec117a",
-        "name": "dht22",
-        "x": 7670,
-        "y": 40,
-        "wires": [
-            [
-                "summary-shape-json"
-            ]
-        ]
-    },
-    {
-        "id": "summary-shape-json",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "d": true,
-        "name": "Send data",
-        "func": "if (msg._skip) return msg;\n\nconst r = (Array.isArray(msg.payload) && msg.payload[0]) || {};\n\nconst out = {\n    temp: {\n        min: r.min_temp,\n        avg: r.avg_temp,\n        max: r.max_temp\n    },\n    hum: {\n        min: r.min_hum,\n        avg: r.avg_hum,\n        max: r.max_hum\n    },\n    dew: {\n        avg: r.avg_dew\n    }\n};\n\nmsg.payload = out;\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 7810,
-        "y": 40,
-        "wires": [
-            [
-                "summary-http-out"
-            ]
-        ]
-    },
-    {
-        "id": "summary-http-out",
-        "type": "http response",
-        "z": "c0cdca176eedd227",
-        "d": true,
-        "name": "OK",
-        "statusCode": "200",
-        "headers": {
-            "content-type": "application/json; charset=utf-8"
-        },
-        "x": 7950,
-        "y": 40,
+        "x": 2150,
+        "y": 820,
         "wires": []
     },
     {
@@ -1421,8 +1331,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1790,
-        "y": 580,
+        "x": 1950,
+        "y": 220,
         "wires": [
             [
                 "5d3a283c24fdb1d4"
@@ -1439,8 +1349,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1620,
-        "y": 1460,
+        "x": 1780,
+        "y": 1100,
         "wires": [
             [
                 "uptime-history-build-sql"
@@ -1460,8 +1370,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1830,
-        "y": 1460,
+        "x": 1990,
+        "y": 1100,
         "wires": [
             [
                 "uptime-history-mysql"
@@ -1475,8 +1385,8 @@
         "g": "64925a76023e1c5d",
         "mydb": "5e560f07cfec117a",
         "name": "Query Status Log",
-        "x": 2030,
-        "y": 1460,
+        "x": 2190,
+        "y": 1100,
         "wires": [
             [
                 "uptime-history-process"
@@ -1496,8 +1406,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2210,
-        "y": 1460,
+        "x": 2370,
+        "y": 1100,
         "wires": [
             [
                 "uptime-history-http-out"
@@ -1548,8 +1458,8 @@
             "33": "\"",
             "34": "}"
         },
-        "x": 2350,
-        "y": 1460,
+        "x": 2510,
+        "y": 1100,
         "wires": []
     },
     {
@@ -1562,8 +1472,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1600,
-        "y": 1600,
+        "x": 1760,
+        "y": 1240,
         "wires": [
             [
                 "df1f25372ee46293"
@@ -1581,8 +1491,8 @@
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 1810,
-        "y": 1600,
+        "x": 1970,
+        "y": 1240,
         "wires": [
             [
                 "3a43d1af3eb15d26"
@@ -1597,8 +1507,8 @@
         "name": "Response",
         "statusCode": "",
         "headers": {},
-        "x": 2030,
-        "y": 1600,
+        "x": 2190,
+        "y": 1240,
         "wires": []
     },
     {
@@ -1611,8 +1521,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1600,
-        "y": 1640,
+        "x": 1760,
+        "y": 1280,
         "wires": [
             [
                 "1734434661ee3dca"
@@ -1630,8 +1540,8 @@
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 1810,
-        "y": 1640,
+        "x": 1970,
+        "y": 1280,
         "wires": [
             [
                 "c433287035665bc3"
@@ -1646,8 +1556,8 @@
         "name": "Response",
         "statusCode": "",
         "headers": {},
-        "x": 2030,
-        "y": 1640,
+        "x": 2190,
+        "y": 1280,
         "wires": []
     },
     {
@@ -1660,8 +1570,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1630,
-        "y": 1780,
+        "x": 1790,
+        "y": 1420,
         "wires": [
             [
                 "cd7539754652df01"
@@ -1681,8 +1591,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1890,
-        "y": 1780,
+        "x": 2050,
+        "y": 1420,
         "wires": [
             [
                 "be0234bc2af3f61f"
@@ -1709,8 +1619,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 2140,
-        "y": 1780,
+        "x": 2300,
+        "y": 1420,
         "wires": [
             [
                 "dd8ae04e667fd775",
@@ -1726,8 +1636,8 @@
         "name": "200 OK",
         "statusCode": "200",
         "headers": {},
-        "x": 2340,
-        "y": 1780,
+        "x": 2500,
+        "y": 1420,
         "wires": []
     },
     {
@@ -1753,8 +1663,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 1610,
-        "y": 1820,
+        "x": 1770,
+        "y": 1460,
         "wires": [
             [
                 "770da6a7bece6b93"
@@ -1774,8 +1684,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1840,
-        "y": 1820,
+        "x": 2000,
+        "y": 1460,
         "wires": [
             [
                 "09d57fa6c2fd292a"
@@ -1799,8 +1709,8 @@
         "defaultLocationType": "default",
         "outputs": 1,
         "options": [],
-        "x": 2080,
-        "y": 1820,
+        "x": 2240,
+        "y": 1460,
         "wires": [
             []
         ]
@@ -1877,8 +1787,8 @@
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
-        "x": 2470,
-        "y": 1240,
+        "x": 2630,
+        "y": 880,
         "wires": [
             [
                 "6a53bd4692157e10"
@@ -1892,8 +1802,8 @@
         "g": "1c9684d00c28d451",
         "mydb": "5e560f07cfec117a",
         "name": "alert_rules",
-        "x": 2430,
-        "y": 1300,
+        "x": 2590,
+        "y": 940,
         "wires": [
             [
                 "5254f9b4133929d9"
@@ -1913,8 +1823,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2610,
-        "y": 1300,
+        "x": 2770,
+        "y": 940,
         "wires": []
     },
     {
@@ -1988,7 +1898,7 @@
         "z": "c0cdca176eedd227",
         "g": "936233020b891e13",
         "name": "Query alert evet lists",
-        "func": "// รับ query params\nconst q = (msg.req && msg.req.query) ? msg.req.query : {};\n\n// ✨ FIX: เพิ่ม LEFT JOIN เพื่อดึง ack_note จากตาราง alert_acks\nlet sql = `\n    SELECT \n        ae.*, \n        aa.ack_note \n    FROM \n        alert_events AS ae \n    LEFT JOIN \n        alert_acks AS aa ON ae.event_id = aa.event_id\n`;\n\nconst conditions = [];\nconst params = [];\n\nif (q.status) {\n    const statuses = q.status.split(',').map(s => s.trim());\n    conditions.push(`ae.status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\n// ... (เงื่อนไขอื่นๆ สามารถเพิ่มได้ตามต้องการ)\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY ae.opened_at DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\n\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
+        "func": "// รับ query params\nconst q = (msg.req && msg.req.query) ? msg.req.query : {};\n\n// ✨ FIX: ไม่ต้อง JOIN ตารางแล้ว เลือกข้อมูล ack_note จากตาราง alert_events โดยตรง\nlet sql = `SELECT * FROM alert_events`;\n\nconst conditions = [];\nconst params = [];\n\nif (q.status) {\n    const statuses = q.status.split(',').map(s => s.trim());\n    conditions.push(`status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\n// ... (เงื่อนไขอื่นๆ สามารถเพิ่มได้ตามต้องการ)\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY opened_at DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\n\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -2041,8 +1951,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 3220,
-        "y": 2640,
+        "x": 3260,
+        "y": 2520,
         "wires": [
             [
                 "a78bca7fae37d1f1"
@@ -2061,8 +1971,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3450,
-        "y": 2640,
+        "x": 3490,
+        "y": 2520,
         "wires": [
             [
                 "de59cdc9edf29480"
@@ -2079,8 +1989,8 @@
         "method": "put",
         "upload": false,
         "swaggerDoc": "",
-        "x": 2430,
-        "y": 1060,
+        "x": 2590,
+        "y": 700,
         "wires": [
             [
                 "de33353dd1628a6a"
@@ -2100,8 +2010,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2610,
-        "y": 1060,
+        "x": 2770,
+        "y": 700,
         "wires": [
             [
                 "f0ebb5a35291b244"
@@ -2115,8 +2025,8 @@
         "g": "e0c8d7b3e0c8d7b3",
         "mydb": "5e560f07cfec117a",
         "name": "alert_rules",
-        "x": 2770,
-        "y": 1060,
+        "x": 2930,
+        "y": 700,
         "wires": [
             [
                 "55275ebb0ab7e56b"
@@ -2136,8 +2046,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2950,
-        "y": 1060,
+        "x": 3110,
+        "y": 700,
         "wires": [
             [
                 "205b806eb2540670"
@@ -2157,8 +2067,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2670,
-        "y": 1240,
+        "x": 2830,
+        "y": 880,
         "wires": [
             [
                 "155f14d9caf7f584"
@@ -2196,8 +2106,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 2430,
-        "y": 1120,
+        "x": 2590,
+        "y": 760,
         "wires": [
             [
                 "b2c3d4e5.f6g7h8i9"
@@ -2217,8 +2127,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2620,
-        "y": 1120,
+        "x": 2780,
+        "y": 760,
         "wires": [
             [
                 "c3d4e5f6.g7h8i9j0"
@@ -2232,8 +2142,8 @@
         "g": "e0c8d7b3e0c8d7b3",
         "mydb": "5e560f07cfec117a",
         "name": "alert_rules",
-        "x": 2790,
-        "y": 1120,
+        "x": 2950,
+        "y": 760,
         "wires": [
             [
                 "d4e5f6g7.h8i9j0k1"
@@ -2250,8 +2160,8 @@
         "headers": {
             "content-type": "application/json; charset=utf-8"
         },
-        "x": 2960,
-        "y": 1120,
+        "x": 3120,
+        "y": 760,
         "wires": []
     },
     {
@@ -2284,8 +2194,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 3180,
-        "y": 2960,
+        "x": 3190,
+        "y": 2700,
         "wires": [
             [
                 "94de46be975ab45a"
@@ -2303,8 +2213,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3450,
-        "y": 2960,
+        "x": 3460,
+        "y": 2700,
         "wires": [
             [
                 "5d528147da6dc93e"
@@ -2325,8 +2235,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3710,
-        "y": 2940,
+        "x": 3720,
+        "y": 2680,
         "wires": [
             [
                 "67a399bfc19977a1"
@@ -2340,8 +2250,8 @@
         "name": "400 Bad Request",
         "statusCode": "400",
         "headers": {},
-        "x": 3710,
-        "y": 3000,
+        "x": 3720,
+        "y": 2740,
         "wires": []
     },
     {
@@ -2351,8 +2261,8 @@
         "name": "200 OK",
         "statusCode": "200",
         "headers": {},
-        "x": 3930,
-        "y": 2940,
+        "x": 3940,
+        "y": 2680,
         "wires": []
     },
     {
@@ -2362,8 +2272,8 @@
         "g": "6bdd339e33ee4610",
         "name": "สำหรับ Sync เวลา ESP32",
         "info": "",
-        "x": 1630,
-        "y": 780,
+        "x": 1790,
+        "y": 420,
         "wires": []
     },
     {
@@ -2406,8 +2316,8 @@
         "g": "fc3d12748b8ec6e6",
         "name": "แปะหมายเลขคำขอ",
         "info": "",
-        "x": 1340,
-        "y": 560,
+        "x": 1500,
+        "y": 200,
         "wires": []
     },
     {
@@ -2417,8 +2327,8 @@
         "g": "8b8a1fc20cab8523",
         "name": "Load or Save Config",
         "info": "",
-        "x": 1610,
-        "y": 540,
+        "x": 1770,
+        "y": 180,
         "wires": []
     },
     {
@@ -2428,8 +2338,8 @@
         "g": "0321cc28b5f9bbec",
         "name": "สำหรับเก็บ Map mac to room",
         "info": "",
-        "x": 1650,
-        "y": 920,
+        "x": 1810,
+        "y": 560,
         "wires": []
     },
     {
@@ -2439,8 +2349,8 @@
         "g": "17813c4a50ebd580",
         "name": "สำหรับเก็บ Map pin to room",
         "info": "",
-        "x": 1630,
-        "y": 1100,
+        "x": 1790,
+        "y": 740,
         "wires": []
     },
     {
@@ -2450,8 +2360,8 @@
         "g": "1519d0b809bfff5d",
         "name": "สำหรับ Query data ไปสร้างกราฟ Temp&Hum",
         "info": "",
-        "x": 1680,
-        "y": 1280,
+        "x": 1840,
+        "y": 920,
         "wires": []
     },
     {
@@ -2461,8 +2371,8 @@
         "g": "64925a76023e1c5d",
         "name": "สำหรับ Query data แสดง Uptime",
         "info": "",
-        "x": 1650,
-        "y": 1420,
+        "x": 1810,
+        "y": 1060,
         "wires": []
     },
     {
@@ -2472,8 +2382,8 @@
         "g": "2c61351b61c73c69",
         "name": "สำหรับ Notification",
         "info": "",
-        "x": 1610,
-        "y": 1560,
+        "x": 1770,
+        "y": 1200,
         "wires": []
     },
     {
@@ -2483,8 +2393,8 @@
         "g": "dea09d2391cecac6",
         "name": "สำหรับ Daily Report",
         "info": "",
-        "x": 1610,
-        "y": 1740,
+        "x": 1770,
+        "y": 1380,
         "wires": []
     },
     {
@@ -2505,8 +2415,8 @@
         "topic": "",
         "payload": "{}",
         "payloadType": "json",
-        "x": 2450,
-        "y": 940,
+        "x": 2610,
+        "y": 580,
         "wires": [
             [
                 "60c32d43196f7e41"
@@ -2526,8 +2436,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2760,
-        "y": 940,
+        "x": 2920,
+        "y": 580,
         "wires": [
             [
                 "b5a4a350a2b8e5c2"
@@ -2549,8 +2459,8 @@
         "correl": "",
         "expiry": "",
         "broker": "8301192ec347dbc9",
-        "x": 2980,
-        "y": 940,
+        "x": 3140,
+        "y": 580,
         "wires": []
     },
     {
@@ -2566,8 +2476,8 @@
         "nl": false,
         "rap": false,
         "inputs": 0,
-        "x": 2420,
-        "y": 1000,
+        "x": 2580,
+        "y": 640,
         "wires": [
             [
                 "c3d9b0e1f4a5c6d7"
@@ -2587,8 +2497,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2620,
-        "y": 1000,
+        "x": 2780,
+        "y": 640,
         "wires": [
             [
                 "8a7b6c5d4e3f2d1c"
@@ -2619,8 +2529,8 @@
                 "valueValue": "application/json"
             }
         ],
-        "x": 2830,
-        "y": 1000,
+        "x": 2990,
+        "y": 640,
         "wires": [
             []
         ]
@@ -2632,8 +2542,8 @@
         "g": "e0c8d7b3e0c8d7b3",
         "name": "Sync Alerts from Device to DB",
         "info": "",
-        "x": 2460,
-        "y": 900,
+        "x": 2620,
+        "y": 540,
         "wires": []
     },
     {
@@ -2664,8 +2574,8 @@
         "name": "200 OK",
         "statusCode": "200",
         "headers": {},
-        "x": 3620,
-        "y": 2640,
+        "x": 3660,
+        "y": 2520,
         "wires": []
     },
     {
@@ -2676,146 +2586,8 @@
         "name": "OK",
         "statusCode": "200",
         "headers": {},
-        "x": 3110,
-        "y": 1060,
-        "wires": []
-    },
-    {
-        "id": "dcd35d84b27f2f80",
-        "type": "http in",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "POST /api/alerts/:id/ack",
-        "url": "/api/alerts/:id/ack",
-        "method": "post",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 200,
-        "y": 1000,
-        "wires": [
-            [
-                "08e8135dea0646fc"
-            ]
-        ]
-    },
-    {
-        "id": "08e8135dea0646fc",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "Insert ack",
-        "func": "// Function: eval_alert_v2 (FIXED Timezone)\n\n// --- [FIX START] ---\n// Helper function ใหม่สำหรับแปลงเวลาเป็น Local Time ของ Server\nfunction toLocalSqlDatetime(date) {\n    const pad = (num) => String(num).padStart(2, '0');\n    const year = date.getFullYear();\n    const month = pad(date.getMonth() + 1);\n    const day = pad(date.getDate());\n    const hours = pad(date.getHours());\n    const minutes = pad(date.getMinutes());\n    const seconds = pad(date.getSeconds());\n    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;\n}\n// --- [FIX END] ---\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\nvar now_ts = now.getTime();\n\n// --- [FIX START] ---\n// ใช้ฟังก์ชันใหม่ที่เราสร้างขึ้น\nvar now_sql = new Date().toISOString().slice(0, 19).replace('T', ' ');\n// --- [FIX END] ---\n\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    var roomKeyPrefix = Object.keys(deviceMap).find(key => deviceMap[key] === mac && key.startsWith('room'));\n    if (roomKeyPrefix) {\n        var nameKey = `name${roomKeyPrefix.slice(-1).toUpperCase()}`;\n        return deviceMap[nameKey] || mac;\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    return null;\n}\n\nvar state = states[dedup_key] || {\n    status: 'closed',\n    level: 'normal',\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    last_level: 'normal',\n    last_sample_ts: 0,\n    event_id: null,\n    last_notified_ts: 0\n};\n\nvar isContinuous = (now_ts - state.last_sample_ts) <= 90 * 1000;\nif (!isContinuous) {\n    state.warn_count = 0;\n    state.crit_count = 0;\n    state.clear_count = 0;\n}\nstate.last_sample_ts = now_ts;\n\nvar rawLevel = determineRawLevel(value, rule);\n\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else { // 'critical'\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\nvar outputs = [null, null, null];\n\nfunction buildOpenMsg(event_id, level) {\n    var room = getRoomName(mac);\n    return {\n        topic:\n            `INSERT INTO \\`alert_events\\` (\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`, \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`, \\`closed_at\\`, \\`last_updated\\`, \\`last_notified\\`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, NULL, ?, NULL) ON DUPLICATE KEY UPDATE \\`level\\`=VALUES(\\`level\\`), \\`trigger_value\\`=VALUES(\\`trigger_value\\`), \\`status\\`='open', \\`rule_id\\`=VALUES(\\`rule_id\\`), \\`opened_at\\`=COALESCE(\\`opened_at\\`, VALUES(\\`opened_at\\`)), \\`closed_at\\`=NULL, \\`last_updated\\`=VALUES(\\`last_updated\\`)`,\n        payload: [\n            event_id, dedup_key, mac, room, sensor, metric, level, value,\n            rule.id, now_sql, now_sql\n        ]\n    };\n}\n\nfunction buildRecoverMsg(event_id) {\n    return {\n        topic:\n            `UPDATE \\`alert_events\\`\nSET \\`status\\`='closed', \\`closed_at\\`=?, \\`last_updated\\`=?, \\`trigger_value\\`=?, \\`level\\`='normal'\nWHERE \\`event_id\\`=?`,\n        payload: [now_sql, now_sql, value, event_id]\n    };\n}\n\nif (state.status !== 'closed' && rawLevel === 'normal' && state.clear_count >= (rule.clear_consec || 1)) {\n    var prevEvent = state.event_id;\n    state.status = 'closed';\n    state.level = 'normal';\n    state.event_id = null;\n    outputs[0] = buildRecoverMsg(prevEvent);\n    outputs[2] = { payload: { type: 'recovery', event_id: prevEvent, mac, sensor, metric, ts: now_iso } };\n}\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= (rule.crit_open_consec || 1)) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= (rule.warn_open_consec || 1)) newLevel = 'warning';\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = state.event_id || uuidv4();\n        outputs[0] = buildOpenMsg(state.event_id, newLevel);\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, mac, sensor, metric, value, ts: now_iso } };\n    }\n}\nelse if (state.status !== 'closed' && rawLevel !== 'normal') {\n    if (state.level === 'warning' && rawLevel === 'critical' &&\n        state.crit_count >= (rule.crit_open_consec || 1)) {\n        state.level = 'critical';\n        outputs[0] = buildOpenMsg(state.event_id, 'critical');\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: state.event_id, mac, sensor, metric, value, ts: now_iso } };\n    } else {\n        outputs[0] = buildOpenMsg(state.event_id, state.level);\n    }\n}\n\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
-        "outputs": 2,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 380,
-        "y": 1000,
-        "wires": [
-            [
-                "7902bafc02d7c331"
-            ],
-            [
-                "7902bafc02d7c331"
-            ]
-        ]
-    },
-    {
-        "id": "7902bafc02d7c331",
-        "type": "mysql",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "mydb": "5e560f07cfec117a",
-        "name": "alert_acks",
-        "x": 530,
-        "y": 1000,
-        "wires": [
-            [
-                "6648cf51d547305f"
-            ]
-        ]
-    },
-    {
-        "id": "6648cf51d547305f",
-        "type": "join",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "Join ack and status",
-        "mode": "custom",
-        "build": "object",
-        "property": "payload",
-        "propertyType": "msg",
-        "key": "ack_type",
-        "joiner": "\\n",
-        "joinerType": "str",
-        "useparts": true,
-        "accumulate": false,
-        "timeout": "5",
-        "count": "2",
-        "reduceRight": false,
-        "reduceExp": "",
-        "reduceInit": "",
-        "reduceInitType": "",
-        "reduceFixup": "",
-        "x": 220,
-        "y": 1060,
-        "wires": [
-            [
-                "c1f4a8e11a42a76e"
-            ]
-        ]
-    },
-    {
-        "id": "c1f4a8e11a42a76e",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "Prepare Success Response",
-        "func": "msg.payload = { ok: true, message: 'Alert acknowledged successfully.' };\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 480,
-        "y": 1060,
-        "wires": [
-            [
-                "b7f1ae01a628fb46",
-                "214bd2f562bea0dd"
-            ]
-        ]
-    },
-    {
-        "id": "b7f1ae01a628fb46",
-        "type": "http response",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "200 OK",
-        "statusCode": "200",
-        "headers": {},
-        "x": 720,
-        "y": 1060,
-        "wires": []
-    },
-    {
-        "id": "214bd2f562bea0dd",
-        "type": "debug",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "debug ack result",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 740,
-        "y": 1000,
+        "x": 3270,
+        "y": 700,
         "wires": []
     },
     {
@@ -2848,25 +2620,14 @@
         "wires": []
     },
     {
-        "id": "2e371fe608dab1c9",
-        "type": "comment",
-        "z": "c0cdca176eedd227",
-        "g": "878839870f21c18f",
-        "name": "รับ Action การรับทราบ Alert มาอัพเดท",
-        "info": "",
-        "x": 240,
-        "y": 960,
-        "wires": []
-    },
-    {
         "id": "635f66dcda15ad8f",
         "type": "comment",
         "z": "c0cdca176eedd227",
         "g": "1c9684d00c28d451",
         "name": "อัพเดทเงื่อนไขในการใช้กับ Alert",
         "info": "",
-        "x": 2460,
-        "y": 1200,
+        "x": 2620,
+        "y": 840,
         "wires": []
     },
     {
@@ -2881,25 +2642,6 @@
         "wires": []
     },
     {
-        "id": "0a86bc6539a2f158",
-        "type": "function",
-        "z": "c0cdca176eedd227",
-        "d": true,
-        "name": "Query alert evet lists",
-        "func": "const q = (msg.req && msg.req.query) ? msg.req.query : {};\nlet sql = 'SELECT * FROM alert_events';\nconst conditions = [];\nconst params = [];\n\nif (q.status) {\n    const statuses = q.status.split(',').map(s => s.trim());\n    conditions.push(`status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\nif (q.mac) {\n    conditions.push('mac = ?');\n    params.push(q.mac);\n}\n// Add other filters like level, sensor_name, etc. similarly\n\nif (q.start && q.end) {\n    conditions.push('opened_at BETWEEN ? AND ?');\n    params.push(new Date(q.start).toISOString().slice(0, 19).replace('T', ' '));\n    params.push(new Date(q.end).toISOString().slice(0, 19).replace('T', ' '));\n}\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY opened_at DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\n\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 920,
-        "y": 1220,
-        "wires": [
-            []
-        ]
-    },
-    {
         "id": "b6294b7b45eb69cc",
         "type": "function",
         "z": "c0cdca176eedd227",
@@ -2912,8 +2654,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1980,
-        "y": 780,
+        "x": 2140,
+        "y": 420,
         "wires": [
             [
                 "d954e3e7f76c543a"
@@ -2927,10 +2669,129 @@
         "g": "6bdd339e33ee4610",
         "mydb": "5e560f07cfec117a",
         "name": "alert_events",
-        "x": 2190,
-        "y": 800,
+        "x": 2350,
+        "y": 440,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "df0843b9df45b9a1",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "name": "POST /api/alerts/:id/ack",
+        "url": "/api/alerts/:id/ack",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 200,
+        "y": 980,
+        "wires": [
+            [
+                "ab55c792c2f49101"
+            ]
+        ]
+    },
+    {
+        "id": "ab55c792c2f49101",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "name": "Insert ack",
+        "func": "// Function: Acknowledge Alert (Correct Version)\n\n// 1. ดึงข้อมูลที่จำเป็นจาก Request ที่เข้ามา\nconst eventId = msg.req.params.id; // ดึง event_id จาก URL\nconst payload = msg.payload || {};\nconst ackNote = payload.ack_note || null;\nconst ackBy = payload.ack_by || 'WebAppUser';\nconst nowSql = new Date().toISOString().slice(0, 19).replace('T', ' ');\n\n// 2. ตรวจสอบว่ามี event_id หรือไม่\nif (!eventId) {\n    msg.statusCode = 400; // Bad Request\n    msg.payload = { ok: false, error: 'Event ID is missing.' };\n    return msg; \n}\n\n// 3. เตรียมคำสั่ง SQL เพื่ออัปเดตตาราง alert_events\n// เราจะเปลี่ยน status เป็น 'ack' และบันทึกข้อมูล ack ลงไปเลย\nmsg.topic = \"UPDATE `alert_events` SET `status` = 'ack', `ack_by` = ?, `ack_note` = ?, `last_updated` = ? WHERE `event_id` = ?;\";\nmsg.payload = [ackBy, ackNote, nowSql, eventId];\n\n// 4. เตรียม Response สำหรับส่งกลับไปหน้าเว็บ\n// เราจะเก็บ response ที่ต้องการส่งกลับไว้ใน msg._responsePayload\nmsg._responsePayload = { ok: true, message: 'Alert acknowledged successfully.' };\n\nreturn msg;",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 980,
+        "wires": [
+            [
+                "0910021c59de5f54",
+                "3eb5c949a433deea"
+            ],
+            [
+                "0910021c59de5f54"
+            ]
+        ]
+    },
+    {
+        "id": "0910021c59de5f54",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "mydb": "5e560f07cfec117a",
+        "name": "alert_acks",
+        "x": 650,
+        "y": 980,
+        "wires": [
+            [
+                "b132c12befc8a3b9"
+            ]
+        ]
+    },
+    {
+        "id": "d1a9de5ab288941b",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {},
+        "x": 760,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "44406ddf7ea6600a",
+        "type": "comment",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "name": "รับ Action การรับทราบ Alert มาอัพเดท",
+        "info": "",
+        "x": 240,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "3eb5c949a433deea",
+        "type": "debug",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 980,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "b132c12befc8a3b9",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "d202e0ad46fe14a1",
+        "name": "Set Final Response",
+        "func": "// Node นี้จะทำหน้าที่นำ Response ที่เราเตรียมไว้มาใส่ใน msg.payload\n// เพื่อส่งกลับไปหน้าเว็บอย่างถูกต้อง\nmsg.payload = msg._responsePayload || { ok: true };\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 1040,
+        "wires": [
+            [
+                "d1a9de5ab288941b"
+            ]
         ]
     },
     {
@@ -2953,8 +2814,8 @@
         "title": "",
         "descr": "",
         "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
-        "x": 1110,
-        "y": 620,
+        "x": 1310,
+        "y": 680,
         "wires": [
             [
                 "1143feaf4788fd3f"
