@@ -354,7 +354,7 @@
             "e76452fe989beaa9"
         ],
         "x": 74,
-        "y": 699,
+        "y": 679,
         "w": 1112,
         "h": 202
     },
@@ -1757,7 +1757,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 190,
-        "y": 840,
+        "y": 820,
         "wires": [
             [
                 "021ffa3c89524f0a"
@@ -1770,7 +1770,7 @@
         "z": "c0cdca176eedd227",
         "g": "c786c427801548b2",
         "name": "Check condition and insert",
-        "func": "// Function: eval_alert_v6.1 (Preserve Final Level on Close)\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\n\nfunction getLocalSqlTimestamp() {\n    const d = new Date();\n    const tzOffset = d.getTimezoneOffset() * 60000;\n    const localTime = new Date(d.getTime() - tzOffset);\n    return localTime.toISOString().slice(0, 19).replace('T', ' ');\n}\nvar now_sql = getLocalSqlTimestamp();\n\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    node.error(\"Invalid payload\", msg);\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    for (const key in deviceMap) {\n        if (key.startsWith('room') && deviceMap[key] === mac) {\n            const roomLetter = key.slice(-1).toUpperCase();\n            return deviceMap[`name${roomLetter}`] || mac;\n        }\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    return null;\n}\n\nrule.warn_open_consec = rule.warn_open_consec ?? 2;\nrule.crit_open_consec = rule.crit_open_consec ?? 1;\nrule.clear_consec = rule.clear_consec ?? 2;\n\nvar state = states[dedup_key] || {\n    status: 'closed',\n    level: 'normal',\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    event_id: null,\n};\n\nvar rawLevel = determineRawLevel(value, rule);\n\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else {\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\nvar outputs = [null, null, null];\nvar room = getRoomName(mac);\n\n// A) RECOVERY: Close an existing open incident (✅ Level is preserved!)\nif (state.status === 'open' && rawLevel === 'normal' && state.clear_count >= rule.clear_consec) {\n    const eventToClose = state.event_id;\n    const finalLevel = state.level; // Get the last known level before closing\n    const recoveryNote = `System Recovery`;\n    \n    // Update state in memory\n    state.status = 'closed';\n    state.level = 'normal'; // Reset state for next incident\n    state.event_id = null;\n    \n    outputs[0] = {\n        topic: `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='closed', \\`closed_at\\`=?, \\`trigger_value\\`=?, \\`ack_by\\`='system', \\`ack_note\\`=?\n            WHERE \\`event_id\\`=?;\n            \n            INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`note\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n            VALUES (?, 'close', ?, ?, 'system', ?, ?, ?, ?, ?);\n        `,\n        payload: [\n            // Payload for UPDATE alert_events\n            now_sql, value, recoveryNote, eventToClose,\n            // Payload for INSERT alert_event_log\n            eventToClose, finalLevel, value, now_sql, recoveryNote, mac, sensor, metric\n        ]\n    };\n    outputs[2] = { payload: { type: 'recovery', event_id: eventToClose, dedup_key: dedup_key, mac, sensor, metric, ts: now_iso } };\n}\n\n// B) OPEN NEW INCIDENT: Always a new row\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= rule.warn_open_consec) newLevel = 'warning';\n\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = uuidv4(); \n        \n        outputs[0] = {\n            topic: `\n                INSERT INTO \\`alert_events\\` \n                    (\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`, \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`) \n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?);\n                \n                INSERT INTO \\`alert_event_log\\` \n                    (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'open', ?, ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                state.event_id, dedup_key, mac, room, sensor, metric, newLevel, value, rule.id, now_sql,\n                state.event_id, newLevel, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    }\n}\n\n// C) UPDATE EXISTING OPEN INCIDENT (Upgrade or Heartbeat)\nelse if (state.status === 'open' && rawLevel !== 'normal') {\n    const eventToUpdate = state.event_id;\n    if (state.level === 'warning' && rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) {\n        state.level = 'critical';\n        \n        outputs[0] = {\n            topic: `\n                UPDATE \\`alert_events\\` \n                SET \\`level\\`='critical', \\`trigger_value\\`=?, \\`room_name\\`=? \n                WHERE \\`event_id\\`=?;\n                \n                INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'upgrade', 'critical', ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                value, room, eventToUpdate,\n                eventToUpdate, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: eventToUpdate, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    } else {\n        // Just a heartbeat update\n        outputs[0] = {\n            topic: `UPDATE \\`alert_events\\` SET \\`trigger_value\\`=?, \\`room_name\\`=? WHERE \\`event_id\\`=?;`,\n            payload: [value, room, eventToUpdate]\n        };\n    }\n}\n\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
+        "func": "// Function: eval_alert_v6.1 (Preserve Final Level on Close)\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\n\nfunction getLocalSqlTimestamp() {\n    const d = new Date();\n    const tzOffset = d.getTimezoneOffset() * 60000;\n    const localTime = new Date(d.getTime() - tzOffset);\n    return localTime.toISOString().slice(0, 19).replace('T', ' ');\n}\nvar now_sql = getLocalSqlTimestamp();\n\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    node.error(\"Invalid payload\", msg);\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    for (const key in deviceMap) {\n        if (key.startsWith('room') && deviceMap[key] === mac) {\n            const roomLetter = key.slice(-1).toUpperCase();\n            return deviceMap[`name${roomLetter}`] || mac;\n        }\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    return null;\n}\n\nrule.warn_open_consec = rule.warn_open_consec ?? 2;\nrule.crit_open_consec = rule.crit_open_consec ?? 1;\nrule.clear_consec = rule.clear_consec ?? 2;\n\nvar state = states[dedup_key] || {\n    status: 'closed',\n    level: 'normal',\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    event_id: null,\n};\n\nvar rawLevel = determineRawLevel(value, rule);\n\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else {\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\nvar outputs = [null, null, null];\nvar room = getRoomName(mac);\n\n// A) RECOVERY: Close an existing open or acknowledged incident\nif ((state.status === 'open' || state.status === 'ack') && rawLevel === 'normal' && state.clear_count >= rule.clear_consec) {\n\n    const eventToClose = state.event_id;\n    const originalStatus = state.status;\n    const finalLevel = state.level; \n\n    // Update state in memory for the next event\n    state.status = 'closed';\n    state.level = 'normal';\n    state.event_id = null;\n\n    let updateSql;\n    let updatePayload;\n    let logNote;\n\n    if (originalStatus === 'ack') {\n        // Case 1: Alert was already acknowledged\n        // Just change status to 'closed', set closed_at, and keep ack_by/ack_note\n        logNote = 'System Recovery (post-acknowledgement)';\n        updateSql = `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='closed', \\`closed_at\\`=?\n            WHERE \\`event_id\\`=? AND \\`status\\` = 'ack';\n        `; // <-- FIX: Added AND `status` = 'ack'\n        updatePayload = [now_sql, eventToClose];\n\n    } else { // originalStatus must be 'open'\n        // Case 2: Alert was open but not yet acknowledged\n        // Close the alert and mark it as closed by the system\n        logNote = 'System Recovery';\n        updateSql = `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='closed', \\`closed_at\\`=?, \\`ack_by\\`='system', \\`ack_note\\`=?\n            WHERE \\`event_id\\`=? AND \\`status\\` = 'open';\n        `;\n        updatePayload = [now_sql, logNote, eventToClose];\n    }\n\n    // Create the INSERT statement for the log table (common for both cases)\n    const logSql = `\n        INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`note\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n        VALUES (?, 'close', ?, ?, 'system', ?, ?, ?, ?, ?);\n    `;\n    const logPayload = [eventToClose, finalLevel, value, now_sql, logNote, mac, sensor, metric];\n\n    outputs[0] = {\n        topic: updateSql + logSql,\n        payload: [...updatePayload, ...logPayload]\n    };\n\n    outputs[2] = { payload: { type: 'recovery', event_id: eventToClose, dedup_key: dedup_key, mac, sensor, metric, ts: now_iso } };\n}\n\n// B) OPEN NEW INCIDENT: Always a new row\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= rule.warn_open_consec) newLevel = 'warning';\n\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = uuidv4();\n\n        outputs[0] = {\n            topic: `\n                INSERT INTO \\`alert_events\\` \n                    (\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`, \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`) \n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?);\n                \n                INSERT INTO \\`alert_event_log\\` \n                    (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'open', ?, ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                state.event_id, dedup_key, mac, room, sensor, metric, newLevel, value, rule.id, now_sql,\n                state.event_id, newLevel, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    }\n}\n\n// C) UPDATE EXISTING OPEN INCIDENT (Upgrade or Heartbeat)\nelse if (state.status === 'open' && rawLevel !== 'normal') {\n    const eventToUpdate = state.event_id;\n    if (state.level === 'warning' && rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) {\n        state.level = 'critical';\n\n        outputs[0] = {\n            topic: `\n                UPDATE \\`alert_events\\` \n                SET \\`level\\`='critical', \\`trigger_value\\`=?, \\`room_name\\`=? \n                WHERE \\`event_id\\`=?;\n                \n                INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'upgrade', 'critical', ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                value, room, eventToUpdate,\n                eventToUpdate, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: eventToUpdate, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    } else {\n        // Just a heartbeat update\n        outputs[0] = {\n            topic: `UPDATE \\`alert_events\\` SET \\`last_updated\\`=? WHERE \\`event_id\\`=?;`,\n            payload: [now_sql, eventToUpdate]\n        };\n    }\n}\n\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
@@ -1778,7 +1778,7 @@
         "finalize": "",
         "libs": [],
         "x": 620,
-        "y": 840,
+        "y": 820,
         "wires": [
             [
                 "6daf156cc54d455a",
@@ -1800,7 +1800,7 @@
         "mydb": "5e560f07cfec117a",
         "name": "alert_events",
         "x": 850,
-        "y": 760,
+        "y": 740,
         "wires": [
             []
         ]
@@ -1870,7 +1870,7 @@
         "onceDelay": "10",
         "topic": "",
         "x": 240,
-        "y": 780,
+        "y": 760,
         "wires": [
             [
                 "54b2a2871733d5e7"
@@ -1891,7 +1891,7 @@
         "finalize": "",
         "libs": [],
         "x": 480,
-        "y": 780,
+        "y": 760,
         "wires": [
             [
                 "6daf156cc54d455a"
@@ -2121,7 +2121,7 @@
         "finalize": "",
         "libs": [],
         "x": 400,
-        "y": 840,
+        "y": 820,
         "wires": [
             [
                 "676bd48cd34d868a"
@@ -2645,7 +2645,7 @@
         "statusVal": "payload.type",
         "statusType": "msg",
         "x": 1090,
-        "y": 820,
+        "y": 800,
         "wires": []
     },
     {
@@ -2656,7 +2656,7 @@
         "name": "รับข้อมูล Sensor มาประเมินเงื่อนไข",
         "info": "",
         "x": 230,
-        "y": 740,
+        "y": 720,
         "wires": []
     },
     {
@@ -2739,7 +2739,7 @@
         "z": "c0cdca176eedd227",
         "g": "d202e0ad46fe14a1",
         "name": "Insert ack",
-        "func": "// Function: Acknowledge Alert (Correct Version)\n\n// 1. ดึงข้อมูลที่จำเป็นจาก Request ที่เข้ามา\nconst eventId = msg.req.params.id; // ดึง event_id จาก URL\nconst payload = msg.payload || {};\nconst ackNote = payload.ack_note || null;\nconst ackBy = payload.ack_by || 'WebAppUser';\nconst nowSql = new Date().toISOString().slice(0, 19).replace('T', ' ');\n\n// 2. ตรวจสอบว่ามี event_id หรือไม่\nif (!eventId) {\n    msg.statusCode = 400; // Bad Request\n    msg.payload = { ok: false, error: 'Event ID is missing.' };\n    return msg; \n}\n\n// 3. เตรียมคำสั่ง SQL เพื่ออัปเดตตาราง alert_events\n// เราจะเปลี่ยน status เป็น 'ack' และบันทึกข้อมูล ack ลงไปเลย\nmsg.topic = \"UPDATE `alert_events` SET `status` = 'ack', `ack_by` = ?, `ack_note` = ?, `last_updated` = ? WHERE `event_id` = ?;\";\nmsg.payload = [ackBy, ackNote, nowSql, eventId];\n\n// 4. เตรียม Response สำหรับส่งกลับไปหน้าเว็บ\n// เราจะเก็บ response ที่ต้องการส่งกลับไว้ใน msg._responsePayload\nmsg._responsePayload = { ok: true, message: 'Alert acknowledged successfully.' };\n\nreturn msg;",
+        "func": "// Function: Prepare ACK Query\n\nconst eventId = msg.req.params.id;\nconst payload = msg.payload || {};\nconst ackNote = payload.ack_note || null;\nconst ackBy = payload.ack_by || 'WebAppUser';\nconst nowSql = new Date().toISOString().slice(0, 19).replace('T', ' ');\n\nif (!eventId) {\n    msg.statusCode = 400;\n    msg.payload = { ok: false, error: 'Event ID is missing.' };\n    return msg;\n}\n\n// สร้าง Multi-statement SQL: 1. อัปเดต, 2. ดึง dedup_key กลับมาเพื่ออัปเดต state\nmsg.topic = `\n    UPDATE \\`alert_events\\` SET \\`status\\` = 'ack', \\`ack_by\\` = ?, \\`ack_note\\` = ?, \\`last_updated\\` = ? WHERE \\`event_id\\` = ? AND \\`status\\` = 'open';\n    SELECT dedup_key FROM \\`alert_events\\` WHERE \\`event_id\\` = ?;\n`;\nmsg.payload = [ackBy, ackNote, nowSql, eventId, eventId];\n\n// เก็บ response ที่จะส่งกลับ UI ไว้ก่อน\nmsg._responsePayload = { ok: true, message: 'Alert acknowledged successfully.' };\n\nreturn msg;",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
@@ -2819,7 +2819,7 @@
         "z": "c0cdca176eedd227",
         "g": "d202e0ad46fe14a1",
         "name": "Set Final Response",
-        "func": "// Node นี้จะทำหน้าที่นำ Response ที่เราเตรียมไว้มาใส่ใน msg.payload\n// เพื่อส่งกลับไปหน้าเว็บอย่างถูกต้อง\nmsg.payload = msg._responsePayload || { ok: true };\nreturn msg;",
+        "func": "// Function: Update Context After ACK & Set Final Response\n\n// msg.payload จาก MySQL แบบ multi-statement จะมาเป็น Array [[...], [...]]\nconst dbResult = msg.payload;\n\n// ตรวจสอบว่าผลลัพธ์ที่สอง (SELECT) มีข้อมูล dedup_key กลับมาหรือไม่\nif (Array.isArray(dbResult) && dbResult.length > 1 && Array.isArray(dbResult[1]) && dbResult[1].length > 0) {\n    const dedup_key = dbResult[1][0].dedup_key;\n    if (dedup_key) {\n        const states = flow.get('alert_states') || {};\n        if (states[dedup_key]) {\n            // อัปเดตสถานะใน \"ความจำ\" ของ Node-RED ให้เป็น 'ack'\n            states[dedup_key].status = 'ack';\n            flow.set('alert_states', states);\n            node.status({ fill: \"green\", shape: \"dot\", text: `Context updated for ${dedup_key}` });\n        } else {\n            node.warn(`State not found in context for dedup_key: ${dedup_key}`);\n        }\n    }\n}\n\n// นำ Response ที่เตรียมไว้มาใส่กลับเข้าไปเพื่อส่งให้ UI\nmsg.payload = msg._responsePayload || { ok: true };\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -2849,7 +2849,7 @@
         "statusVal": "payload.type",
         "statusType": "msg",
         "x": 1090,
-        "y": 860,
+        "y": 840,
         "wires": []
     },
     {
