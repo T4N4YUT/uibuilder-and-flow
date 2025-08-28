@@ -1624,6 +1624,100 @@
             width: 60rem;
             max-width: 90vw !important;
         }
+
+        #qa-alert-card,
+        #card-critical,
+        #card-warning {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+
+        #qa-alert-card:hover,
+        #card-critical:hover,
+        #card-warning:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+        }
+
+        /* === CSS for Alert Chips in Detail Modal === */
+        /* === CSS for Alert Chips in Detail Modal V4 (Taller & Bigger Font) === */
+        #detail-alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-top: 4px;
+        }
+
+        .alert-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.6rem 0.8rem;
+            /* <-- ปรับแก้: เพิ่ม padding แนวตั้งและแนวนอน ทำให้กรอบสูงขึ้น */
+            border-radius: 0.5rem;
+            font-weight: 500;
+            line-height: 1.2;
+            border: 1px solid transparent;
+        }
+
+        .alert-chip-info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+            /* <-- ปรับแก้: เพิ่มขนาดตัวอักษรให้ใหญ่ขึ้น */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .alert-chip-info strong {
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        .alert-chip .icon {
+            font-size: 0.95rem;
+            /* ขยาย icon ตามเล็กน้อย */
+            flex-shrink: 0;
+        }
+
+        .btn-ack-chip {
+            padding: 0.5rem 1rem;
+            /* ขยายปุ่มเล็กน้อยให้สมดุล */
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            border-radius: 0.375rem;
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #93c5fd;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-ack-chip:hover {
+            background-color: rgba(59, 130, 246, 0.4);
+            border-color: rgba(59, 130, 246, 0.8);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        /* สีสำหรับ Critical */
+        .alert-chip-critical {
+            background-color: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        /* สีสำหรับ Warning */
+        .alert-chip-warning {
+            background-color: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #fcd34d;
+        }
     </style>
 
 </head>
@@ -1750,6 +1844,51 @@
                 <!-- Sidebar -->
                 <aside class="self-stretch h-full">
                     <div class="space-y-4 pr-1">
+
+                        <div id="qa-alert-card"
+                            class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)] cursor-pointer">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-lg font-semibold">🔔 Alerts</h4>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                                <div id="card-critical"
+                                    class="p-4 rounded-lg border border-[var(--border)] bg-opacity-60 cursor-pointer">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div>
+                                            <div class="text-xs text-[var(--muted)]">Critical</div>
+                                            <div id="count-critical" class="text-3xl font-extrabold text-red-400">0
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-[rgba(248,113,113,0.08)] flex items-center justify-center">
+                                            <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                                        </div>
+                                    </div>
+                                    <ul id="list-critical"
+                                        class="text-sm text-[var(--muted)] space-y-1 max-h-24 overflow-y-auto mt-3">
+                                    </ul>
+                                </div>
+
+                                <div id="card-warning"
+                                    class="p-4 rounded-lg border border-[var(--border)] bg-opacity-60 cursor-pointer">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div>
+                                            <div class="text-xs text-[var(--muted)]">Warning</div>
+                                            <div id="count-warning" class="text-3xl font-extrabold text-yellow-400">0
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-[rgba(251,191,36,0.06)] flex items-center justify-center">
+                                            <i class="fa-solid fa-triangle-exclamation text-yellow-400"></i>
+                                        </div>
+                                    </div>
+                                    <ul id="list-warning"
+                                        class="text-sm text-[var(--muted)] space-y-1 max-h-24 overflow-y-auto mt-3">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                         <div class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)]">
                             <h4 class="text-lg font-semibold mb-3">📈 System summary</h4>
                             <div class="grid grid-cols-2 gap-3">
@@ -1771,56 +1910,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)]">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="text-lg font-semibold">🔔 Alerts</h4>
-                                <a class="text-sm text-[var(--muted)] hover:text-white" href="#">View all</a>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                                <!-- Critical Card -->
-                                <div id="card-critical"
-                                    class="p-4 rounded-lg border border-[var(--border)] bg-opacity-60">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div>
-                                            <div class="text-xs text-[var(--muted)]">Critical</div>
-                                            <div id="count-critical" class="text-3xl font-extrabold text-red-400">0
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="w-10 h-10 rounded-full bg-[rgba(248,113,113,0.08)] flex items-center justify-center">
-                                            <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
-                                        </div>
-                                    </div>
-                                    <ul id="list-critical"
-                                        class="text-sm text-[var(--muted)] space-y-1 max-h-24 overflow-y-auto mt-3">
-                                        <!-- JS จะเติม <li> ที่นี่ -->
-                                    </ul>
-                                </div>
-
-                                <!-- Warning Card -->
-                                <div id="card-warning"
-                                    class="p-4 rounded-lg border border-[var(--border)] bg-opacity-60">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div>
-                                            <div class="text-xs text-[var(--muted)]">Warning</div>
-                                            <div id="count-warning" class="text-3xl font-extrabold text-yellow-400">0
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="w-10 h-10 rounded-full bg-[rgba(251,191,36,0.06)] flex items-center justify-center">
-                                            <i class="fa-solid fa-triangle-exclamation text-yellow-400"></i>
-                                        </div>
-                                    </div>
-                                    <ul id="list-warning"
-                                        class="text-sm text-[var(--muted)] space-y-1 max-h-24 overflow-y-auto mt-3">
-                                        <!-- JS จะเติม <li> ที่นี่ -->
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Quick Actions -->
                         <div id="qa-card" class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)]">
                             <div class="flex items-center justify-between mb-3">
@@ -1863,13 +1952,6 @@
                                     title="Recipients">
                                     <i class="fa-solid fa-paper-plane"></i>
                                 </button>
-                                <button id="qa-alerts"
-                                    class="px-3 py-2 rounded-lg border border-[var(--border)] hover:bg-white/5 relative"
-                                    title="Alert Center">
-                                    <i class="fa-solid fa-bell"></i>
-                                    <span id="qa-alert-count"
-                                        class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full hidden items-center justify-center">0</span>
-                                </button>
                                 <div aria-hidden="true"></div>
                             </div>
 
@@ -1909,13 +1991,13 @@
                         <div class="detail-card flex-1 min-h-0" id="detail-card-alerts">
                             <h6 class="detail-card-title">🔔 Room Alerts</h6>
                             <div class="detail-card-content overflow-y-auto">
-                                <ul id="detail-alert-list" class="space-y-2">
+                                <ul id="detail-alert-list">
                                     <li class="text-center text-[var(--muted)] mt-4">No active alerts</li>
                                 </ul>
                             </div>
                         </div>
                         <div class="detail-card">
-                            <h6 class="detail-card-title">📈 System summary</h6>
+                            <h6 class="detail-card-title">📡 Live data</h6>
                             <!-- KPIs -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
                                 <!-- Temperature -->
@@ -2106,27 +2188,56 @@
                 onclick="event.stopPropagation()">
 
                 <div class="flex-shrink-0 p-4 border-b border-[var(--border)] flex justify-between items-center">
-                    <h5 class="font-semibold text-lg">🚨 Alert Center</h5>
+                    <h5 class="font-semibold text-lg">Alerts Center</h5>
                     <button class="flex items-center justify-center h-10 w-10 rounded-lg btn-close-custom"
                         data-close="modal-alert-center">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
 
-                <div class="flex-shrink-0 p-3 border-b border-[var(--border)] grid grid-cols-4 gap-3">
-                    <input type="text" id="alert-filter-search" class="config-input col-span-2"
-                        placeholder="Search MAC, Sensor...">
-                    <select id="alert-filter-level" class="config-select">
-                        <option value="">All Levels</option>
-                        <option value="critical">Critical</option>
-                        <option value="warning">Warning</option>
-                    </select>
-                    <select id="alert-filter-status" class="config-select">
-                        <option value="open,ack">Active (Open/ACK)</option>
-                        <option value="open">Open</option>
-                        <option value="ack">Acknowledged</option>
-                        <option value="closed">Closed (History)</option>
-                    </select>
+                <div class="flex-shrink-0 p-4 border-b border-[var(--border)]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        <div class="md:col-span-2">
+                            <label for="alert-filter-search"
+                                class="text-sm font-medium text-slate-400 mb-1 block">Search</label>
+                            <input type="text" id="alert-filter-search" class="config-input"
+                                placeholder="Search MAC, Sensor, Note...">
+                        </div>
+                        <div>
+                            <label for="alert-filter-level"
+                                class="text-sm font-medium text-slate-400 mb-1 block">Level</label>
+                            <select id="alert-filter-level" class="config-select">
+                                <option value="">All Levels</option>
+                                <option value="critical">Critical</option>
+                                <option value="warning">Warning</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="alert-filter-status"
+                                class="text-sm font-medium text-slate-400 mb-1 block">Status</label>
+                            <select id="alert-filter-status" class="config-select">
+                                <option value="open,ack">Active(Open/ACK)</option>
+                                <option value="open">Open</option>
+                                <option value="ack">Acknowledged</option>
+                                <option value="closed">Closed (History)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="alert-filter-start-date"
+                                class="text-sm font-medium text-slate-400 mb-1 block">Start</label>
+                            <input type="datetime-local" id="alert-filter-start-date" class="config-input">
+                        </div>
+                        <div>
+                            <label for="alert-filter-end-date"
+                                class="text-sm font-medium text-slate-400 mb-1 block">End</label>
+                            <input type="datetime-local" id="alert-filter-end-date" class="config-input">
+                        </div>
+                        <div class="lg:col-start-4 flex gap-2">
+                            <button id="alert-filter-apply" class="btn btn-primary w-full"><i
+                                    class="fa-solid fa-check mr-2"></i>Apply</button>
+                            <button id="alert-filter-reset" class="btn w-full">Reset</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex-grow overflow-y-auto">
@@ -2435,24 +2546,24 @@
                     <div class="config-row">
                         <label class="config-label">
                             <span class="icon text-red-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Critical Low Temperature
+                                    aria-hidden="true"></i></span>Critical Low
                             <input id="temp-crit-low" type="number" step="0.1" class="config-input mt-1">
                         </label>
                         <label class="config-label">
                             <span class="icon text-amber-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Warning Low Temperature
+                                    aria-hidden="true"></i></span>Warning Low
                             <input id="temp-warn-low" type="number" step="0.1" class="config-input mt-1">
                         </label>
                     </div>
                     <div class="config-row" style="margin-top:.75rem">
                         <label class="config-label">
                             <span class="icon text-amber-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Warning High Temperature
+                                    aria-hidden="true"></i></span>Warning High
                             <input id="temp-warn-high" type="number" step="0.1" class="config-input mt-1">
                         </label>
                         <label class="config-label">
                             <span class="icon text-red-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Critical High Temperature
+                                    aria-hidden="true"></i></span>Critical High
                             <input id="temp-crit-high" type="number" step="0.1" class="config-input mt-1">
                         </label>
                     </div>
@@ -2464,24 +2575,24 @@
                     <div class="config-row">
                         <label class="config-label">
                             <span class="icon text-red-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Critical Low Humidity
+                                    aria-hidden="true"></i></span>Critical Low
                             <input id="hum-crit-low" type="number" step="0.1" class="config-input mt-1">
                         </label>
                         <label class="config-label">
                             <span class="icon text-amber-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Warning Low Humidity
+                                    aria-hidden="true"></i></span>Warning Low
                             <input id="hum-warn-low" type="number" step="0.1" class="config-input mt-1">
                         </label>
                     </div>
                     <div class="config-row" style="margin-top:.75rem">
                         <label class="config-label">
                             <span class="icon text-amber-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Warning High Humidity
+                                    aria-hidden="true"></i></span>Warning High
                             <input id="hum-warn-high" type="number" step="0.1" class="config-input mt-1">
                         </label>
                         <label class="config-label">
                             <span class="icon text-red-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Critical High Humidity
+                                    aria-hidden="true"></i></span>Critical High
                             <input id="hum-crit-high" type="number" step="0.1" class="config-input mt-1">
                         </label>
                     </div>
@@ -2566,8 +2677,8 @@
                     <div class="pr-6 pb-6 border-r border-b border-dashed border-[var(--border)]">
                         <div class="space-y-3">
                             <div>
-                                <label for="name_room_a"
-                                    class="block text-xs font-medium text-[var(--muted)] mb-1">Name</label>
+                                <label for="name_room_a" class="block text-xs font-medium text-[var(--muted)] mb-1">Room
+                                    name</label>
                                 <input type="text" id="name_room_a" name="name_room_a" placeholder=""
                                     class="config-input">
                             </div>
@@ -2583,8 +2694,8 @@
                     <div class="pl-6 pb-6 border-b border-dashed border-[var(--border)]">
                         <div class="space-y-3">
                             <div>
-                                <label for="name_room_b"
-                                    class="block text-xs font-medium text-[var(--muted)] mb-1">Name</label>
+                                <label for="name_room_b" class="block text-xs font-medium text-[var(--muted)] mb-1">Room
+                                    name</label>
                                 <input type="text" id="name_room_b" name="name_room_b" placeholder=""
                                     class="config-input">
                             </div>
@@ -2600,8 +2711,8 @@
                     <div class="pr-6 pt-6 border-r border-dashed border-[var(--border)]">
                         <div class="space-y-3">
                             <div>
-                                <label for="name_room_c"
-                                    class="block text-xs font-medium text-[var(--muted)] mb-1">Name</label>
+                                <label for="name_room_c" class="block text-xs font-medium text-[var(--muted)] mb-1">Room
+                                    name</label>
                                 <input type="text" id="name_room_c" name="name_room_c" placeholder=""
                                     class="config-input">
                             </div>
@@ -2617,8 +2728,8 @@
                     <div class="pl-6 pt-6">
                         <div class="space-y-3">
                             <div>
-                                <label for="name_room_d"
-                                    class="block text-xs font-medium text-[var(--muted)] mb-1">Name</label>
+                                <label for="name_room_d" class="block text-xs font-medium text-[var(--muted)] mb-1">Room
+                                    name</label>
                                 <input type="text" id="name_room_d" name="name_room_d" placeholder=""
                                     class="config-input">
                             </div>
@@ -2649,7 +2760,7 @@
             class="absolute right-6 top-6 bg-[var(--panel)] border border-[var(--border)] rounded-xl p-0 w-[48rem] max-w-[95vw] flex flex-col max-h-[calc(100vh-3rem)]">
 
             <div class="config-header flex-shrink-0">
-                <h5 class="font-semibold text-lg">✈️ Notification Settings</h5>
+                <h5 class="font-semibold text-lg">Notification Settings</h5>
                 <button class="flex items-center justify-center h-10 w-10 rounded-lg btn-close-custom"
                     data-close="modal-recipients" aria-label="Close">
                     <i class="fa-solid fa-xmark text-xl"></i>
@@ -2740,6 +2851,8 @@
             if (typeof applyPinNames === 'function') applyPinNames?.();
             uibuilder.start();
             initAllRoomsOffline();
+            fetchAlertSummaryAndRender();
+            setInterval(fetchAlertSummaryAndRender, 5000);
             console.log('[System] 🚀 Starting initial config fetch for all online devices...');
             const rooms = ['room-a', 'room-b', 'room-c', 'room-d'];
             const fetchPromises = rooms.map(async (roomId) => {
@@ -3122,9 +3235,11 @@
             window.liveAlertSettings = {};
             const CFG_REQUEST_TIMEOUT_MS = 3000;
             async function fetchConfigWithRetry(roomId, mac, retries = 5) {
-                if (!mac) return;
+                if (!mac) return; // ออกทันทีถ้าไม่มี MAC Address
+
                 const requestId = uuid();
 
+                // ส่งคำขอไปยังอุปกรณ์ผ่าน MQTT
                 uibuilder.send({
                     topic: `esp32/control/${mac}/request_config`,
                     payload: { command: "get_config", room: roomId, mac, requestId }
@@ -3132,30 +3247,57 @@
 
                 console.log(`[ConfigFetcher] Sent request ID: ${requestId} to MAC: ${mac} (Room: ${roomId})`);
 
-                let timeout = new Promise(resolve => setTimeout(() => resolve(null), 3000)); // เพิ่ม timeout
-                let responsePromise = new Promise(resolve => {
-                    const handler = (msg) => {
-                        if (msg.payload?.requestId === requestId && msg.payload?.mac_address === mac) {
-                            uibuilder.onChange('msg', handler, false); // แก้ไขเป็น onChange
-                            resolve(msg.payload);
+                let handler; // ประกาศ handler ไว้นอก Promise เพื่อให้เข้าถึงได้จากทุกที่
+
+                // สร้าง Promise สำหรับจัดการ Timeout
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => {
+                        if (handler) {
+                            uibuilder.onChange('msg', handler, false); // ยกเลิกการดักฟังเมื่อหมดเวลา
+                        }
+                        reject(new Error('timeout'));
+                    }, CFG_REQUEST_TIMEOUT_MS)
+                );
+
+                // สร้าง Promise สำหรับรอข้อความตอบกลับ
+                const responsePromise = new Promise((resolve, reject) => {
+                    handler = (msg) => {
+                        try {
+                            // ตรวจสอบว่า msg และ payload มีอยู่จริง และตรงกับ requestId ที่รออยู่
+                            if (msg?.payload && msg.payload.requestId === requestId && msg.payload.mac_address === mac) {
+                                uibuilder.onChange('msg', handler, false); // ยกเลิกการดักฟังทันทีที่เจอข้อความ
+                                resolve(msg.payload);
+                            }
+                        } catch (e) {
+                            console.error("Error inside uibuilder message handler:", e);
+                            uibuilder.onChange('msg', handler, false); // ยกเลิกการดักฟังหากเกิด Error
+                            reject(e);
                         }
                     };
-                    uibuilder.onChange('msg', handler); // แก้ไขเป็น onChange
+                    uibuilder.onChange('msg', handler); // เริ่มดักฟังข้อความ
                 });
 
-                const config = await Promise.race([responsePromise, timeout]);
+                try {
+                    // รอว่าระหว่าง responsePromise กับ timeoutPromise อะไรจะเสร็จก่อน
+                    const config = await Promise.race([responsePromise, timeoutPromise]);
 
-                if (config) {
-                    console.log(`[ConfigFetcher] ✅ Config for ${roomId} received!`);
-                    if (config.alerts) {
-                        window.liveAlertSettings[roomId] = {
-                            temp: { critLow: config.alerts.temp_crit_low, warnLow: config.alerts.temp_warn_low, warnHigh: config.alerts.temp_warn_high, critHigh: config.alerts.temp_crit_high },
-                            hum: { critLow: config.alerts.hum_crit_low, warnLow: config.alerts.hum_warn_low, warnHigh: config.alerts.hum_warn_high, critHigh: config.alerts.hum_crit_high }
-                        };
+                    // ถ้าได้รับ config สำเร็จ (responsePromise ชนะ)
+                    if (config) {
+                        console.log(`[ConfigFetcher] ✅ Config for ${roomId} received!`);
+                        if (config.alerts) {
+                            // อัปเดตค่า Thresholds ที่เก็บไว้ในหน่วยความจำ
+                            window.liveAlertSettings[roomId] = {
+                                temp: { critLow: config.alerts.temp_crit_low, warnLow: config.alerts.temp_warn_low, warnHigh: config.alerts.temp_warn_high, critHigh: config.alerts.temp_crit_high },
+                                hum: { critLow: config.alerts.hum_crit_low, warnLow: config.alerts.hum_warn_low, warnHigh: config.alerts.hum_warn_high, critHigh: config.alerts.hum_crit_high }
+                            };
+                        }
                     }
-                } else {
-                    console.warn(`[ConfigFetcher] 👎 No config for ${roomId}. ${retries} retries left.`);
+
+                } catch (error) {
+                    // ถ้าเกิด Timeout หรือ Error (timeoutPromise ชนะ หรือมีปัญหา)
+                    console.warn(`[ConfigFetcher] 👎 No config for ${roomId}. ${retries} retries left. Reason: ${error.message}`);
                     if (retries > 0) {
+                        // ถ้ายังลองใหม่ได้อีก ให้หน่วงเวลา 5 วินาทีแล้วลองอีกครั้ง
                         setTimeout(() => fetchConfigWithRetry(roomId, mac, retries - 1), 5000);
                     } else {
                         console.error(`[ConfigFetcher] ❌ Failed to fetch config for ${roomId} after multiple retries.`);
@@ -3972,9 +4114,9 @@
                         if (point.dataType === 'dew') {
                             dynamicLabel = 'Dew Point(Overall)';
                         } else if (point.pinId === 'overall') {
-                            dynamicLabel = `${point.dataType === 'temp' ? 'Temp' : 'RH'} (Overall)`;
+                            dynamicLabel = `${point.dataType === 'temp' ? 'Temp' : 'Humi'} (Overall)`;
                         } else {
-                            dynamicLabel = `${point.dataType === 'temp' ? 'Temp' : 'RH'} ${getDynamicPinLabel(point.pinId)}`;
+                            dynamicLabel = `${point.dataType === 'temp' ? 'Temp' : 'Humi'} ${getDynamicPinLabel(point.pinId)}`;
                         }
 
                         innerHtml += `
@@ -4061,6 +4203,90 @@
                 if (!asc(h)) return { ok: false, msg: '❌ ช่วง Humidity ต้องเรียง: Crit Low < Warn Low < Warn High < Crit High' };
                 return { ok: true };
             }
+            /**
+            * @param {Array<Object>} alerts - Array ของ object แจ้งเตือนสำหรับห้องนี้
+            */
+            function renderDetailAlerts(alerts) {
+                const listEl = document.getElementById('detail-alert-list');
+                if (!listEl) return;
+
+                // ฟังก์ชันย่อยสำหรับหา condition (High/Low) - (ใช้ตัวเดิมจากครั้งที่แล้ว)
+                const getConditionText = (alert) => {
+                    const roomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
+                    if (!roomId || !window.liveAlertSettings || !window.liveAlertSettings[roomId]) {
+                        return '';
+                    }
+                    const thresholds = window.liveAlertSettings[roomId][alert.metric];
+                    if (!thresholds || typeof alert.trigger_value !== 'number') {
+                        return '';
+                    }
+                    if (alert.trigger_value > thresholds.warnHigh) {
+                        return 'High';
+                    }
+                    if (alert.trigger_value < thresholds.warnLow) {
+                        return 'Low';
+                    }
+                    return 'Threshold Event';
+                };
+
+                listEl.classList.remove('space-y-2');
+                listEl.innerHTML = '';
+
+                if (!alerts || alerts.length === 0) {
+                    listEl.innerHTML = '<li class="text-center text-[var(--muted)] mt-4 w-full">No active alerts for this room</li>';
+                    return;
+                }
+
+                // --- ✨ จุดที่เราจะแก้ไข HTML และเพิ่มปุ่ม ACK ✨ ---
+                const alertChipsHtml = alerts.map(alert => {
+                    const levelClass = alert.level === 'critical' ? 'alert-chip-critical' : 'alert-chip-warning';
+                    const icon = '<i class="fa-solid fa-triangle-exclamation icon"></i>';
+
+                    // 1. จัดรูปแบบวันที่และเวลา
+                    const dateTimeText = new Date(alert.opened_at).toLocaleString('th-TH', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                        hour12: false
+                    }).replace(',', '');
+
+                    // 2. หาชื่อ Sensor
+                    const mac = window.ROOM_TO_MAC_MAP?.[alert.room_id] || alert.mac;
+                    const pinMap = mac ? (window.MAC_PIN_NAMES?.[mac] || {}) : {};
+                    const sensorNameText = (String(alert.sensor_name).toLowerCase() === 'overall')
+                        ? 'OVERALL'
+                        : (pinMap[`name_pin_${alert.sensor_name}`] || `Pin ${alert.sensor_name}`);
+
+                    // 3. หา Metric, Condition, Value
+                    const conditionText = getConditionText(alert);
+                    const metricText = alert.metric.charAt(0).toUpperCase() + alert.metric.slice(1);
+                    const valueText = Number(alert.trigger_value).toFixed(1);
+                    const unit = alert.metric === 'temp' ? '°C' : '%';
+
+                    // 4. สร้างปุ่ม ACK (จะแสดงผลเฉพาะ alert ที่ status เป็น 'open' เท่านั้น)
+                    let ackButtonHtml = '';
+                    if (alert.status === 'open') {
+                        ackButtonHtml = `<button class="btn-ack-chip" data-event-id="${alert.event_id}">ACK</button>`;
+                    }
+
+                    // 5. ประกอบร่างข้อความทั้งหมด
+                    const fullMessage = `${dateTimeText} <strong>${sensorNameText}:</strong> ${metricText} ${conditionText} ${valueText}${unit}`;
+
+                    // 6. สร้าง HTML ของ Chip ทั้งหมด
+                    return `
+                    <li>
+                        <div class="alert-chip ${levelClass}">
+                            <div class="alert-chip-info" title="${fullMessage.replace(/<strong>|<\/strong>/g, '')}">
+                                ${icon}
+                                <span>${fullMessage}</span>
+                            </div>
+                            ${ackButtonHtml}
+                        </div>
+                    </li>
+                `;
+                }).join('');
+
+                listEl.innerHTML = alertChipsHtml;
+            }
             function validateNotifications() {
                 const badEmail = (notificationEmails || []).find(e => !isValidEmail(e));
                 if (badEmail) return { ok: false, msg: `❌ Email ไม่ถูกต้อง: ${badEmail}` };
@@ -4086,38 +4312,18 @@
             function setRoomCardsBlank(roomId, isBlank) {
                 const tempValEl = document.getElementById(`temp-${roomId}`);
                 const rhValEl = document.getElementById(`rh-${roomId}`);
-                const tempCard = tempValEl?.parentElement;
-                const rhCard = rhValEl?.parentElement;
-                const gridWrap = tempCard?.parentElement;
-                const uptimeTextWrap = document.getElementById(`uptime-${roomId}`)?.parentElement;
-                const uptimeBarWrap = document.getElementById(`uptime-bar-${roomId}`)?.parentElement?.parentElement;
-                const chartEl = document.getElementById(`chart-${roomId}`);
-                const chartWrap = chartEl?.parentElement;
-                const updatedEl = document.getElementById(`updated-${roomId}`);
+                // ใช้ .closest() เพื่อหา card หลัก จะแม่นยำกว่า .parentElement
+                const tempCard = tempValEl?.closest('.metric-card');
+                const rhCard = rhValEl?.closest('.metric-card');
 
                 if (isBlank) {
-                    gridWrap?.classList.add('hidden');
-                    tempCard?.classList.add('hidden');
-                    rhCard?.classList.add('hidden');
-                    uptimeTextWrap?.classList.add('hidden');
-                    uptimeBarWrap?.classList.add('hidden');
-                    chartWrap?.classList.add('hidden');
-                    if (tempValEl) tempValEl.textContent = '—';
-                    if (rhValEl) rhValEl.textContent = '—';
-                    if (updatedEl) updatedEl.textContent = '';
-                    const ch = window._roomCharts?.[`chart-${roomId}`];
-                    if (ch) {
-                        ch.data.labels = [];
-                        ch.data.datasets[0].data = [];
-                        ch.update('');
-                    }
+                    // เมื่อเป็น offline ให้ซ่อน card ทั้งสอง
+                    if (tempCard) tempCard.classList.add('hidden');
+                    if (rhCard) rhCard.classList.add('hidden');
                 } else {
-                    gridWrap?.classList.remove('hidden');
-                    tempCard?.classList.remove('hidden');
-                    rhCard?.classList.remove('hidden');
-                    uptimeTextWrap?.classList.remove('hidden');
-                    uptimeBarWrap?.classList.remove('hidden');
-                    chartWrap?.classList.remove('hidden');
+                    // เมื่อเป็น online ให้แสดง card ทั้งสอง
+                    if (tempCard) tempCard.classList.remove('hidden');
+                    if (rhCard) rhCard.classList.remove('hidden');
                 }
             }
             function mergeIntoChart(chart, newLabels, newSeriesTuples) {
@@ -4268,23 +4474,59 @@
                 }
             }
 
-            // ===== Reset a room to offline UI =====
+            // โค้ดที่แก้ไขแล้ว (คัดลอกไปทับของเดิมได้เลย)
             function resetRoomUI(roomId) {
-                console.warn(`No data received for ${roomId} in ${ROOM_TIMEOUT_MS / 1000}s. Setting UI to offline.`);
+                console.warn(`[Offline] No data for ${roomId} in ${ROOM_TIMEOUT_MS / 1000}s. Setting UI to offline.`);
+
+                // ✨ --- จุดที่เพิ่มเข้ามา --- ✨
+                // Clear the data store for the offline room
+                if (window.roomDataStore && window.roomDataStore[roomId]) {
+                    window.roomDataStore[roomId].history = [];
+                    window.roomDataStore[roomId].live = {};
+                    console.log(`[DataStore] Cleared history and live data for offline room: ${roomId}`);
+                }
+                // ✨ --- สิ้นสุดส่วนที่เพิ่ม --- ✨
+
+                // 1. เปลี่ยนไฟสถานะเป็นสีแดง
                 const statusDot = document.getElementById(`status-dot-${roomId}`);
                 if (statusDot) {
                     setLed(statusDot, 'led--red');
                 }
+
+                // 2. ล้างเวลาอัปเดตล่าสุด
                 const updatedEl = document.getElementById(`updated-${roomId}`);
-                if (updatedEl) updatedEl.textContent = '';
-                setRoomCardsBlank(roomId, true);
-                const chartId = `chart-${roomId}`;
-                const ch = window._roomCharts?.[chartId];
-                if (ch) {
-                    ch.data.labels = [];
-                    ch.data.datasets[0].data = [];
-                    ch.update('none');
+                if (updatedEl) {
+                    updatedEl.textContent = '';
                 }
+
+                // 3. หา element ที่เกี่ยวข้องใน metric-card
+                const tempValEl = document.getElementById(`temp-${roomId}`);
+                const rhValEl = document.getElementById(`rh-${roomId}`);
+                const tempCard = tempValEl?.closest('.metric-card');
+                const rhCard = rhValEl?.closest('.metric-card');
+
+                // 4. รีเซ็ตค่าและการแสดงผลของ Temperature Card
+                if (tempCard) {
+                    const valueEl = tempCard.querySelector('.metric-value');
+                    const statusEl = tempCard.querySelector('.metric-status');
+                    if (valueEl) valueEl.textContent = '—';
+                    if (statusEl) statusEl.textContent = 'Offline';
+                    // เปลี่ยนสีการ์ดเป็นสีเทา (Offline)
+                    tempCard.className = 'metric-card rounded-xl shadow p-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white text-center flex flex-col justify-center';
+                }
+
+                // 5. รีเซ็ตค่าและการแสดงผลของ Humidity Card
+                if (rhCard) {
+                    const valueEl = rhCard.querySelector('.metric-value');
+                    const statusEl = rhCard.querySelector('.metric-status');
+                    if (valueEl) valueEl.textContent = '—';
+                    if (statusEl) statusEl.textContent = 'Offline';
+                    // เปลี่ยนสีการ์ดเป็นสีเทา (Offline)
+                    rhCard.className = 'metric-card rounded-xl shadow p-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white text-center flex flex-col justify-center';
+                }
+
+                // 6. เรียกใช้ฟังก์ชันเพื่อซ่อน metric-card ทั้งหมด (หลังจากรีเซ็ตค่าแล้ว)
+                setRoomCardsBlank(roomId, true);
             }
 
             function updateRoomUI(roomId, data) {
@@ -4420,11 +4662,11 @@
                 if (show('dew')) tempDatasets.push({ label: 'Dew Point(Overall)', data: dew, borderColor: 'rgba(34,197,94,1)', backgroundColor: 'rgba(34,197,94,0.15)', borderWidth: 2, fill: false, tension: 0.35, pinId: 'overall', dataType: 'dew' });
 
                 let rhDatasets = [];
-                if (show('overall')) rhDatasets.push({ label: 'RH (Overall)', data: h_overall, borderColor: 'rgba(59,130,246,1)', backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 3, fill: false, tension: 0.35, pinId: 'overall', dataType: 'rh' });
-                if (show('pin25')) rhDatasets.push({ label: `RH ${pinLabel('25')}`, data: h25, borderColor: 'rgba(191,219,254,0.95)', backgroundColor: 'rgba(191,219,254,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '25', dataType: 'rh' });
-                if (show('pin26')) rhDatasets.push({ label: `RH ${pinLabel('26')}`, data: h26, borderColor: 'rgba(147,197,253,0.95)', backgroundColor: 'rgba(147,197,253,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '26', dataType: 'rh' });
-                if (show('pin32')) rhDatasets.push({ label: `RH ${pinLabel('32')}`, data: h32, borderColor: 'rgba(96,165,250,0.95)', backgroundColor: 'rgba(96,165,250,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '32', dataType: 'rh' });
-                if (show('pin33')) rhDatasets.push({ label: `RH ${pinLabel('33')}`, data: h33, borderColor: 'rgba(59,130,246,0.85)', backgroundColor: 'rgba(59,130,246,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '33', dataType: 'rh' });
+                if (show('overall')) rhDatasets.push({ label: 'Humi (Overall)', data: h_overall, borderColor: 'rgba(59,130,246,1)', backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 3, fill: false, tension: 0.35, pinId: 'overall', dataType: 'rh' });
+                if (show('pin25')) rhDatasets.push({ label: `Humi ${pinLabel('25')}`, data: h25, borderColor: 'rgba(191,219,254,0.95)', backgroundColor: 'rgba(191,219,254,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '25', dataType: 'rh' });
+                if (show('pin26')) rhDatasets.push({ label: `Humi ${pinLabel('26')}`, data: h26, borderColor: 'rgba(147,197,253,0.95)', backgroundColor: 'rgba(147,197,253,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '26', dataType: 'rh' });
+                if (show('pin32')) rhDatasets.push({ label: `Humi ${pinLabel('32')}`, data: h32, borderColor: 'rgba(96,165,250,0.95)', backgroundColor: 'rgba(96,165,250,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '32', dataType: 'rh' });
+                if (show('pin33')) rhDatasets.push({ label: `Humi ${pinLabel('33')}`, data: h33, borderColor: 'rgba(59,130,246,0.85)', backgroundColor: 'rgba(59,130,246,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '33', dataType: 'rh' });
 
                 let minTimestamp = Infinity;
                 let maxTimestamp = -Infinity;
@@ -4818,12 +5060,6 @@
             });
 
             document.getElementById('btn-save-notification-settings')?.addEventListener('click', saveNotificationSettings);
-
-            // =================================================================
-            // ✨ END OF NOTIFICATION SETTINGS V4 ✨
-            // =================================================================
-
-            // ===== KPI/Alerts (optional fields) =====
             function dewPointC_Magnus(Tc, RHpct) {
                 const T = Number(Tc), RH = Number(RHpct);
                 if (!Number.isFinite(T) || !Number.isFinite(RH)) return null;
@@ -4865,18 +5101,90 @@
                 }
             }
 
+            // ✨ [REPLACE] อัปเกรดฟังก์ชัน updateAlertCards ให้ฉลาดขึ้น
             function updateAlertCards(payload) {
-                const crit = Number(payload.critical_count || 0);
-                const warn = Number(payload.warning_count || 0);
+                let critCount = 0;
+                let warnCount = 0;
+
+                // --- ส่วนที่แก้ไข ---
+                // เช็คว่า payload ที่เข้ามาเป็นแบบ summary ({ critical_count: ... }) หรือแบบเต็ม ({ alerts: [...] })
+                if (payload.critical_count !== undefined || payload.warning_count !== undefined) {
+                    // แบบ Summary (จาก /api/alerts/summary)
+                    critCount = Number(payload.critical_count || 0);
+                    warnCount = Number(payload.warning_count || 0);
+                } else if (Array.isArray(payload.alerts)) {
+                    // แบบเต็ม (เผื่อใช้ในอนาคต)
+                    const allActiveAlerts = payload.alerts;
+                    critCount = allActiveAlerts.filter(a => a.level === 'critical' && (a.status === 'open' || a.status === 'ack')).length;
+                    warnCount = allActiveAlerts.filter(a => a.level === 'warning' && (a.status === 'open' || a.status === 'ack')).length;
+                }
+                // --- สิ้นสุดส่วนที่แก้ไข ---
+
                 const critEl = document.getElementById('count-critical');
                 const warnEl = document.getElementById('count-warning');
-                if (critEl) critEl.textContent = String(crit);
-                if (warnEl) warnEl.textContent = String(warn);
-                const pcCrit = document.getElementById('progress-critical');
-                const pcWarn = document.getElementById('progress-warning');
-                if (pcCrit) pcCrit.style.width = `${Math.min(100, crit * 10)}%`;
-                if (pcWarn) pcWarn.style.width = `${Math.min(100, warn * 10)}%`;
+
+                if (critEl) critEl.textContent = String(critCount);
+                if (warnEl) warnEl.textContent = String(warnCount);
+
+                // อัปเดต KPI หลัก
+                const activeAlertsEl = document.getElementById('kpi-active-alerts');
+                if (activeAlertsEl) {
+                    activeAlertsEl.textContent = String(critCount + warnCount);
+                }
             }
+            async function fetchAlertsForRoom(roomId) {
+                const mac = window.ROOM_TO_MAC_MAP?.[roomId];
+                if (!mac) {
+                    console.log(`[Alerts] No MAC address for room ${roomId}, returning empty array.`);
+                    return []; // ถ้าไม่มี MAC ก็ return Array ว่างไปเลย
+                }
+
+                try {
+                    const response = await fetch(`/api/alerts?mac=${mac}&status=open,ack`);
+
+                    if (!response.ok) {
+                        console.error(`[Alerts] API request for ${roomId} failed with status ${response.status}`);
+                        return []; // ถ้า API ตอบกลับมาไม่สำเร็จ ก็ return Array ว่าง
+                    }
+
+                    const data = await response.json();
+
+                    // --- จุดแก้ไขที่สำคัญที่สุด ---
+                    // ตรวจสอบว่าข้อมูลที่ได้เป็น Array โดยตรง หรือเป็น Object ที่มี property 'alerts' เป็น Array
+                    if (Array.isArray(data)) {
+                        return data; // กรณี API ส่งมาถูกต้องเป็น Array
+                    } else if (data && Array.isArray(data.alerts)) {
+                        return data.alerts; // ✨ [FIX] เปิดกล่องแล้วส่ง Array ข้างในออกไป
+                    } else {
+                        console.warn(`[Alerts] API for ${roomId} did not return a valid array or {alerts: [...]}. Got:`, data);
+                        return []; // ถ้ามาในรูปแบบอื่นที่ไม่รู้จัก ก็ return array ว่าง
+                    }
+                    // --- สิ้นสุดส่วนที่แก้ไข ---
+
+                } catch (error) {
+                    console.error(`[Alerts] Failed to fetch or parse alerts for ${roomId}:`, error);
+                    return []; // ถ้าเกิด Error ใดๆ ก็ตามระหว่าง fetch ก็ return Array ว่าง
+                }
+            }
+            async function fetchAlertSummaryAndRender() {
+                try {
+                    const url = '/api/alerts/summary';
+                    const res = await fetch(url, { cache: 'no-store' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+                    console.debug('[AlertSummary] data =', data);
+
+                    // โยนเข้าโค้ดเดิมของคุณ
+                    updateAlertCards({
+                        critical_count: Number(data.critical_count || 0),
+                        warning_count: Number(data.warning_count || 0)
+                    });
+                } catch (err) {
+                    console.error('[AlertSummary] fetch failed:', err);
+                }
+            }
+
+
             function uuid() {
                 return (crypto?.randomUUID?.() || (Date.now().toString(16) + Math.random().toString(16).slice(2)));
             }
@@ -5236,6 +5544,17 @@
                 const defaultName = roomId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const finalName = window.ROOM_NAMES?.[roomId] || defaultName;
 
+                // ✨ [FIX] ทำลาย Chart Instance เก่าทิ้งก่อนเสมอ ✨
+                if (window._detailCharts.temp) {
+                    window._detailCharts.temp.destroy();
+                    window._detailCharts.temp = null; // ตั้งค่ากลับเป็น null
+                }
+                if (window._detailCharts.rh) {
+                    window._detailCharts.rh.destroy();
+                    window._detailCharts.rh = null; // ตั้งค่ากลับเป็น null
+                }
+                // ✨ [END FIX] ✨
+                renderDetailAlerts([]);
                 if (!window._detailCharts.temp || !window._detailCharts.rh) {
                     console.log('[ChartJS] Initializing detail charts for the first time...');
                     const tempCtx = document.getElementById('detail-chart-temp')?.getContext('2d');
@@ -5324,22 +5643,18 @@
                     });
                 }
 
-                // ล้างข้อมูลกราฟเก่าออกทุกครั้งที่เปิด Modal
-                if (window._detailCharts.temp && window._detailCharts.rh) {
-                    console.log(`Clearing charts before loading new room: ${roomId}`);
-                    window._detailCharts.temp.data.datasets = [];
-                    window._detailCharts.rh.data.datasets = [];
-                    window._detailCharts.temp.update('none');
-                    window._detailCharts.rh.update('none');
-                }
+                console.log(`Clearing charts before loading new room: ${roomId}`);
 
-                // โค้ดส่วนที่เหลือของฟังก์ชัน (ถูกต้องอยู่แล้ว)
                 updateDetailKPIs([]);
                 const sensorList = document.getElementById('detail-sensor-list');
                 if (sensorList) sensorList.innerHTML = '<li class="text-center text-[var(--muted)] mt-4">Loading data...</li>';
                 const detailRoomNameEl = document.getElementById('detail-room-name');
                 detailRoomNameEl.textContent = `${finalName}`;
                 detailRoomNameEl.dataset.currentRoom = roomId;
+                const alertListEl = document.getElementById('detail-alert-list');
+                if (alertListEl) {
+                    alertListEl.innerHTML = '<li class="text-center text-[var(--muted)] mt-4 w-full">Loading alerts...</li>';
+                }
                 applyPinNames(roomId);
                 window.currentCfgRoom = roomId;
                 const cfgRoomSelect = document.getElementById('cfg-room');
@@ -5381,6 +5696,8 @@
 
                 setDefault24hRange();
                 openModal('modal-room-detail');
+                const alerts = await fetchAlertsForRoom(roomId);
+                renderDetailAlerts(alerts);
                 fetchAndRenderRange();
                 fetchAndRenderUptimeChart(roomId, 'detail-uptime-chart-canvas', 'detail-uptime-pct');
             }
@@ -5454,6 +5771,17 @@
             document.addEventListener('click', e => { const id = e.target?.dataset?.close; if (id) closeModal(id); });
             document.getElementById('qa-reboot')?.addEventListener('click', () => openModal('modal-reboot'));
             document.getElementById('detail-btn-export')?.addEventListener('click', () => {
+                // --- ส่วนที่เพิ่มเข้ามา ---
+                const detailRoomNameEl = document.getElementById('detail-room-name');
+                const roomId = detailRoomNameEl?.dataset.currentRoom;
+
+                if (roomId) {
+                    const exportForm = document.getElementById('form-export');
+                    if (exportForm && exportForm.room) {
+                        exportForm.room.value = roomId;
+                    }
+                }
+                // --- สิ้นสุดส่วนที่เพิ่ม ---
                 openModal('modal-export');
             });
 
@@ -5632,7 +5960,23 @@
                     if (!data || typeof data !== 'object') return;
 
                     const topic = msg.topic || '';
+                    if (topic === 'alert_event' && data.type) {
+                        const roomName = data.room_name || 'Unknown Room';
+                        const metric = data.metric === 'temp' ? 'Temperature' : 'Humidity';
+                        const value = Number(data.value).toFixed(1);
+                        const unit = data.metric === 'temp' ? '°C' : '%';
 
+                        if (data.type === 'triggered') {
+                            const level = data.level; // 'critical' or 'warning'
+                            const message = `${level.toUpperCase()} on ${roomName}: ${metric} is ${value}${unit}.`;
+                            const toastType = level === 'critical' ? 'fail' : 'warn';
+                            showPopup(message, { type: toastType, timeout: 10000 });
+                        } else if (data.type === 'recovered') {
+                            const message = `RECOVERY on ${roomName}: ${metric} is back to normal.`;
+                            showPopup(message, { type: 'success', timeout: 7000 });
+                        }
+                        return; // จบการทำงานสำหรับ msg นี้
+                    }
                     // 1) ESP32 config response → resolve promise แล้วจบ
                     if (topic.startsWith('esp32/response/') && topic.endsWith('/config')) {
                         const incomingId = (data?.requestId || '').toString();
@@ -5740,7 +6084,6 @@
                     if (typeof checkAndFetchConfig === 'function') checkAndFetchConfig(roomId);
                     updateRoomUI(roomId, data);
                     updateKPIs(data);
-                    updateAlertCards(data);
                     if (window._roomTimeouts[roomId]) clearTimeout(window._roomTimeouts[roomId]);
                     window._roomTimeouts[roomId] = setTimeout(() => {
                         resetRoomUI(roomId);
@@ -5987,7 +6330,7 @@
                 });
             });
             // =================================================================
-            // ✨ ALERT CENTER LOGIC (CORRECTED & ENHANCED) ✨
+            // ✨ ALERT CENTER LOGIC V2 (CORRECTED & ENHANCED) ✨
             // =================================================================
 
             const qaAlertsButton = document.getElementById('qa-alerts');
@@ -5995,109 +6338,123 @@
             const alertTableBodyEl = document.getElementById('alert-table-body');
             const qaAlertCountEl = document.getElementById('qa-alert-count');
             const bulkAckButton = document.getElementById('btn-bulk-ack');
-            const bulkAckNoteInput = document.getElementById('bulk-ack-note');
             const ackAllCheckbox = document.getElementById('ack-all-checkbox');
 
-            // --- Open/Close and Data Loading ---
+            // --- State Management ---
+            let allAlertsCache = []; // เก็บข้อมูลทั้งหมดที่โหลดมาครั้งแรก
+
+            // --- Filter Elements ---
+            const searchInput = document.getElementById('alert-filter-search');
+            const levelSelect = document.getElementById('alert-filter-level');
+            const statusSelect = document.getElementById('alert-filter-status');
+            const startDateInput = document.getElementById('alert-filter-start-date');
+            const endDateInput = document.getElementById('alert-filter-end-date');
+            const applyButton = document.getElementById('alert-filter-apply');
+            const resetButton = document.getElementById('alert-filter-reset');
+
+            // --- Event Listeners ---
             qaAlertsButton?.addEventListener('click', () => {
                 openModal('modal-alert-center');
-                const currentStatusFilter = document.getElementById('alert-filter-status').value;
-                loadAlerts(currentStatusFilter);
+                resetFilters(); // รีเซ็ตฟิลเตอร์ทุกครั้งที่เปิด
+                loadAndCacheAlerts();
             });
 
-
-            // --- Bulk ACK Handler ---
-            bulkAckButton?.addEventListener('click', async () => {
-                const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
-                const note = bulkAckNoteInput.value;
-                if (selectedIds.length === 0) {
-                    showPopup('⚠️ Please select alerts to acknowledge.', { type: 'warn' });
-                    return;
-                }
-
-                try {
-                    const success = await handleAck(selectedIds, note);
-                    if (!success) throw new Error('API returned an error');
-
-                    showPopup(`✅ Acknowledged ${selectedIds.length} alert(s).`, { type: 'success' });
-
-                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
-                    await loadAlerts(currentStatusFilter);
-                    bulkAckNoteInput.value = '';
-
-                } catch (err) {
-                    console.error(err);
-                    showPopup('❌ Failed to acknowledge selected alerts.', { type: 'fail' });
-                }
+            // ทำให้ฟิลเตอร์ทำงานทันที ไม่ต้องรอ Apply (ยกเว้น Date ที่ต้องกด Apply)
+            searchInput?.addEventListener('input', applyFilters);
+            levelSelect?.addEventListener('change', applyFilters);
+            statusSelect?.addEventListener('change', loadAndCacheAlerts); // โหลดใหม่เมื่อเปลี่ยนสถานะหลัก
+            applyButton?.addEventListener('click', applyFilters);
+            resetButton?.addEventListener('click', () => {
+                resetFilters();
+                applyFilters();
             });
-            // Fetch and render alerts
-            async function loadAlerts(status = 'open,ack') {
+
+            // --- Core Functions ---
+
+            // 1. โหลดข้อมูลจาก Server และเก็บใน Cache
+            async function loadAndCacheAlerts() {
+                const status = statusSelect.value || 'open,ack';
+                alertTableBodyEl.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-[var(--muted)]">Loading alerts...</td></tr>';
+
                 try {
                     const res = await fetch(`/api/alerts?status=${encodeURIComponent(status)}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
 
-                    const alerts = Array.isArray(data) ? data : (data && Array.isArray(data.alerts) ? data.alerts : []);
+                    allAlertsCache = Array.isArray(data) ? data : (data?.alerts || []);
 
-                    const qaAlertCountEl = document.getElementById('qa-alert-count');
-                    if (qaAlertCountEl) {
-                        const openCount = alerts.filter(a => a.status === 'open').length;
-                        if (openCount > 0) {
-                            qaAlertCountEl.textContent = openCount;
-                            qaAlertCountEl.classList.remove('hidden');
-                            qaAlertCountEl.classList.add('flex');
-                        } else {
-                            qaAlertCountEl.classList.add('hidden');
-                        }
-                    }
+                    // อัปเดตตัวเลขแจ้งเตือนที่ปุ่ม Quick Action (นับเฉพาะ 'open')
+                    const openCount = allAlertsCache.filter(a => a.status === 'open').length;
+                    updateQAAlertCount(openCount);
 
-                    renderAlertTable(alerts);
+                    applyFilters(); // กรองและแสดงผลทันทีหลังโหลดข้อมูล
                 } catch (err) {
                     console.error('[AlertCenter] loadAlerts error:', err);
-                    renderAlertTable([]); // อย่างน้อยให้หน้ามันวาด “ว่าง”
+                    allAlertsCache = [];
+                    renderAlertTable([]);
                 }
             }
 
+            // 🎯 [REPLACE] อัปเกรดฟังก์ชัน applyFilters ให้ค้นหาได้ทุกคอลัมน์
+            // 2. กรองข้อมูลจาก Cache ตามฟิลเตอร์ปัจจุบัน
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const level = levelSelect.value;
+                const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+                let endDate = endDateInput.value ? new Date(endDateInput.value) : null;
 
-            // Render table rows
+                // ทำให้ endDate ครอบคลุมทั้งวัน
+                if (endDate) {
+                    endDate.setHours(23, 59, 59, 999);
+                }
+
+                const filteredAlerts = allAlertsCache.filter(alert => {
+                    const alertDate = new Date(alert.opened_at);
+
+                    // ✨ --- START: ส่วนที่แก้ไข --- ✨
+                    // ดึงชื่อ Sensor ที่ตั้งเองมาเพื่อใช้ในการค้นหา
+                    const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
+                    const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
+
+                    // Check search term (ค้นหาทุกคอลัมน์!)
+                    const inSearch = searchTerm === '' ||
+                        (alert.opened_at?.toLowerCase().includes(searchTerm)) ||       // ค้นหา 'เวลา'
+                        (alert.room_name?.toLowerCase().includes(searchTerm)) ||       // ค้นหา 'Room'
+                        (customSensorName.toLowerCase().includes(searchTerm)) ||       // ค้นหา 'Sensor' (ชื่อที่ตั้งเอง)
+                        (alert.metric?.toLowerCase().includes(searchTerm)) ||          // ค้นหา 'Metric'
+                        (alert.level?.toLowerCase().includes(searchTerm)) ||           // ค้นหา 'Level'
+                        String(alert.trigger_value).toLowerCase().includes(searchTerm) || // ค้นหา 'Value'
+                        (alert.status?.toLowerCase().includes(searchTerm)) ||          // ค้นหา 'Status'
+                        (alert.ack_by?.toLowerCase().includes(searchTerm)) ||          // ค้นหา 'Ack By'
+                        (alert.ack_note?.toLowerCase().includes(searchTerm)) ||        // ค้นหา 'Note'
+                        (alert.mac?.toLowerCase().includes(searchTerm));               // ค้นหา 'MAC Address' (ยังเก็บไว้เผื่อค้นหา)
+                    // ✨ --- END: ส่วนที่แก้ไข --- ✨
+
+                    // Check level
+                    const inLevel = level === '' || alert.level === level;
+
+                    // Check date range
+                    const inDateRange = (!startDate || alertDate >= startDate) && (!endDate || alertDate <= endDate);
+
+                    return inSearch && inLevel && inDateRange;
+                });
+
+                renderAlertTable(filteredAlerts);
+            }
+
+            // 3. แสดงผลข้อมูลลงตาราง
             function renderAlertTable(alerts) {
                 alertTableBodyEl.innerHTML = '';
                 if (!alerts || alerts.length === 0) {
-                    alertTableBodyEl.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-[var(--muted)]">No alerts found.</td></tr>';
+                    alertTableBodyEl.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-[var(--muted)]">No alerts match the current filters.</td></tr>';
                     return;
                 }
 
-                // ✨ เพิ่ม Header ใหม่
-                const headerRow = document.querySelector('#modal-alert-center thead tr');
-                headerRow.innerHTML = `
-        <th class="p-3 text-center w-12"><input type="checkbox" id="ack-all-checkbox"></th>
-        <th class="p-3">Time</th>
-        <th class="p-3">Room</th>
-        <th class="p-3">Sensor</th>
-        <th class="p-3">Metric</th>
-        <th class="p-3">Level</th>
-        <th class="p-3">Value</th>
-        <th class="p-3">Status</th>
-        <th class="p-3">Ack By</th>
-        <th class="p-3">Note</th>
-        <th class="p-3 text-center">Actions</th>
-    `;
-                const ackAllEl = document.getElementById('ack-all-checkbox');
-                if (ackAllEl) {
-                    ackAllEl.addEventListener('change', (e) => {
-                        const isChecked = e.target.checked;
-                        document.querySelectorAll('.ack-checkbox:not(:disabled)').forEach(cb => {
-                            cb.checked = isChecked;
-                        });
-                        updateBulkAckButtonState?.();
-                    });
-                }
                 alerts.forEach(alert => {
                     const row = document.createElement('tr');
-                    row.className = 'border-b border-[var(--border)]';
+                    row.className = 'border-b border-[var(--border)] hover:bg-white/5';
 
-                    // ✨ แก้ไขเรื่องเวลาให้ถูกต้อง
-                    const openedAt = alert.opened_at ? new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
+                    const openedAt = alert.opened_at ? new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false }).replace(',', '') : '-';
 
                     const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
                     const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
@@ -6112,9 +6469,9 @@
             <td class="p-3">${alert.metric}</td>
             <td class="p-3"><span class="badge badge-${alert.level}">${alert.level}</span></td>
             <td class="p-3">${alert.trigger_value !== null ? Number(alert.trigger_value).toFixed(2) : 'N/A'}</td>
-            <td class="p-3">${alert.status}</td>
+            <td class="p-3 capitalize">${alert.status}</td>
             <td class="p-3">${ackByDisplay}</td>
-            <td class="p-3 truncate max-w-xs">${ackNoteDisplay}</td>
+            <td class="p-3 truncate max-w-xs" title="${alert.ack_note || ''}">${ackNoteDisplay}</td>
             <td class="p-3 text-center">
                 ${alert.status === 'open' ? `<button class="btn text-xs py-1 px-2 btn-ack-single" data-event-id="${alert.event_id}">ACK</button>` : ''}
             </td>
@@ -6123,26 +6480,66 @@
                 });
             }
 
-            async function handleAck(eventIds, note) {
-                let allSuccess = true;
-                for (const eventId of eventIds) {
-                    try {
-                        const response = await fetch(`/api/alerts/${eventId}/ack`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ack_note: note, ack_by: 'WebAppUser' })
-                        });
-                        if (!response.ok) {
-                            console.error(`Failed to ACK event ${eventId}. Status: ${response.status}`);
-                            allSuccess = false;
-                        }
-                    } catch (error) {
-                        console.error(`Network error while acknowledging event ${eventId}:`, error);
-                        allSuccess = false;
+            // 4. รีเซ็ตฟิลเตอร์ทั้งหมด
+            function resetFilters() {
+                searchInput.value = '';
+                levelSelect.value = '';
+                startDateInput.value = '';
+                endDateInput.value = '';
+            }
+
+            // --- Helper Functions ---
+            function updateQAAlertCount(count) {
+                if (qaAlertCountEl) {
+                    if (count > 0) {
+                        qaAlertCountEl.textContent = count;
+                        qaAlertCountEl.classList.remove('hidden');
+                        qaAlertCountEl.classList.add('flex');
+                    } else {
+                        qaAlertCountEl.classList.add('hidden');
                     }
                 }
-                return allSuccess;
             }
+
+            // --- Logic สำหรับ ACK (เหมือนเดิมแต่ย้ายมา) ---
+            document.getElementById('alert-table-body').addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-ack-single');
+                if (btn) {
+                    const eventId = btn.dataset.eventId;
+                    openAckModal([eventId]);
+                }
+            });
+
+            bulkAckButton?.addEventListener('click', () => {
+                const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
+                if (selectedIds.length > 0) {
+                    openAckModal(selectedIds);
+                } else {
+                    showPopup('⚠️ Please select at least one alert to acknowledge.', { type: 'warn' });
+                }
+            });
+
+            function updateBulkAckButtonState() {
+                const selectedCount = document.querySelectorAll('.ack-checkbox:checked').length;
+                bulkAckButton.disabled = selectedCount === 0;
+            }
+
+            ackAllCheckbox?.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('.ack-checkbox:not(:disabled)').forEach(cb => {
+                    cb.checked = isChecked;
+                });
+                updateBulkAckButtonState();
+            });
+
+            alertTableBodyEl.addEventListener('change', (e) => {
+                if (e.target.classList.contains('ack-checkbox')) {
+                    const totalCheckboxes = document.querySelectorAll('.ack-checkbox:not(:disabled)').length;
+                    const selectedCount = document.querySelectorAll('.ack-checkbox:checked').length;
+                    ackAllCheckbox.checked = totalCheckboxes > 0 && selectedCount === totalCheckboxes;
+                    updateBulkAckButtonState();
+                }
+            });
             // =================================================================
             // ✨ ALERT ACK MODAL LOGIC (Vanilla JS) ✨
             // =================================================================
@@ -6196,16 +6593,35 @@
                 );
 
                 try {
-                    await Promise.all(promises);
-                    showPopup(`✅ Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
-                    closeModal('modal-ack');
-                    // Reload alerts to show updated status
-                    const currentStatusFilter = document.getElementById('alert-filter-status').value;
-                    loadAlerts(currentStatusFilter);
+                    // รอให้ fetch requests ทั้งหมดเสร็จสิ้น และเก็บผลลัพธ์ไว้
+                    const responses = await Promise.all(promises);
+
+                    // ตรวจสอบว่าทุก response ที่ได้กลับมานั้น .ok (status 200-299) หรือไม่
+                    const allSuccess = responses.every(res => res.ok);
+
+                    if (allSuccess) {
+                        // ถ้าทุกอย่างสำเร็จเรียบร้อย ถึงจะแสดง Popup สำเร็จ
+                        showPopup(`✅ Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
+                        closeModal('modal-ack');
+                        loadAndCacheAlerts(); // โหลดข้อมูลใหม่เพื่ออัปเดตตาราง
+                    } else {
+                        // ถ้ามีอย่างน้อยหนึ่ง request ที่ไม่สำเร็จ
+                        // เราจะดึงข้อความ error จาก response ตัวแรกที่ล้มเหลวมาแสดง
+                        const failedResponse = responses.find(res => !res.ok);
+                        let errorMessage = `Server responded with status ${failedResponse.status}`;
+                        try {
+                            const errorJson = await failedResponse.json();
+                            errorMessage = errorJson.error || errorMessage;
+                        } catch (e) { /* ไม่ต้องทำอะไรถ้าอ่าน json ไม่ได้ */ }
+
+                        throw new Error(errorMessage); // โยน Error เพื่อให้ไปเข้า catch block
+                    }
                 } catch (err) {
-                    showPopup(`❌ Failed to acknowledge alerts.`, { type: 'fail' });
+                    // catch block จะจัดการทั้ง network error และ error ที่เราโยนมาเอง
+                    showPopup(`❌ Failed to acknowledge alerts: ${err.message}`, { type: 'fail' });
                     console.error("ACK Error:", err);
                 } finally {
+                    // ส่วนนี้เหมือนเดิม คือคืนสภาพปุ่มให้กดได้อีกครั้ง
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Confirm';
                 }
@@ -6262,6 +6678,33 @@
                 if (selectedIds.length > 0) {
                     openAckModal(selectedIds);
                 }
+            });
+            // 🎯 [ADD] ฟังก์ชันและ Event Listeners สำหรับการคลิก Alerts Card
+            function handleAlertCardClick(levelFilter = '') {
+                // กำหนดค่าฟิลเตอร์ใน Modal ตามที่คลิก
+                document.getElementById('alert-filter-status').value = 'open,ack';
+                document.getElementById('alert-filter-level').value = levelFilter;
+
+                // เปิด Modal แล้วโหลดข้อมูลตามฟิลเตอร์
+                openModal('modal-alert-center');
+                loadAndCacheAlerts(); // ฟังก์ชันนี้จะอ่านค่าจาก select boxes เอง
+            }
+
+            // ผูก Event Listener เข้ากับการ์ดต่างๆ
+            document.getElementById('qa-alert-card')?.addEventListener('click', (e) => {
+                // ป้องกันไม่ให้ทำงานซ้ำซ้อนถ้าคลิกที่การ์ดย่อย
+                if (e.target.closest('#card-critical') || e.target.closest('#card-warning')) {
+                    return;
+                }
+                handleAlertCardClick(''); // คลิกการ์ดใหญ่ = ไม่กรอง level
+            });
+
+            document.getElementById('card-critical')?.addEventListener('click', () => {
+                handleAlertCardClick('critical'); // คลิกการ์ดแดง = กรอง critical
+            });
+
+            document.getElementById('card-warning')?.addEventListener('click', () => {
+                handleAlertCardClick('warning'); // คลิกการ์ดเหลือง = กรอง warning
             });
 
             function updateBulkAckButtonState() {
@@ -6477,6 +6920,16 @@
                 }
             }
             document.getElementById('btn-save-rule')?.addEventListener('click', handleSaveSensorRule);
+            document.getElementById('detail-alert-list').addEventListener('click', (e) => {
+                const ackButton = e.target.closest('.btn-ack-chip');
+                if (!ackButton) return;
+
+                const eventId = ackButton.dataset.eventId;
+                if (eventId) {
+                    console.log(`ACK button in chip clicked for event_id: ${eventId}`);
+                    openAckModal([eventId]);
+                }
+            });
         });
 
     </script>
