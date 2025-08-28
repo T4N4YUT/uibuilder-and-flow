@@ -4204,19 +4204,30 @@
                 return { ok: true };
             }
             /**
-            * @param {Array<Object>} alerts - Array ของ object แจ้งเตือนสำหรับห้องนี้
-            */
-            function renderDetailAlerts(alerts) {
+        * @param {Array<Object>} alerts - Array ของ object แจ้งเตือนสำหรับห้องนี้
+        * @param {string} roomId - ID ของห้องที่ข้อมูลนี้เป็นของ
+        */
+            function renderDetailAlerts(alerts, roomId) {
                 const listEl = document.getElementById('detail-alert-list');
                 if (!listEl) return;
 
+                // ✨ Safety Check! ตรวจสอบก่อนว่าข้อมูลที่กำลังจะแสดงผล ตรงกับห้องที่เปิดอยู่จริงหรือไม่
+                const modalEl = document.getElementById('modal-room-detail');
+                const currentOpenRoom = document.getElementById('detail-room-name')?.dataset.currentRoom;
+
+                // ถ้า modal ไม่ได้เปิดอยู่ หรือ roomId ของข้อมูลไม่ตรงกับห้องที่เปิดอยู่ ก็ไม่ต้องทำอะไรเลย
+                if (modalEl.classList.contains('hidden') || currentOpenRoom !== roomId) {
+                    console.warn(`[Render Guard] Dropping stale alert render for '${roomId}'. Current modal is for '${currentOpenRoom}'.`);
+                    return; // 🛑 หยุดการทำงานทันทีถ้าข้อมูลไม่ตรงกัน
+                }
+
                 // ฟังก์ชันย่อยสำหรับหา condition (High/Low) - (ใช้ตัวเดิมจากครั้งที่แล้ว)
                 const getConditionText = (alert) => {
-                    const roomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
-                    if (!roomId || !window.liveAlertSettings || !window.liveAlertSettings[roomId]) {
+                    const currentRoomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
+                    if (!currentRoomId || !window.liveAlertSettings || !window.liveAlertSettings[currentRoomId]) {
                         return '';
                     }
-                    const thresholds = window.liveAlertSettings[roomId][alert.metric];
+                    const thresholds = window.liveAlertSettings[currentRoomId][alert.metric];
                     if (!thresholds || typeof alert.trigger_value !== 'number') {
                         return '';
                     }
@@ -5697,7 +5708,7 @@
                 setDefault24hRange();
                 openModal('modal-room-detail');
                 const alerts = await fetchAlertsForRoom(roomId);
-                renderDetailAlerts(alerts);
+                renderDetailAlerts(alerts, roomId);
                 fetchAndRenderRange();
                 fetchAndRenderUptimeChart(roomId, 'detail-uptime-chart-canvas', 'detail-uptime-pct');
             }
