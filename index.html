@@ -85,7 +85,6 @@
         #mainContent svg,
         #mainContent canvas {
             -webkit-user-drag: none;
-            user-drag: none;
         }
 
         .copyable {
@@ -249,6 +248,7 @@
         .config-body {
             flex-grow: 1;
             max-height: none;
+            overflow-y: auto;
             overflow: visible;
             padding: 1rem;
         }
@@ -386,7 +386,6 @@
         #modal-room-detail canvas {
             user-select: auto;
             -webkit-user-select: auto;
-            user-drag: auto;
             -webkit-user-drag: auto;
         }
 
@@ -891,9 +890,16 @@
         }
 
         .card-chart,
-        #detail-uptime-chart-container,
-        .modal-room-detail .config-body {
+        #detail-uptime-chart-container {
             overflow: visible !important;
+        }
+
+        /* เพิ่มกฎใหม่สำหรับ modal นี้โดยเฉพาะ */
+        #modal-room-detail .config-body {
+            overflow-y: auto !important;
+            /* 👈 ทำให้มี scrollbar แนวตั้งเมื่อเนื้อหาล้น */
+            overflow-x: hidden;
+            /* 👈 ซ่อน scrollbar แนวนอนไปเลย */
         }
 
         .modal-overlay {
@@ -1001,9 +1007,8 @@
         }
 
         #detail-uptime-pct {
-            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.2);
-            text-stroke: 1px rgba(0, 0, 0, 0.2);
-            paint-order: stroke fill;
+            color: #000000;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
         }
 
         .btn-close-custom {
@@ -1310,24 +1315,6 @@
             padding: 0.75rem;
         }
 
-        .btn:hover,
-        #qa-card .grid button:hover {
-            transform: translateY(-2px);
-            color: var(--accent);
-            border-color: var(--border);
-            box-shadow:
-                inset 0 0 0 1.5px var(--accent),
-                0 0 12px 0 rgba(59, 130, 246, 0.4);
-            filter: none;
-        }
-
-        .config-tab:hover,
-        .weekday-btn:hover {
-            color: var(--accent);
-            border-color: var(--accent);
-            background-color: rgba(59, 130, 246, 0.1);
-        }
-
         .btn,
         .room-card,
         #qa-card .grid button,
@@ -1354,36 +1341,7 @@
             transition: all 0.2s ease-in-out;
         }
 
-        .btn:hover,
-        .room-card:hover,
-        #qa-card .grid button:hover,
-        .config-input:hover,
-        .config-select:hover,
-        .weekday-btn:hover,
-        .config-tab:hover,
-        .custom-dropdown-container .flex-1.config-input:hover,
-        #series-dropdown-btn:hover,
-        [id^="recipient-action-"]:hover,
-        .dropdown-item:hover,
-        .btn:focus-visible,
-        .room-card:focus-visible,
-        #qa-card .grid button:focus-visible,
-        .config-input:focus-visible,
-        .config-select:focus-visible,
-        .weekday-btn:focus-visible,
-        .config-tab:focus-visible,
-        .custom-dropdown-container .flex-1.config-input:focus-visible,
-        #series-dropdown-btn:focus-visible,
-        [id^="recipient-action-"]:focus-visible,
-        .dropdown-item:focus-visible {
-            &:not(.btn-close-custom):not(:disabled) {
-                transform: translateY(-2px);
-                color: var(--accent);
-                box-shadow:
-                    inset 0 0 0 1.5px var(--accent),
-                    0 0 12px 0 rgba(59, 130, 246, 0.4);
-            }
-        }
+
 
         .room-card:hover,
         .room-card:focus-visible {
@@ -1428,6 +1386,92 @@
             color: var(--accent);
         }
 
+        .btn:hover,
+        .btn:focus-visible,
+        .room-card:hover,
+        .room-card:focus-visible,
+        #qa-card .grid button:hover,
+        #qa-card .grid button:focus-visible,
+        .config-input:hover,
+        .config-input:focus-visible,
+        .config-select:hover,
+        .config-select:focus-visible,
+        input[type="datetime-local"]:hover,
+        input[type="datetime-local"]:focus-visible,
+        .weekday-btn:hover,
+        .weekday-btn:focus-visible,
+        .config-tab:hover,
+        .config-tab:focus-visible,
+        .custom-dropdown-container .config-input:hover,
+        .custom-dropdown-container .config-input:focus-visible,
+        #series-dropdown-btn:hover,
+        #series-dropdown-btn:focus-visible,
+        [id^="recipient-action-"]:hover,
+        [id^="recipient-action-"]:focus-visible,
+        .dropdown-item:hover,
+        .dropdown-item:focus-visible,
+        .clickable-sensor-row:hover,
+        .clickable-sensor-row:focus-visible,
+        #qa-alert-card:hover,
+        #qa-alert-card:focus-visible,
+        #card-critical:hover,
+        #card-critical:focus-visible,
+        #card-warning:hover,
+        #card-warning:focus-visible {
+
+            /* ใช้ pseudo-class :where เพื่อให้แน่ใจว่ามันจะไม่ไป override สไตล์อื่นที่มีความเฉพาะเจาะจงสูงกว่า */
+            &:where(:not(.btn-close-custom):not(:disabled)) {
+                transform: translateY(-2px);
+                box-shadow:
+                    /* แสงฟุ้งสีน้ำเงินรอบนอก */
+                    0 0 12px 0 rgba(59, 130, 246, 0.4),
+                    /* เส้นขอบสีน้ำเงินด้านใน */
+                    inset 0 0 0 1.5px var(--accent);
+            }
+        }
+
+        /* ทำให้สีของ Text/Icon กลับเป็นเหมือนเดิม ไม่ใช่สีน้ำเงิน */
+        .btn:hover,
+        .btn:focus-visible {
+            color: var(--text);
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item:focus-visible {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--text);
+        }
+
+        .config-tab:hover,
+        .config-tab:focus-visible {
+            color: var(--accent);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .weekday-btn:hover,
+        .weekday-btn:focus-visible {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        /* สไตล์พิเศษสำหรับปุ่ม weekday ที่ถูกเลือกอยู่แล้ว */
+        .weekday-btn.active:hover,
+        .weekday-btn.active:focus-visible {
+            filter: brightness(1.2);
+            box-shadow:
+                inset 0 0 0 1.5px rgba(255, 255, 255, 0.8),
+                0 0 12px 0 rgba(59, 130, 246, 0.6);
+        }
+
+        /* ทำให้ border ของ input field หายไปเมื่อมี glow เพื่อความสวยงาม */
+        .config-input:hover,
+        .config-input:focus-visible,
+        .config-select:hover,
+        .config-select:focus-visible,
+        input[type="datetime-local"]:hover,
+        input[type="datetime-local"]:focus-visible {
+            border-color: transparent;
+        }
+
         /* === CSS for Alert & Notification System === */
 
         /* Badges for alert levels */
@@ -1465,18 +1509,9 @@
         }
 
         #modal-alert-center .alert-center-panel {
-            transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
-            transform: scale(0.95) translateY(10px);
-            opacity: 0;
-            pointer-events: none;
+            max-height: calc(100vh - 3rem);
+            height: calc(100vh - 3rem);
         }
-
-        #modal-alert-center:not(.hidden) .alert-center-panel {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            pointer-events: auto;
-        }
-
 
         #alert-table-body tr:hover {
             background-color: rgba(255, 255, 255, 0.03);
@@ -1718,6 +1753,244 @@
             border-color: rgba(245, 158, 11, 0.4);
             color: #fcd34d;
         }
+
+        /* === CSS for Update Animation (Add this) === */
+        .flash-update {
+            animation: flash 0.7s ease-out;
+        }
+
+        @keyframes flash {
+            0% {
+                background-color: rgba(253, 224, 71, 0.25);
+                border-color: rgba(253, 224, 71, 0.6);
+                box-shadow: 0 0 12px rgba(253, 224, 71, 0.3);
+            }
+
+            100% {
+                background-color: transparent;
+                border-color: var(--border);
+                box-shadow: none;
+            }
+        }
+
+        .flash-update-row {
+            animation: flash-row 0.8s ease-out;
+        }
+
+        @keyframes flash-row {
+
+            0%,
+            100% {
+                background-color: var(--panel);
+                /* สีพื้นหลังปกติ */
+            }
+
+            50% {
+                background-color: var(--border);
+                /* สีที่จะสว่างวาบขึ้นมา */
+            }
+        }
+
+        /* === START: Custom Button Styles === */
+        .btn.btn-confirm {
+            background-color: #3b82f6;
+            /* สีน้ำเงิน */
+            border-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn.btn-confirm:hover:not(:disabled) {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            /* คง animation ขยับขึ้นไว้ */
+            box-shadow: none !important;
+            /* ปิดเอฟเฟกต์เรืองแสง */
+        }
+
+        .btn.btn-reset {
+            background-color: #7f1d1d;
+            /* สีแดงเข้ม */
+            border-color: #991b1b;
+            color: #fca5a5;
+            font-weight: 600;
+        }
+
+        .btn.btn-reset:hover:not(:disabled) {
+            background-color: #991b1b;
+            border-color: #b91c1c;
+            color: white;
+            transform: translateY(-2px);
+            /* คง animation ขยับขึ้นไว้ */
+            box-shadow: none !important;
+            /* ปิดเอฟเฟกต์เรืองแสง */
+        }
+
+        /* === START: Confirmation Modal Styles === */
+        #modal-confirm:not(.hidden) {
+            display: flex;
+        }
+
+        #modal-confirm .qa-popup-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            /* เพิ่มช่องว่างระหว่างเนื้อหากับปุ่ม */
+            padding: 1.5rem;
+            /* ปรับ Padding ให้สวยงาม */
+            animation: fadeInScale 0.2s ease-out forwards;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Base style for the confirmation action button */
+        #btn-confirm-yes {
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Blue for standard confirm */
+        #btn-confirm-yes.btn-confirm {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        #btn-confirm-yes.btn-confirm:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        /* Red for destructive actions */
+        #btn-confirm-yes.btn-reset {
+            background-color: #dc2626;
+            border-color: #dc2626;
+            color: white;
+        }
+
+        #btn-confirm-yes.btn-reset:hover {
+            background-color: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        .confirm-footer {
+            display: flex;
+            justify-content: flex-end;
+            /* จัดปุ่มไปทางขวา */
+            gap: 0.75rem;
+            /* ระยะห่างระหว่างปุ่ม */
+            border-top: 1px solid var(--border);
+            /* เพิ่มเส้นคั่น */
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* === END: Confirmation Modal Styles === */
+        /* === START: Modal Animation Styles === */
+
+        /* 1. Overlay (พื้นหลังสีดำโปร่งแสง) */
+        .config-overlay,
+        [id^="modal-"]:not(#modal-confirm) {
+            background-color: rgba(11, 18, 32, 0.7);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.2s ease-out;
+        }
+
+        /* 2. ตัว Panel ของ Modal (ส่วนที่เป็นกรอบสีขาว) */
+        #modal-reboot>div,
+        #modal-export>div,
+        #modal-device-map>div,
+        #modal-pin-map>div,
+        #modal-recipients>div,
+        #modal-ack .config-panel,
+        #modal-settings .config-panel,
+        #modal-room-detail .config-panel,
+        #modal-alert-center .alert-center-panel,
+        #modal-sensor-rules .config-panel {
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+
+        /* 3. สไตล์เริ่มต้น (ตอนซ่อนอยู่ หรือกำลังจะปิด) */
+        .modal-initial-state,
+        .modal-is-exiting>div,
+        .modal-is-exiting .config-panel,
+        .modal-is-exiting .alert-center-panel {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+
+        /* เมื่อ Modal ปิด (กำลังจะหายไป) ให้ Overlay จางลง */
+        .modal-is-exiting {
+            opacity: 0;
+        }
+
+        /* === START: Universal Modal Animation Styles V2 (Upgraded) === */
+        [id^="modal-"] {
+            background-color: rgba(11, 18, 32, 0.7);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.2s ease-out;
+            opacity: 1;
+            /* สถานะปกติ */
+        }
+
+        /* เลือก panel หลักของ modal ไม่ว่าจะเป็น div ตรงๆ หรือ .config-panel */
+        [id^="modal-"]>div,
+        [id^="modal-"] .config-panel,
+        [id^="modal-"] .alert-center-panel {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out;
+            transform: scale(1) translateY(0);
+            /* สถานะปกติ */
+            opacity: 1;
+        }
+
+        /* สไตล์เริ่มต้นตอนกำลังจะเปิด */
+        .modal-is-entering {
+            opacity: 0;
+        }
+
+        .modal-is-entering>div,
+        .modal-is-entering .config-panel,
+        .modal-is-entering .alert-center-panel {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+
+        /* สไตล์ตอนกำลังจะปิด */
+        .modal-is-exiting {
+            opacity: 0;
+        }
+
+        .modal-is-exiting>div,
+        .modal-is-exiting .config-panel,
+        .modal-is-exiting .alert-center-panel {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+
+        /* === CSS for Locked Settings Form === */
+        .settings-locked .config-body fieldset,
+        .settings-locked .config-body .cfg-mac-row,
+        .settings-locked .config-body label {
+            opacity: 0.7;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .settings-locked .config-body input,
+        .settings-locked .config-body select {
+            pointer-events: none;
+            cursor: not-allowed;
+        }
     </style>
 
 </head>
@@ -1843,7 +2116,7 @@
 
                 <!-- Sidebar -->
                 <aside class="self-stretch h-full">
-                    <div class="space-y-4 pr-1">
+                    <div class="space-y-4 pr-1 flex flex-col h-full">
 
                         <div id="qa-alert-card"
                             class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)] cursor-pointer">
@@ -1889,25 +2162,43 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)]">
-                            <h4 class="text-lg font-semibold mb-3">📈 System summary</h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="rounded-lg border border-[var(--border)] p-3">
-                                    <div class="text-xs text-[var(--muted)]">Devices Online</div>
-                                    <div class="text-2xl font-extrabold leading-tight" id="kpi-devices-online">0/4</div>
+                        <div
+                            class="bg-[var(--panel)] p-4 rounded-xl border border-[var(--border)] flex flex-col flex-1">
+                            <h4 class="text-lg font-semibold mb-3">📈 System Summary</h4>
+                            <div class="grid grid-cols-2 gap-3 h-full grid-rows-2">
+
+                                <div
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-red-500/10 flex flex-col justify-between items-center text-center">
+                                    <div class="text-sm text-red-300/80">Highest Temp</div>
+                                    <div class="text-3xl font-extrabold leading-tight text-red-400"
+                                        id="kpi-pro-temp-max">—</div>
+                                    <div class="text-xs text-red-400/70" id="kpi-pro-temp-max-room"></div>
                                 </div>
-                                <div class="rounded-lg border border-[var(--border)] p-3">
-                                    <div class="text-xs text-[var(--muted)]">Active Alerts</div>
-                                    <div class="text-2xl font-extrabold leading-tight" id="kpi-active-alerts">0</div>
+
+                                <div
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-blue-500/10 flex flex-col justify-between items-center text-center">
+                                    <div class="text-sm text-blue-300/80">Highest Humidity</div>
+                                    <div class="text-3xl font-extrabold leading-tight text-blue-400"
+                                        id="kpi-pro-hum-max">—</div>
+                                    <div class="text-xs text-blue-400/70" id="kpi-pro-hum-max-room"></div>
                                 </div>
-                                <div class="rounded-lg border border-[var(--border)] p-3">
-                                    <div class="text-xs text-[var(--muted)]">Avg Temp (24h)</div>
-                                    <div class="text-2xl font-extrabold leading-tight" id="kpi-avg-temp">—</div>
+
+                                <div
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-teal-500/10 flex flex-col justify-between items-center text-center">
+                                    <div class="text-sm text-teal-300/80">Highest Dew Point</div>
+                                    <div class="text-3xl font-extrabold leading-tight text-teal-400"
+                                        id="kpi-pro-dew-max">—</div>
+                                    <div class="text-xs text-teal-400/70" id="kpi-pro-dew-max-room"></div>
                                 </div>
-                                <div class="rounded-lg border border-[var(--border)] p-3">
-                                    <div class="text-xs text-[var(--muted)]">Avg RH (24h)</div>
-                                    <div class="text-2xl font-extrabold leading-tight" id="kpi-avg-rh">—</div>
+
+                                <div
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-amber-500/10 flex flex-col justify-between items-center text-center">
+                                    <div class="text-sm text-amber-300/80">Fastest Temp Rise</div>
+                                    <div class="text-3xl font-extrabold leading-tight text-amber-400"
+                                        id="kpi-pro-temp-rise">—</div>
+                                    <div class="text-xs text-amber-400/70" id="kpi-pro-temp-rise-room"></div>
                                 </div>
+
                             </div>
                         </div>
                         <!-- Quick Actions -->
@@ -2093,8 +2384,8 @@
                                     <input id="range-end" type="datetime-local"
                                         class="mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2 text-sm">
                                 </label>
-                                <button id="btn-apply-range" class="btn h-10 px-4">Apply</button>
-                                <button id="btn-reset-range" class="btn h-10 px-4">Reset</button>
+                                <button id="btn-apply-range" class="btn btn-confirm h-10 px-4">Apply</button>
+                                <button id="btn-reset-range" class="btn btn-reset h-10 px-4">Reset</button>
                             </div>
 
                             <div class="mt-3 relative text-sm">
@@ -2233,9 +2524,8 @@
                             <input type="datetime-local" id="alert-filter-end-date" class="config-input">
                         </div>
                         <div class="lg:col-start-4 flex gap-2">
-                            <button id="alert-filter-apply" class="btn btn-primary w-full"><i
-                                    class="fa-solid fa-check mr-2"></i>Apply</button>
-                            <button id="alert-filter-reset" class="btn w-full">Reset</button>
+                            <button id="alert-filter-apply" class="btn btn-confirm w-full">Apply</button>
+                            <button id="alert-filter-reset" class="btn btn-reset w-full">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -2332,9 +2622,8 @@
 
                 </div>
                 <div class="config-footer flex justify-between">
-                    <button id="btn-reset-rule" class="btn btn-danger">Reset to Inherit</button>
-                    <button id="btn-save-rule" class="btn btn-primary"><i class="fa-solid fa-save mr-2"></i>Save
-                        Rules</button>
+                    <button id="btn-reset-rule" class="btn btn-reset">Reset to Default</button>
+                    <button id="btn-save-rule" class="btn btn-confirm">Save Rules</button>
                 </div>
             </div>
         </div>
@@ -2354,7 +2643,7 @@
             <form id="form-reboot" class="space-y-3">
                 <label class="block text-sm">Select room
                     <select name="target"
-                        class="mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
+                        class="config-select mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
                         <option value="room-a">Room A</option>
                         <option value="room-b">Room B</option>
                         <option value="room-c">Room C</option>
@@ -2393,7 +2682,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <label class="block text-sm">Select room
                         <select name="room"
-                            class="mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
+                            class="config-select mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
                             <option value="room-a">Room A</option>
                             <option value="room-b">Room B</option>
                             <option value="room-c">Room C</option>
@@ -2403,7 +2692,7 @@
                     </label>
                     <label class="block text-sm">Type
                         <select name="type"
-                            class="mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
+                            class="config-select mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
                             <option value="csv">CSV</option>
                             <option value="pdf">PDF</option>
                         </select>
@@ -2455,12 +2744,12 @@
 
             <div class="config-body">
                 <div class="config-tabs">
+                    <button class="config-tab" data-tab="alerts"><i
+                            class="fa-solid fa-bell mr-2 opacity-80"></i>Alerts</button>
                     <button class="config-tab active" data-tab="ethernet"><i
                             class="fa-solid fa-ethernet mr-2 opacity-80"></i>Ethernet</button>
                     <button class="config-tab" data-tab="mqtt"><i
                             class="fa-solid fa-server mr-2 opacity-80"></i>MQTT</button>
-                    <button class="config-tab" data-tab="alerts"><i
-                            class="fa-solid fa-bell mr-2 opacity-80"></i>Alerts</button>
                 </div>
 
                 <!-- ETHERNET -->
@@ -2601,13 +2890,14 @@
             </div>
 
             <div class="config-footer">
-                <div class="flex items-center justify-between gap-2">
-                    <button id="btn-save-settings" class="w-full px-6 py-3 rounded-lg font-semibold
-           bg-blue-600 text-white
-           hover:bg-blue-700
-           focus:outline-none focus:ring-2 focus:ring-blue-400
-           transition">
-                        <i class="fa-solid fa-save mr-2"></i> Save & Apply
+                <div class="flex items-center justify-end gap-3"> <button id="btn-edit-settings"
+                        class="btn btn-confirm">
+                        <i class="fa-solid fa-pencil mr-2"></i> Edit
+                    </button>
+                    <button id="btn-cancel-settings" class="btn hidden"> <i class="fa-solid fa-xmark mr-2"></i> Cancel
+                    </button>
+                    <button id="btn-save-settings" class="btn btn-confirm hidden"> <i class="fa-solid fa-save mr-2"></i>
+                        Save & Apply
                     </button>
                 </div>
             </div>
@@ -2843,6 +3133,24 @@
             </div>
         </div>
     </div>
+    <div id="modal-confirm" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4">
+        <div class="qa-popup-panel w-full max-w-md">
+            <div class="flex items-center gap-4">
+                <div id="confirm-icon" class="qa-icon text-2xl text-amber-400">
+                    <i class="fa-solid fa-circle-question"></i>
+                </div>
+                <div class="qa-msg">
+                    <h5 id="confirm-title" class="font-bold text-lg mb-1">Confirm Action</h5>
+                    <p id="confirm-message" class="text-sm opacity-90">Are you sure you want to proceed?</p>
+                </div>
+            </div>
+            <div class="confirm-footer">
+                <button id="btn-confirm-no" class="btn h-auto px-6 py-2">Cancel</button>
+                <button id="btn-confirm-yes" class="btn h-auto px-6 py-2">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <div id="alert-lifecycle-tooltip" class="custom-tooltip" style="pointer-events: none; white-space: pre-line;"></div>
     <!-- Scripts at the end -->
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -2866,7 +3174,6 @@
             const htmlLegendPlugin = {
                 id: 'htmlLegend',
                 afterUpdate(chart, args, options) {
-                    // ปิดเงียบถ้าไม่ได้เปิดใช้ หรือไม่มี container ให้เขียน
                     if (!options || options === true || !options.containerID) return;
                     const ul = getOrCreateLegendList(chart, options.containerID);
                     if (!ul) return;
@@ -2925,7 +3232,7 @@
                     ctx.save();
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'middle';
-                    ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+                    ctx.font = 'bold 20px Inter, system-ui, sans-serif';
                     ctx.fillStyle = '#fff';
                     ctx.fillText(label, right - 8, y);
                     ctx.restore();
@@ -2957,6 +3264,69 @@
                     ctx.restore();
                 }
             };
+            /**
+ * แปลงวันที่เป็น String ในรูปแบบที่อ่านง่าย (วัน/เดือน/ปี เวลา)
+ * @param {string | Date} t - เวลาที่ต้องการแปลง
+ * @param {string} locale - (Optional) รูปแบบภาษา เช่น 'th-TH' หรือ 'en-GB'
+ * @returns {string} - วันที่ที่จัดรูปแบบแล้ว หรือ '-' ถ้าไม่มีข้อมูล
+ */
+            function fmtDate(t, locale = 'th-TH') {
+                if (!t) return '-';
+                try {
+                    return new Date(t).toLocaleString(locale, {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
+                        hour12: false, timeZone: 'Asia/Bangkok'
+                    }).replace(',', '');
+                } catch (e) {
+                    return 'Invalid Date';
+                }
+            }
+
+            /**
+             * สร้างเนื้อหา HTML สำหรับ Custom Tooltip ตาม Lifecycle ของ Alert
+             * @param {object} row - ข้อมูล Alert ทั้งแถวจาก API
+             * @param {string} currentTab - สถานะของแท็บที่กำลังดูอยู่ ('open', 'ack', 'closed', 'open,ack')
+             * @returns {string} - โค้ด HTML สำหรับใส่ใน Tooltip
+             */
+            function buildLifecycleTooltipHTML(row, currentTab) {
+                const opened = fmtDate(row.opened_at);
+                const acked = fmtDate(row.ack_at);
+                const closed = fmtDate(row.closed_at);
+
+                const who = row.ack_by && row.ack_by !== 'system' ? row.ack_by : (row.ack_by ? row.ack_by : null);
+                const note = row.ack_note && row.ack_note.trim() ? row.ack_note.trim() : null;
+
+                const ackLine = (() => {
+                    if (!acked || acked === '-') return `<strong>ACKed:</strong> -`;
+                    if (who && note) return `<strong>ACKed:</strong> ${acked} (by ${who}, note: "${note}")`;
+                    if (who && !note) return `<strong>ACKed:</strong> ${acked} (by ${who})`;
+                    if (!who && note) return `<strong>ACKed:</strong> ${acked} (note: "${note}")`;
+                    return `<strong>ACKed:</strong> ${acked}`;
+                })();
+
+                let lines = [`<div><strong>Opened:</strong> ${opened}</div>`];
+                if (currentTab === 'ack' || currentTab === 'closed' || (currentTab.includes('open,ack') && row.status === 'ack')) {
+                    lines.push(`<div>${ackLine}</div>`);
+                }
+                if (currentTab === 'closed') {
+                    lines.push(`<div><strong>Closed:</strong> ${closed}</div>`);
+                }
+                return `<div class="custom-tooltip-body">${lines.join('')}</div>`;
+            }
+
+            /**
+             * 
+             * @param {object} row
+             * @param {string} currentTab
+             * @returns {string | Date}
+             */
+            function resolvePrimaryTime(row, currentTab) {
+                if (currentTab === 'closed') return row.closed_at || row.opened_at;
+                if (currentTab === 'ack') return row.ack_at || row.opened_at;
+                if (row.status === 'ack') return row.ack_at || row.opened_at;
+                return row.opened_at;
+            }
 
             const getOrCreateLegendList = (chart, containerID) => {
                 const container = document.getElementById(containerID);
@@ -2980,6 +3350,23 @@
                 Chart.register(window.ChartZoom);
             } else {
                 console.warn('[Chart.js] chartjs-plugin-zoom not available');
+            }
+            async function refreshVisibleAlertViews() {
+                console.log('[Real-time] Alert event occurred. Refreshing visible modals...');
+                const detailModal = document.getElementById('modal-room-detail');
+                if (detailModal && !detailModal.classList.contains('hidden')) {
+                    const roomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
+                    if (roomId) {
+                        console.log(`[Real-time] Refreshing Detail Modal for '${roomId}'...`);
+                        const alerts = await fetchAlertsForRoom(roomId);
+                        renderDetailAlerts(alerts, roomId);
+                    }
+                }
+                const alertCenterModal = document.getElementById('modal-alert-center');
+                if (alertCenterModal && !alertCenterModal.classList.contains('hidden')) {
+                    console.log('[Real-time] Refreshing Alert Center...');
+                    await loadAndCacheAlerts();
+                }
             }
             Chart.register(ThresholdPlugin, htmlLegendPlugin, UptimeLabelPlugin);;
             const css = getComputedStyle(document.documentElement);
@@ -3018,20 +3405,69 @@
                 if (s > 0) str += `${s}s`;
                 return str.trim();
             }
-            // สร้าง/คืน tooltip element เฉพาะของกราฟ uptime แต่ละ canvas
+            function showConfirmationModal(title, message, options = {}) {
+                return new Promise((resolve) => {
+                    const modal = document.getElementById('modal-confirm');
+                    const titleEl = document.getElementById('confirm-title');
+                    const messageEl = document.getElementById('confirm-message');
+                    const iconEl = document.getElementById('confirm-icon');
+                    const confirmBtn = document.getElementById('btn-confirm-yes');
+                    const cancelBtn = document.getElementById('btn-confirm-no');
+
+                    titleEl.textContent = title;
+                    messageEl.innerHTML = message;
+                    confirmBtn.className = 'btn h-auto px-8 py-3';
+                    iconEl.className = 'qa-icon text-2xl';
+                    confirmBtn.textContent = options.confirmText || 'Confirm';
+                    if (options.confirmClass) {
+                        confirmBtn.classList.add(options.confirmClass);
+                    }
+
+                    if (options.iconClass) {
+                        iconEl.innerHTML = `<i class="fa-solid ${options.iconClass}"></i>`;
+                    } else {
+                        iconEl.innerHTML = '<i class="fa-solid fa-circle-question"></i>';
+                    }
+
+                    if (options.iconColorClass) {
+                        iconEl.classList.add(options.iconColorClass);
+                    } else {
+                        iconEl.classList.add('text-amber-400');
+                    }
+
+
+                    const cleanupAndResolve = (value) => {
+                        modal.classList.add('hidden');
+                        confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+                        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+                        modal.removeEventListener('click', overlayClickHandler);
+                        resolve(value);
+                    };
+
+                    const confirmClickHandler = () => cleanupAndResolve(true);
+                    const cancelClickHandler = () => cleanupAndResolve(false);
+                    const overlayClickHandler = (e) => {
+                        if (e.target === modal) {
+                            cleanupAndResolve(false);
+                        }
+                    };
+                    document.getElementById('btn-confirm-yes').addEventListener('click', confirmClickHandler);
+                    document.getElementById('btn-confirm-no').addEventListener('click', cancelClickHandler);
+                    modal.addEventListener('click', overlayClickHandler);
+
+                    modal.classList.remove('hidden');
+                });
+            }
             function getOrCreateUptimeTooltip(canvasId) {
                 let el = document.getElementById(`uptip-${canvasId}`);
                 if (!el) {
                     el = document.createElement('div');
                     el.id = `uptip-${canvasId}`;
-                    // ใช้ class .custom-tooltip ของคุณ (มีสไตล์ครบแล้ว)
                     el.className = 'custom-tooltip';
                     document.body.appendChild(el);
                 }
                 return el;
             }
-
-            // External tooltip handler สำหรับกราฟ Uptime (stacked bar)
             function uptimeTooltipExternal(context, canvasId) {
                 const tooltip = context.tooltip;
                 const el = getOrCreateUptimeTooltip(canvasId);
@@ -3109,8 +3545,6 @@
                 const startISO = start.toISOString();
                 const endISO = end.toISOString();
                 const ROW_KEY = 'Status';
-
-                // helpers
                 const normStatus = (v) => {
                     const s = String(v ?? '').trim().toLowerCase();
                     if (['online', 'on', '1', 'true', 'up'].includes(s)) return 'online';
@@ -3128,7 +3562,6 @@
                     if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
                     const data = await res.json();
-                    //pctEl.textContent = `${(data.uptime_pct ?? 0).toFixed(2)} %`;
                     const points = [];
 
                     if (!data.segments || data.segments.length === 0) {
@@ -3152,7 +3585,6 @@
                         }
                     }
 
-                    // เรียงตามเวลาเพื่อให้ tooltip/hover สบายใจขึ้น
                     points.sort((a, b) => a.x[0] - b.x[0]);
 
                     const ctx = canvas.getContext('2d');
@@ -3162,7 +3594,6 @@
                             datasets: [{
                                 label: 'Uptime',
                                 data: points,
-                                // สีต่อจุด
                                 backgroundColor: (ctx) => ctx.raw?.c || '#999',
                                 borderWidth: 0,
                                 borderSkipped: false,
@@ -3189,7 +3620,6 @@
                                 },
                                 uptimeLabel: { text: `${(data.uptime_pct ?? 0).toFixed(2)} %` }
                             },
-                            // ไม่ต้อง stack แกนเวลา เพราะนี่คือช่วงเวลา ไม่ใช่ค่าที่ต้องบวกกัน
                             scales: {
                                 x: {
                                     type: 'time',
@@ -3235,11 +3665,8 @@
             window.liveAlertSettings = {};
             const CFG_REQUEST_TIMEOUT_MS = 3000;
             async function fetchConfigWithRetry(roomId, mac, retries = 5) {
-                if (!mac) return; // ออกทันทีถ้าไม่มี MAC Address
-
+                if (!mac) return;
                 const requestId = uuid();
-
-                // ส่งคำขอไปยังอุปกรณ์ผ่าน MQTT
                 uibuilder.send({
                     topic: `esp32/control/${mac}/request_config`,
                     payload: { command: "get_config", room: roomId, mac, requestId }
@@ -3247,45 +3674,36 @@
 
                 console.log(`[ConfigFetcher] Sent request ID: ${requestId} to MAC: ${mac} (Room: ${roomId})`);
 
-                let handler; // ประกาศ handler ไว้นอก Promise เพื่อให้เข้าถึงได้จากทุกที่
-
-                // สร้าง Promise สำหรับจัดการ Timeout
+                let handler;
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => {
                         if (handler) {
-                            uibuilder.onChange('msg', handler, false); // ยกเลิกการดักฟังเมื่อหมดเวลา
+                            uibuilder.onChange('msg', handler, false);
                         }
                         reject(new Error('timeout'));
                     }, CFG_REQUEST_TIMEOUT_MS)
                 );
-
-                // สร้าง Promise สำหรับรอข้อความตอบกลับ
                 const responsePromise = new Promise((resolve, reject) => {
                     handler = (msg) => {
                         try {
-                            // ตรวจสอบว่า msg และ payload มีอยู่จริง และตรงกับ requestId ที่รออยู่
                             if (msg?.payload && msg.payload.requestId === requestId && msg.payload.mac_address === mac) {
-                                uibuilder.onChange('msg', handler, false); // ยกเลิกการดักฟังทันทีที่เจอข้อความ
+                                uibuilder.onChange('msg', handler, false);
                                 resolve(msg.payload);
                             }
                         } catch (e) {
                             console.error("Error inside uibuilder message handler:", e);
-                            uibuilder.onChange('msg', handler, false); // ยกเลิกการดักฟังหากเกิด Error
+                            uibuilder.onChange('msg', handler, false);
                             reject(e);
                         }
                     };
-                    uibuilder.onChange('msg', handler); // เริ่มดักฟังข้อความ
+                    uibuilder.onChange('msg', handler);
                 });
 
                 try {
-                    // รอว่าระหว่าง responsePromise กับ timeoutPromise อะไรจะเสร็จก่อน
                     const config = await Promise.race([responsePromise, timeoutPromise]);
-
-                    // ถ้าได้รับ config สำเร็จ (responsePromise ชนะ)
                     if (config) {
                         console.log(`[ConfigFetcher] ✅ Config for ${roomId} received!`);
                         if (config.alerts) {
-                            // อัปเดตค่า Thresholds ที่เก็บไว้ในหน่วยความจำ
                             window.liveAlertSettings[roomId] = {
                                 temp: { critLow: config.alerts.temp_crit_low, warnLow: config.alerts.temp_warn_low, warnHigh: config.alerts.temp_warn_high, critHigh: config.alerts.temp_crit_high },
                                 hum: { critLow: config.alerts.hum_crit_low, warnLow: config.alerts.hum_warn_low, warnHigh: config.alerts.hum_warn_high, critHigh: config.alerts.hum_crit_high }
@@ -3294,10 +3712,8 @@
                     }
 
                 } catch (error) {
-                    // ถ้าเกิด Timeout หรือ Error (timeoutPromise ชนะ หรือมีปัญหา)
                     console.warn(`[ConfigFetcher] 👎 No config for ${roomId}. ${retries} retries left. Reason: ${error.message}`);
                     if (retries > 0) {
-                        // ถ้ายังลองใหม่ได้อีก ให้หน่วงเวลา 5 วินาทีแล้วลองอีกครั้ง
                         setTimeout(() => fetchConfigWithRetry(roomId, mac, retries - 1), 5000);
                     } else {
                         console.error(`[ConfigFetcher] ❌ Failed to fetch config for ${roomId} after multiple retries.`);
@@ -3330,6 +3746,27 @@
                         setRoomCardsBlank(roomId, true);
                     }
                 });
+            }
+            function animateValue(element, start, end, duration, unit = '') {
+                if (!element) return;
+                if (start === end) {
+                    element.textContent = `${end.toFixed(1)}${unit}`;
+                    return;
+                }
+
+                const range = end - start;
+                let startTime = null;
+
+                function step(timestamp) {
+                    if (!startTime) startTime = timestamp;
+                    const progress = Math.min((timestamp - startTime) / duration, 1);
+                    const currentVal = start + progress * range;
+                    element.textContent = `${currentVal.toFixed(1)}${unit}`;
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    }
+                }
+                window.requestAnimationFrame(step);
             }
             async function saveDeviceMapToServer(formData) {
                 const dataToSave = {
@@ -3455,10 +3892,7 @@
             }
 
             function applyPinNames(roomId) {
-                // ใช้ roomId ที่ส่งเข้ามา หรือหาจากค่าปัจจุบันถ้าไม่ได้ส่งมา
                 const currentRoomId = roomId || window.currentCfgRoom || document.getElementById('cfg-room')?.value || 'room-a';
-
-                // ตรวจสอบว่า map พร้อมใช้งานหรือไม่
                 if (!window.ROOM_TO_MAC_MAP || !window.MAC_PIN_NAMES) return;
 
                 const mac = window.ROOM_TO_MAC_MAP?.[currentRoomId];
@@ -3484,7 +3918,6 @@
                 e.stopPropagation();
                 seriesPanel.classList.toggle('hidden');
             });
-            // ดึงข้อความ label ข้าง ๆ checkbox (ไม่เอา icon/element ลูก)
             function getLabelTextFrom(el) {
                 const label = el.closest('label');
                 if (!label) return '';
@@ -3587,7 +4020,6 @@
                 updateGlobalMappings(await res.json());
                 updateMainDashboardUI();
             }
-            // ให้ไฟล์อื่นเรียกได้
             function getRoomToMacFromStorage() {
                 return window.ROOM_TO_MAC_MAP || {};
             }
@@ -3661,14 +4093,12 @@
                 const roomToMac = (typeof getRoomToMacFromStorage === 'function') ? getRoomToMacFromStorage() : {};
                 const mac = normalizeMAC(roomToMac?.[currentCfgRoom] || '');
                 clearSettingsFormFor(currentCfgRoom, mac);
-
+                lockSettingsForm();
                 const dot = document.getElementById(`status-dot-${currentCfgRoom}`);
                 const isOnline = dot && dot.classList.contains('led--green');
-
-                const saveBtn = document.getElementById('btn-save-settings');
+                btnEditSettings.disabled = !isOnline;
 
                 if (isOnline) {
-                    if (saveBtn) saveBtn.disabled = false;
                     try {
                         await requestConfigFromDevice(currentCfgRoom);
                     } catch (err) {
@@ -3676,7 +4106,6 @@
                         scheduleLocalFallback(currentCfgRoom);
                     }
                 } else {
-                    if (saveBtn) saveBtn.disabled = true;
                     console.log(`[Settings] Room ${currentCfgRoom} is offline. Form will remain empty.`);
                 }
             }
@@ -3761,20 +4190,16 @@
                     scheduleLocalFallback(currentCfgRoom);
                 }
             }
-            // ===== Storage helpers=====
             async function loadAllConfigs(room) {
                 const cfg = await fetchConfig(room);
-                // Ethernet
                 document.getElementById('ip').value = cfg.ethernet?.ip || '';
                 document.getElementById('subnet').value = cfg.ethernet?.mask || '';
                 document.getElementById('gateway').value = cfg.ethernet?.gw || '';
                 document.getElementById('dns').value = cfg.ethernet?.dns || '';
-                // MQTT
                 document.getElementById('mqtt-broker').value = cfg.mqtt?.broker || '';
                 document.getElementById('mqtt-port').value = cfg.mqtt?.port || '';
                 document.getElementById('mqtt-user').value = cfg.mqtt?.user || '';
                 document.getElementById('mqtt-pass').value = cfg.mqtt?.pass || '';
-                // Alerts
                 const a = cfg.alerts || getAlertDefaults();
                 document.getElementById('temp-crit-low').value = a.temp.critLow;
                 document.getElementById('temp-warn-low').value = a.temp.warnLow;
@@ -3826,56 +4251,48 @@
             }
             document.getElementById('btn-save-settings')?.addEventListener('click', async () => {
                 const room = currentCfgRoom;
+                const roomName = window.ROOM_NAMES?.[room] || room;
+
+                const confirmed = await showConfirmationModal(
+                    'Confirm Save Settings',
+                    `Are you sure you want to save and apply these settings to <strong>${roomName}</strong>?`,
+                    {
+                        confirmText: 'Save & Apply',
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-save',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+
+                if (!confirmed) return;
+                const saveBtn = document.getElementById('btn-save-settings');
+                const cancelBtn = document.getElementById('btn-cancel-settings');
+                if (saveBtn) saveBtn.disabled = true;
+                if (cancelBtn) cancelBtn.disabled = true;
                 const roomToMac = (typeof getRoomToMacFromStorage === 'function') ? getRoomToMacFromStorage() : {};
                 const mac = normalizeMAC(roomToMac?.[room] || '');
 
                 if (!mac) {
                     showPopup(`❌ ห้อง ${room.toUpperCase()} ยังไม่มี MAC (กรุณาตั้งค่าใน Device Map)`, { type: 'fail' });
+                    if (saveBtn) saveBtn.disabled = false;
+                    if (cancelBtn) cancelBtn.disabled = false;
                     return;
                 }
 
-                const v1 = validateEthernet(room); if (!v1.ok) { showPopup(v1.msg); return; }
-                const v2 = validateMqtt(); if (!v2.ok) { showPopup(v2.msg); return; }
-                const v3 = validateAlerts(); if (!v3.ok) { showPopup(v3.msg); return; }
+                const v1 = validateEthernet(room); if (!v1.ok) { showPopup(v1.msg); if (saveBtn) saveBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false; return; }
+                const v2 = validateMqtt(); if (!v2.ok) { showPopup(v2.msg); if (saveBtn) saveBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false; return; }
+                const v3 = validateAlerts(); if (!v3.ok) { showPopup(v3.msg); if (saveBtn) saveBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false; return; }
 
-                // collectAllSettings ถูกแก้ไขแล้วให้รวมค่าทั้งหมด
                 const settings = collectAllSettings(room);
-
-                // จัดรูปแบบ Alert Rules ให้พร้อมสำหรับ API
                 const alertRules = [
-                    {
-                        scope: "room",
-                        mac: mac,
-                        sensor_name: "overall",
-                        metric: "temp",
-                        active: 1, // กำหนดให้ Rule นี้เป็น Active
-                        crit_min: settings.alerts.temp.critLow,
-                        warn_min: settings.alerts.temp.warnLow,
-                        warn_max: settings.alerts.temp.warnHigh,
-                        crit_max: settings.alerts.temp.critHigh,
-                    },
-                    {
-                        scope: "room",
-                        mac: mac,
-                        sensor_name: "overall",
-                        metric: "hum",
-                        active: 1, // กำหนดให้ Rule นี้เป็น Active
-                        crit_min: settings.alerts.hum.critLow,
-                        warn_min: settings.alerts.hum.warnLow,
-                        warn_max: settings.alerts.hum.warnHigh,
-                        crit_max: settings.alerts.hum.critHigh,
-                    }
+                    { scope: "room", mac: mac, sensor_name: "overall", metric: "temp", active: 1, crit_min: settings.alerts.temp.critLow, warn_min: settings.alerts.temp.warnLow, warn_max: settings.alerts.temp.warnHigh, crit_max: settings.alerts.temp.critHigh },
+                    { scope: "room", mac: mac, sensor_name: "overall", metric: "hum", active: 1, crit_min: settings.alerts.hum.critLow, warn_min: settings.alerts.hum.warnLow, warn_max: settings.alerts.hum.warnHigh, crit_max: settings.alerts.hum.critHigh }
                 ];
 
                 try {
-                    // ขั้นตอนที่ 1: ส่งค่าการตั้งค่าทั้งหมดไปให้อุปกรณ์ ESP32 ผ่าน MQTT
                     const mqttPayload = { command: "set_config", room, mac, requestId: uuid(), settings };
-                    uibuilder.send({
-                        topic: `esp32/control/${mac}/set_config`,
-                        payload: mqttPayload
-                    });
+                    uibuilder.send({ topic: `esp32/control/${mac}/set_config`, payload: mqttPayload });
 
-                    // ขั้นตอนที่ 2: ส่งค่า Alert Rules ไปบันทึกในฐานข้อมูลผ่าน HTTP PUT API
                     const response = await fetch('/api/alert-rules', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -3888,11 +4305,16 @@
                     }
 
                     showPopup(`✅ บันทึกการตั้งค่าทั้งหมดสำเร็จ!`, { type: 'success' });
-                    hideConfigPopup();
+                    lockSettingsForm();
 
                 } catch (error) {
                     console.error("Failed to save settings:", error);
                     showPopup(`❌ บันทึกไม่สำเร็จ: ${error.message}`, { type: 'fail' });
+                } finally {
+                    if (!settingsModalPanel.classList.contains('settings-locked')) {
+                        if (saveBtn) saveBtn.disabled = false;
+                        if (cancelBtn) cancelBtn.disabled = false;
+                    }
                 }
             });
             function collectAllSettings(room) {
@@ -3922,11 +4344,9 @@
                         critHigh: parseFloat(document.getElementById('hum-crit-high').value) || null,
                     }
                 };
-                // ลบ notifications ออกจาก object ที่ return
                 return { ethernet, mqtt, alerts, room };
             }
             async function requestConfigFromDevice(room) {
-                // UI: ล็อก Dropdown ขณะกำลังโหลด
                 const sel = document.getElementById('cfg-room');
                 if (sel) { sel.disabled = true; sel.classList.add('opacity-60', 'cursor-not-allowed'); }
 
@@ -4092,14 +4512,14 @@
                 if (combinedPoints.length > 0) {
                     const title = new Date(timestamp).toLocaleString('en-GB', {
                         year: 'numeric',
-                        month: 'long',  // August
+                        month: 'long',
                         day: '2-digit',
                         hour: '2-digit',
                         minute: '2-digit',
                         second: '2-digit',
                         hour12: false,
                         timeZone: 'Asia/Bangkok',
-                    }).replace(',', ' at'); // <--- แก้ไขตรงนี้
+                    }).replace(',', ' at');
 
                     innerHtml = `<div class="custom-tooltip-header">${title}</div>`;
                     innerHtml += '<div class="custom-tooltip-body">';
@@ -4136,9 +4556,6 @@
                 tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
                 tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
             };
-
-
-            // ---------- VALIDATORS ----------
             function isValidIP(ip) {
                 const re = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
                 return re.test(String(ip || '').trim());
@@ -4204,24 +4621,25 @@
                 return { ok: true };
             }
             /**
-        * @param {Array<Object>} alerts - Array ของ object แจ้งเตือนสำหรับห้องนี้
-        * @param {string} roomId - ID ของห้องที่ข้อมูลนี้เป็นของ
-        */
+            * @param {Array<Object>} alerts
+            * @param {string} roomId
+            */
+            /**
+            * @param {Array<Object>} alerts
+            * @param {string} roomId
+            */
+
             function renderDetailAlerts(alerts, roomId) {
                 const listEl = document.getElementById('detail-alert-list');
                 if (!listEl) return;
 
-                // ✨ Safety Check! ตรวจสอบก่อนว่าข้อมูลที่กำลังจะแสดงผล ตรงกับห้องที่เปิดอยู่จริงหรือไม่
                 const modalEl = document.getElementById('modal-room-detail');
                 const currentOpenRoom = document.getElementById('detail-room-name')?.dataset.currentRoom;
 
-                // ถ้า modal ไม่ได้เปิดอยู่ หรือ roomId ของข้อมูลไม่ตรงกับห้องที่เปิดอยู่ ก็ไม่ต้องทำอะไรเลย
                 if (modalEl.classList.contains('hidden') || currentOpenRoom !== roomId) {
                     console.warn(`[Render Guard] Dropping stale alert render for '${roomId}'. Current modal is for '${currentOpenRoom}'.`);
-                    return; // 🛑 หยุดการทำงานทันทีถ้าข้อมูลไม่ตรงกัน
+                    return;
                 }
-
-                // ฟังก์ชันย่อยสำหรับหา condition (High/Low) - (ใช้ตัวเดิมจากครั้งที่แล้ว)
                 const getConditionText = (alert) => {
                     const currentRoomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
                     if (!currentRoomId || !window.liveAlertSettings || !window.liveAlertSettings[currentRoomId]) {
@@ -4239,65 +4657,158 @@
                     }
                     return 'Threshold Event';
                 };
-
-                listEl.classList.remove('space-y-2');
                 listEl.innerHTML = '';
-
                 if (!alerts || alerts.length === 0) {
                     listEl.innerHTML = '<li class="text-center text-[var(--muted)] mt-4 w-full">No active alerts for this room</li>';
                     return;
                 }
-
-                // --- ✨ จุดที่เราจะแก้ไข HTML และเพิ่มปุ่ม ACK ✨ ---
                 const alertChipsHtml = alerts.map(alert => {
                     const levelClass = alert.level === 'critical' ? 'alert-chip-critical' : 'alert-chip-warning';
                     const icon = '<i class="fa-solid fa-triangle-exclamation icon"></i>';
-
-                    // 1. จัดรูปแบบวันที่และเวลา
                     const dateTimeText = new Date(alert.opened_at).toLocaleString('th-TH', {
                         day: '2-digit', month: '2-digit', year: 'numeric',
                         hour: '2-digit', minute: '2-digit',
                         hour12: false
                     }).replace(',', '');
-
-                    // 2. หาชื่อ Sensor
-                    const mac = window.ROOM_TO_MAC_MAP?.[alert.room_id] || alert.mac;
+                    const mac = window.ROOM_TO_MAC_MAP?.[roomId] || alert.mac;
                     const pinMap = mac ? (window.MAC_PIN_NAMES?.[mac] || {}) : {};
-                    const sensorNameText = (String(alert.sensor_name).toLowerCase() === 'overall')
+                    const sensorNameText = (String(alert.sensor_name).toLowerCase() === 'device_status' || String(alert.sensor_name).toLowerCase() === 'overall')
                         ? 'OVERALL'
                         : (pinMap[`name_pin_${alert.sensor_name}`] || `Pin ${alert.sensor_name}`);
-
-                    // 3. หา Metric, Condition, Value
-                    const conditionText = getConditionText(alert);
-                    const metricText = alert.metric.charAt(0).toUpperCase() + alert.metric.slice(1);
-                    const valueText = Number(alert.trigger_value).toFixed(1);
-                    const unit = alert.metric === 'temp' ? '°C' : '%';
-
-                    // 4. สร้างปุ่ม ACK (จะแสดงผลเฉพาะ alert ที่ status เป็น 'open' เท่านั้น)
                     let ackButtonHtml = '';
                     if (alert.status === 'open') {
                         ackButtonHtml = `<button class="btn-ack-chip" data-event-id="${alert.event_id}">ACK</button>`;
                     }
-
-                    // 5. ประกอบร่างข้อความทั้งหมด
-                    const fullMessage = `${dateTimeText} <strong>${sensorNameText}:</strong> ${metricText} ${conditionText} ${valueText}${unit}`;
-
-                    // 6. สร้าง HTML ของ Chip ทั้งหมด
+                    const metricMap = {
+                        temp: 'Temperature',
+                        hum: 'Humidity',
+                        connectivity: 'Device Status'
+                    };
+                    const displayMetric = metricMap[alert.metric] || alert.metric;
+                    let fullMessage = '';
+                    if (alert.metric === 'connectivity') {
+                        fullMessage = `${dateTimeText} <strong>${displayMetric}:</strong> Device is Offline`;
+                    } else {
+                        const conditionText = getConditionText(alert);
+                        const valueText = Number(alert.trigger_value).toFixed(1);
+                        const unit = alert.metric === 'temp' ? '°C' : '%';
+                        fullMessage = `${dateTimeText} <strong>${sensorNameText}:</strong> ${displayMetric} ${conditionText} ${valueText}${unit}`;
+                    }
                     return `
-                    <li>
-                        <div class="alert-chip ${levelClass}">
-                            <div class="alert-chip-info" title="${fullMessage.replace(/<strong>|<\/strong>/g, '')}">
-                                ${icon}
-                                <span>${fullMessage}</span>
-                            </div>
-                            ${ackButtonHtml}
-                        </div>
-                    </li>
-                `;
+            <li data-event-id="${alert.event_id}">
+                <div class="alert-chip ${levelClass}">
+                    <div class="alert-chip-info" title="${fullMessage.replace(/<strong>|<\/strong>/g, '')}">
+                        ${icon}
+                        <span>${fullMessage}</span>
+                    </div>
+                    ${ackButtonHtml}
+                </div>
+            </li>
+        `;
                 }).join('');
 
                 listEl.innerHTML = alertChipsHtml;
+                const alertItems = listEl.querySelectorAll('li[data-event-id]');
+                alertItems.forEach(item => {
+                    const eventId = item.dataset.eventId;
+                    const alertData = alerts.find(a => String(a.event_id) === eventId);
+                    if (!alertData) return;
+                    const currentTab = 'open,ack';
+
+                    item.addEventListener('mouseenter', (e) => {
+                        const tooltipEl = document.getElementById('alert-lifecycle-tooltip');
+                        if (tooltipEl) {
+                            tooltipEl.innerHTML = buildLifecycleTooltipHTML(alertData, currentTab);
+                            tooltipEl.style.opacity = 1;
+                        }
+                    });
+                    item.addEventListener('mousemove', (e) => {
+                        const tooltipEl = document.getElementById('alert-lifecycle-tooltip');
+                        if (tooltipEl) {
+                            tooltipEl.style.left = `${e.pageX + 15}px`;
+                            tooltipEl.style.top = `${e.pageY}px`;
+                            tooltipEl.style.transform = 'translateY(-50%)';
+                        }
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        const tooltipEl = document.getElementById('alert-lifecycle-tooltip');
+                        if (tooltipEl) {
+                            tooltipEl.style.opacity = 0;
+                        }
+                    });
+                });
             }
+            let originalSettings = {};
+            const settingsModalPanel = document.querySelector('#modal-settings .config-panel');
+            const settingsFormBody = document.querySelector('#modal-settings .config-body');
+            const btnEditSettings = document.getElementById('btn-edit-settings');
+            const btnCancelSettings = document.getElementById('btn-cancel-settings');
+            const btnSaveSettings = document.getElementById('btn-save-settings');
+            const alertLifecycleTooltip = document.getElementById('alert-lifecycle-tooltip');
+            const qaAlertsButton = document.getElementById('qa-alerts');
+            const alertCenterModalEl = document.getElementById('modal-alert-center');
+            const alertTableBodyEl = document.getElementById('alert-table-body');
+            const qaAlertCountEl = document.getElementById('qa-alert-count');
+            const bulkAckButton = document.getElementById('btn-bulk-ack');
+            const ackAllCheckbox = document.getElementById('ack-all-checkbox');
+            const searchInput = document.getElementById('alert-filter-search');
+            const levelSelect = document.getElementById('alert-filter-level');
+            const statusSelect = document.getElementById('alert-filter-status');
+            const startDateInput = document.getElementById('alert-filter-start-date');
+            const endDateInput = document.getElementById('alert-filter-end-date');
+            const applyButton = document.getElementById('alert-filter-apply');
+            const resetButton = document.getElementById('alert-filter-reset');
+            const drawerEl = document.getElementById('modal-sensor-rules');
+            const ruleFormFields = document.getElementById('sensor-rule-form-fields');
+            const overrideToggle = document.getElementById('toggle-override');
+            function lockSettingsForm() {
+                if (!settingsModalPanel) return;
+                settingsModalPanel.classList.add('settings-locked');
+                settingsFormBody.querySelectorAll('input, select').forEach(el => {
+                    el.disabled = true;
+                });
+                btnEditSettings.classList.remove('hidden');
+                btnCancelSettings.classList.add('hidden');
+                btnSaveSettings.classList.add('hidden');
+            }
+            function unlockSettingsForm() {
+                if (!settingsModalPanel) return;
+                settingsModalPanel.classList.remove('settings-locked');
+                settingsFormBody.querySelectorAll('input, select').forEach(el => {
+                    if (el.id !== 'cfg-room') {
+                        el.disabled = false;
+                    }
+                });
+                btnEditSettings.classList.add('hidden');
+                btnCancelSettings.classList.remove('hidden');
+                btnSaveSettings.classList.remove('hidden');
+            }
+            function storeCurrentSettings() {
+                originalSettings = {};
+                settingsFormBody.querySelectorAll('input, select').forEach(el => {
+                    if (el.id) {
+                        originalSettings[el.id] = el.value;
+                    }
+                });
+                console.log('[Lock System] Stored original settings:', originalSettings);
+            }
+            function restoreOriginalSettings() {
+                console.log('[Lock System] Restoring original settings...');
+                for (const [id, value] of Object.entries(originalSettings)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.value = value;
+                    }
+                }
+            }
+            btnEditSettings?.addEventListener('click', () => {
+                storeCurrentSettings();
+                unlockSettingsForm();
+            });
+            btnCancelSettings?.addEventListener('click', () => {
+                restoreOriginalSettings();
+                lockSettingsForm();
+            });
             function validateNotifications() {
                 const badEmail = (notificationEmails || []).find(e => !isValidEmail(e));
                 if (badEmail) return { ok: false, msg: `❌ Email ไม่ถูกต้อง: ${badEmail}` };
@@ -4310,7 +4821,6 @@
                 const timeout = opts.timeout || 4000;
                 showPopup(text, { type, timeout });
             }
-            //==== Helpers =====
             function isNum(v) { return typeof v === 'number' && !isNaN(v); }
             function fmt1(v) { return isNum(v) ? v.toFixed(1) : '—'; }
             function getNumByKeys(obj, keys) {
@@ -4323,16 +4833,13 @@
             function setRoomCardsBlank(roomId, isBlank) {
                 const tempValEl = document.getElementById(`temp-${roomId}`);
                 const rhValEl = document.getElementById(`rh-${roomId}`);
-                // ใช้ .closest() เพื่อหา card หลัก จะแม่นยำกว่า .parentElement
                 const tempCard = tempValEl?.closest('.metric-card');
                 const rhCard = rhValEl?.closest('.metric-card');
 
                 if (isBlank) {
-                    // เมื่อเป็น offline ให้ซ่อน card ทั้งสอง
                     if (tempCard) tempCard.classList.add('hidden');
                     if (rhCard) rhCard.classList.add('hidden');
                 } else {
-                    // เมื่อเป็น online ให้แสดง card ทั้งสอง
                     if (tempCard) tempCard.classList.remove('hidden');
                     if (rhCard) rhCard.classList.remove('hidden');
                 }
@@ -4460,8 +4967,6 @@
                 const m = topic.toLowerCase().match(/(^|\/)(room-[abcd])(?=\/|$)/);
                 return m ? m[2] : null;
             }
-            // ===== Global header status =====
-
             function updateDeviceStatus(status, ms) {
                 const statusText = document.getElementById('status-text');
                 const pingTime = document.getElementById('ping-time');
@@ -4484,62 +4989,41 @@
                     if (pingTime) pingTime.classList.add('hidden');
                 }
             }
-
-            // โค้ดที่แก้ไขแล้ว (คัดลอกไปทับของเดิมได้เลย)
             function resetRoomUI(roomId) {
                 console.warn(`[Offline] No data for ${roomId} in ${ROOM_TIMEOUT_MS / 1000}s. Setting UI to offline.`);
-
-                // ✨ --- จุดที่เพิ่มเข้ามา --- ✨
-                // Clear the data store for the offline room
                 if (window.roomDataStore && window.roomDataStore[roomId]) {
                     window.roomDataStore[roomId].history = [];
                     window.roomDataStore[roomId].live = {};
                     console.log(`[DataStore] Cleared history and live data for offline room: ${roomId}`);
                 }
-                // ✨ --- สิ้นสุดส่วนที่เพิ่ม --- ✨
-
-                // 1. เปลี่ยนไฟสถานะเป็นสีแดง
                 const statusDot = document.getElementById(`status-dot-${roomId}`);
                 if (statusDot) {
                     setLed(statusDot, 'led--red');
                 }
-
-                // 2. ล้างเวลาอัปเดตล่าสุด
                 const updatedEl = document.getElementById(`updated-${roomId}`);
                 if (updatedEl) {
                     updatedEl.textContent = '';
                 }
-
-                // 3. หา element ที่เกี่ยวข้องใน metric-card
                 const tempValEl = document.getElementById(`temp-${roomId}`);
                 const rhValEl = document.getElementById(`rh-${roomId}`);
                 const tempCard = tempValEl?.closest('.metric-card');
                 const rhCard = rhValEl?.closest('.metric-card');
-
-                // 4. รีเซ็ตค่าและการแสดงผลของ Temperature Card
                 if (tempCard) {
                     const valueEl = tempCard.querySelector('.metric-value');
                     const statusEl = tempCard.querySelector('.metric-status');
                     if (valueEl) valueEl.textContent = '—';
                     if (statusEl) statusEl.textContent = 'Offline';
-                    // เปลี่ยนสีการ์ดเป็นสีเทา (Offline)
                     tempCard.className = 'metric-card rounded-xl shadow p-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white text-center flex flex-col justify-center';
                 }
-
-                // 5. รีเซ็ตค่าและการแสดงผลของ Humidity Card
                 if (rhCard) {
                     const valueEl = rhCard.querySelector('.metric-value');
                     const statusEl = rhCard.querySelector('.metric-status');
                     if (valueEl) valueEl.textContent = '—';
                     if (statusEl) statusEl.textContent = 'Offline';
-                    // เปลี่ยนสีการ์ดเป็นสีเทา (Offline)
                     rhCard.className = 'metric-card rounded-xl shadow p-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white text-center flex flex-col justify-center';
                 }
-
-                // 6. เรียกใช้ฟังก์ชันเพื่อซ่อน metric-card ทั้งหมด (หลังจากรีเซ็ตค่าแล้ว)
                 setRoomCardsBlank(roomId, true);
             }
-
             function updateRoomUI(roomId, data) {
                 const roomCardEl = document.querySelector(`.room-card[data-room="${roomId}"]`);
                 if (roomCardEl) {
@@ -4555,34 +5039,24 @@
                 const updatedEl = document.getElementById(`updated-${roomId}`);
                 const tempValEl = document.getElementById(`temp-${roomId}`);
                 const rhValEl = document.getElementById(`rh-${roomId}`);
-                const tempCard = tempValEl?.parentElement;
-                const rhCard = rhValEl?.parentElement;
+                const tempCard = tempValEl?.closest('.metric-card');
+                const rhCard = rhValEl?.closest('.metric-card');
 
                 const hasData =
                     (data.avg_temp != null && !isNaN(data.avg_temp)) ||
                     (data.avg_hum != null && !isNaN(data.avg_hum)) ||
                     (data.uptime_pct != null);
 
-                if (data.status === 'offline') {
+                if (data.status === 'offline' || !hasData) {
                     resetRoomUI(roomId);
                     return;
                 }
-
-                if (hasData) {
-                    if (statusDot) {
-                        setLed(statusDot, 'led--green');
-                    }
-
-                    checkAndFetchConfig(roomId);
-
-                    const cards = roomCardEl.querySelectorAll('.hidden');
-                    cards.forEach(c => c.classList.remove('hidden'));
-                } else {
-                    if (statusDot) {
-                        setLed(statusDot, 'led--red');
-                    }
-                    return;
+                if (statusDot) {
+                    setLed(statusDot, 'led--green');
                 }
+                checkAndFetchConfig(roomId);
+                const hiddenMetricCards = roomCardEl.querySelectorAll('.metric-card.hidden');
+                hiddenMetricCards.forEach(c => c.classList.remove('hidden'));
 
                 if (data.timestamp != null && updatedEl) {
                     const d = new Date(data.timestamp);
@@ -4591,33 +5065,33 @@
                         hour: '2-digit', minute: '2-digit'
                     });
                 }
-
-                if (data.avg_temp != null && !isNaN(data.avg_temp)) {
+                if (data.avg_temp != null && !isNaN(data.avg_temp) && tempValEl && tempCard) {
                     const tStyles = getSensorStyles(data.avg_temp, 'temp', roomId);
-                    if (tempValEl && tempCard) {
-                        tempValEl.textContent = `${Number(data.avg_temp).toFixed(1)}°C`;
-                        const sEl = tempCard.querySelector('p:last-of-type');
-                        if (sEl) sEl.textContent = tStyles.status;
-                        tempCard.className = 'metric-card rounded-xl shadow p-4 text-white text-center flex flex-col justify-center';
-                        tempCard.classList.add('bg-gradient-to-r', ...tStyles.classes);
-                    }
+                    const startValue = parseFloat(tempValEl.textContent) || data.avg_temp;
+                    const endValue = Number(data.avg_temp);
+                    animateValue(tempValEl, startValue, endValue, 500, '°C');
+                    const sEl = tempCard.querySelector('p.metric-status');
+                    if (sEl) sEl.textContent = tStyles.status;
+                    tempCard.className = 'metric-card rounded-xl shadow p-4 text-white text-center flex flex-col justify-center';
+                    tempCard.classList.add('bg-gradient-to-r', ...tStyles.classes);
+                    tempCard.classList.remove('flash-update');
+                    void tempCard.offsetWidth;
+                    tempCard.classList.add('flash-update');
+                    setTimeout(() => tempCard.classList.remove('flash-update'), 700);
                 }
-
-                if (data.avg_hum != null && !isNaN(data.avg_hum)) {
+                if (data.avg_hum != null && !isNaN(data.avg_hum) && rhValEl && rhCard) {
                     const hStyles = getSensorStyles(data.avg_hum, 'hum', roomId);
-                    if (rhValEl && rhCard) {
-                        rhValEl.textContent = `${Number(data.avg_hum).toFixed(1)}%`;
-                        const sEl = rhCard.querySelector('p:last-of-type');
-                        if (sEl) sEl.textContent = hStyles.status;
-                        rhCard.className = 'metric-card rounded-xl shadow p-4 text-white text-center flex flex-col justify-center';
-                        rhCard.classList.add('bg-gradient-to-r', ...hStyles.classes);
-                    }
-                }
-
-                if (data.uptime_pct != null && uptimeBar && uptimeTxt) {
-                    const up = parseFloat(data.uptime_pct) || 0;
-                    uptimeTxt.textContent = `${up.toFixed(1)}%`;
-                    uptimeBar.style.width = `${up}%`;
+                    const startValue = parseFloat(rhValEl.textContent) || data.avg_hum;
+                    const endValue = Number(data.avg_hum);
+                    animateValue(rhValEl, startValue, endValue, 500, '%');
+                    const sEl = rhCard.querySelector('p.metric-status');
+                    if (sEl) sEl.textContent = hStyles.status;
+                    rhCard.className = 'metric-card rounded-xl shadow p-4 text-white text-center flex flex-col justify-center';
+                    rhCard.classList.add('bg-gradient-to-r', ...hStyles.classes);
+                    rhCard.classList.remove('flash-update');
+                    void rhCard.offsetWidth;
+                    rhCard.classList.add('flash-update');
+                    setTimeout(() => rhCard.classList.remove('flash-update'), 700);
                 }
             }
 
@@ -4628,14 +5102,48 @@
                     resetRoomUI(roomId);
                 });
             }
+            function getThresholdsForVisibleSeries(roomId, visibleSeries, metric) {
+                const isThresholdsVisible = document.getElementById('toggle-thresholds')?.checked ?? true;
+                if (!isThresholdsVisible || !roomId || !visibleSeries || visibleSeries.length === 0) {
+                    return [];
+                }
 
+                const mac = window.ROOM_TO_MAC_MAP?.[roomId];
+                if (!mac || !window.allEffectiveRules?.[mac]) {
+                    return [];
+                }
+                const rulesForMac = window.allEffectiveRules[mac];
+                let targetRule = null;
+                if (visibleSeries.length > 1) {
+                    targetRule = rulesForMac.room?.[metric];
+                } else {
+                    const singleSeries = visibleSeries[0];
+                    if (singleSeries.pinId === 'overall' || singleSeries.dataType === 'dew') {
+                        targetRule = rulesForMac.room?.[metric];
+                    } else {
+                        const sensorName = pinLabel(singleSeries.pinId);
+                        targetRule = rulesForMac.sensors?.[sensorName]?.[metric] || rulesForMac.room?.[metric];
+                    }
+                }
+                if (!targetRule) {
+                    return [];
+                }
+                const formatLines = (rule) => {
+                    return [
+                        { y: rule.crit_max, color: '#ef4444', dash: [6, 3], label: `Crit High`, width: 2 },
+                        { y: rule.warn_max, color: '#f59e0b', dash: [6, 3], label: `Warn High`, width: 1 },
+                        { y: rule.warn_min, color: '#f59e0b', dash: [6, 3], label: `Warn Low`, width: 1 },
+                        { y: rule.crit_min, color: '#ef4444', dash: [6, 3], label: `Crit Low`, width: 2 }
+                    ].filter(line => typeof line.y === 'number' && !isNaN(line.y));
+                };
+
+                return formatLines(targetRule);
+            }
             function feedChartsFromRows(rows, withAnimation = true) {
                 if (!window._detailCharts?.temp || !window._detailCharts?.rh || !Array.isArray(rows)) {
                     return;
                 }
-
                 const show = (k) => document.querySelector(`#series-toggle input[data-series="${k}"]`)?.checked ?? true;
-
                 const createSeries = (pin, field) => {
                     return rows
                         .filter(r => String(r.pin).toUpperCase() === String(pin).toUpperCase() && r.timestamp)
@@ -4663,7 +5171,6 @@
                 const pinMap = mac ? (window.MAC_PIN_NAMES?.[mac] || {}) : {};
                 const pinLabel = (pin) => (pinMap[`name_pin_${pin}`]?.trim()) || `Pin ${pin}`;
 
-
                 let tempDatasets = [];
                 if (show('overall')) tempDatasets.push({ label: 'Temp (Overall)', data: t_overall, borderColor: 'rgba(239,68,68,1)', backgroundColor: 'rgba(239,68,68,0.2)', borderWidth: 3, fill: false, tension: 0.35, pinId: 'overall', dataType: 'temp' });
                 if (show('pin25')) tempDatasets.push({ label: `Temp ${pinLabel('25')}`, data: t25, borderColor: 'rgba(252,165,165,0.9)', backgroundColor: 'rgba(252,165,165,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '25', dataType: 'temp' });
@@ -4688,27 +5195,6 @@
                     maxTimestamp = Math.max(...allPoints);
                 }
 
-                const getThresholdLines = (type) => {
-                    const isThresholdsVisible = document.getElementById('toggle-thresholds')?.checked ?? true;
-                    if (!isThresholdsVisible) {
-                        return [];
-                    }
-                    const roomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
-                    if (!roomId) return [];
-                    const liveConfig = window.liveAlertSettings?.[roomId];
-                    if (!liveConfig || !liveConfig[type]) {
-                        return [];
-                    }
-
-                    const cfg = liveConfig[type];
-                    return [
-                        { y: cfg.critHigh, color: '#ef4444', dash: [6, 3], label: `Crit High`, width: 2 },
-                        { y: cfg.warnHigh, color: '#f59e0b', dash: [6, 3], label: `Warn High`, width: 1 },
-                        { y: cfg.warnLow, color: '#f59e0b', dash: [6, 3], label: `Warn Low`, width: 1 },
-                        { y: cfg.critLow, color: '#ef4444', dash: [6, 3], label: `Crit Low`, width: 2 }
-                    ].filter(line => typeof line.y === 'number' && !isNaN(line.y));
-                };
-
                 const tempChart = window._detailCharts.temp;
                 const rhChart = window._detailCharts.rh;
 
@@ -4723,41 +5209,31 @@
                     delete rhChart.options.plugins.zoom.limits.x.min;
                     delete rhChart.options.plugins.zoom.limits.x.max;
                 }
-
+                const visibleTempSeries = tempDatasets.map(ds => ({ pinId: ds.pinId, label: ds.label, dataType: ds.dataType }));
+                const visibleRhSeries = rhDatasets.map(ds => ({ pinId: ds.pinId, label: ds.label, dataType: ds.dataType }));
+                const tempThresholdLines = getThresholdsForVisibleSeries(currentRoomId, visibleTempSeries, 'temp');
+                const rhThresholdLines = getThresholdsForVisibleSeries(currentRoomId, visibleRhSeries, 'hum');
                 tempChart.data.datasets = tempDatasets;
-                tempChart.options.plugins.thresholdPlugin = { lines: getThresholdLines('temp') };
-
+                tempChart.options.plugins.thresholdPlugin = { lines: tempThresholdLines };
                 rhChart.data.datasets = rhDatasets;
-                rhChart.options.plugins.thresholdPlugin = { lines: getThresholdLines('hum') };
-
+                rhChart.options.plugins.thresholdPlugin = { lines: rhThresholdLines };
                 const animMode = withAnimation ? 'default' : 'none';
                 tempChart.update(animMode);
                 rhChart.update(animMode);
-
                 tempChart.resetZoom('none');
                 rhChart.resetZoom('none');
             }
             initAllRoomsOffline();
             initDetailToolbar();
-
-            // =================================================================
-            // ✨ NOTIFICATION SETTINGS V4.2 (COMPLETE & CORRECTED) ✨
-            // =================================================================
-
-            // --- State Variables ---
             let notificationEmails = [];
             let telegramChatIds = [];
             let scheduleWeekdays = [true, true, true, true, true, true, true];
             let scheduleTimes = ["08:00", "17:00"];
             const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-            // --- Default Values ---
             const getDefaultSchedule = () => ({
                 weekdays: [true, true, true, true, true, true, true],
                 times: ["08:00", "17:00"]
             });
-
-            // --- API Interaction ---
             async function loadNotificationSettings() {
                 try {
                     const res = await fetch('/api/notification-settings', { cache: 'no-store' });
@@ -4786,6 +5262,19 @@
             }
 
             async function saveNotificationSettings() {
+                const confirmed = await showConfirmationModal(
+                    'Confirm Notification Settings',
+                    'Are you sure you want to save these recipient and schedule settings?',
+                    {
+                        confirmText: 'Confirm & Save',
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-paper-plane',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+
+                if (!confirmed) return;
+
                 const statusEl = document.getElementById('recipients-status');
                 statusEl.textContent = 'Saving...';
                 if (!scheduleWeekdays.some(day => day === true) || scheduleTimes.length === 0) {
@@ -4815,16 +5304,12 @@
                     statusEl.textContent = '';
                 }
             }
-
-            // --- UI Rendering ---
             function renderAllSettingsUI() {
                 setupCustomDropdown('email', notificationEmails, (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val));
                 setupCustomDropdown('telegram', telegramChatIds, (val) => /^-?\d+$/.test(val));
                 renderScheduleDays();
                 renderScheduleTimes();
             }
-
-            // --- Main Setup Function for Custom Dropdown ---
             function setupCustomDropdown(type, itemsArray, validationFn) {
                 const container = document.querySelector(`#${type}-dropdown-panel`).parentElement;
                 const inputEl = document.getElementById(`recipient-input-${type}`);
@@ -4835,12 +5320,10 @@
                     panelEl.innerHTML = '';
                     const filterText = inputEl.value.toLowerCase();
                     const filteredItems = itemsArray.filter(item => item.toLowerCase().includes(filterText));
-
                     if (filteredItems.length === 0 && document.activeElement !== inputEl) {
                         panelEl.classList.add('hidden');
                         return;
                     }
-
                     filteredItems.forEach(item => {
                         const itemEl = document.createElement('div');
                         itemEl.className = 'dropdown-item';
@@ -4865,10 +5348,8 @@
                         });
                         panelEl.appendChild(itemEl);
                     });
-
                     const inputWidth = inputEl.offsetWidth;
                     panelEl.style.width = `${inputWidth}px`;
-
                     if (filteredItems.length > 0) {
                         panelEl.classList.remove('hidden');
                     } else {
@@ -4895,24 +5376,21 @@
                     renderDropdown();
                     updateRecipientActionButton();
                 });
-
-                // ✨ เพิ่ม Event Listener สำหรับปุ่ม Enter ✨
                 inputEl.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
-                        e.preventDefault(); // ป้องกันการ submit form โดยไม่ตั้งใจ
-                        actionBtn.click(); // สั่งให้ปุ่ม + ทำงานเหมือนโดนคลิก
+                        e.preventDefault();
+                        actionBtn.click();
                     }
                 });
-                // --- สิ้นสุดส่วนที่เพิ่ม ---
 
                 actionBtn.addEventListener('click', () => {
                     const value = inputEl.value.trim();
                     const isExisting = itemsArray.includes(value);
 
-                    if (isExisting) { // Delete Mode
+                    if (isExisting) {
                         const index = itemsArray.indexOf(value);
                         if (index > -1) itemsArray.splice(index, 1);
-                    } else { // Add Mode
+                    } else {
                         if (value && validationFn(value)) {
                             itemsArray.push(value);
                         } else if (value) {
@@ -4931,15 +5409,10 @@
                     }
                 }, true);
             }
-
-
-            // --- Event Listeners ---
             document.getElementById('qa-recipients')?.addEventListener('click', () => {
                 loadNotificationSettings();
                 openModal('modal-recipients');
             });
-
-            // --- Schedule Logic (This is the corrected, full version) ---
             function renderScheduleDays() {
                 const container = document.getElementById('schedule-weekdays');
                 if (!container) return;
@@ -4964,13 +5437,10 @@
                 scheduleTimes.forEach(time => {
                     const div = document.createElement('div');
                     div.className = 'schedule-time-item';
-
-                    // ✨ แก้ไขจุดที่ 1: เปลี่ยนวิธีซ่อน input เพื่อให้ตำแหน่งถูกต้อง ✨
                     const timeInput = document.createElement('input');
                     timeInput.type = 'time';
                     timeInput.value = time;
                     timeInput.className = 'hidden-time-input';
-                    // ทำให้มองไม่เห็น แต่ยังคงอยู่ในตำแหน่งเดิม
                     Object.assign(timeInput.style, {
                         position: 'absolute',
                         opacity: 0,
@@ -4982,7 +5452,6 @@
                     const timeText = document.createElement('span');
                     timeText.className = 'time-text';
                     timeText.textContent = time;
-                    // ✨ แก้ไขจุดที่ 2: ทำให้ตัวเลขเวลากดได้ ✨
                     timeText.onclick = () => timeInput.showPicker();
 
                     const actionsDiv = document.createElement('div');
@@ -5048,11 +5517,8 @@
             document.getElementById('modal-recipients')?.addEventListener('click', e => {
                 const btn = e.target.closest('.remove-item-btn');
                 if (!btn || btn.dataset.type !== 'time') return;
-
-                // แก้ไขตรงนี้: ให้หา input จาก parent ที่เป็น .schedule-time-item
                 const timeItemDiv = btn.closest('.schedule-time-item');
                 if (!timeItemDiv) return;
-
                 const timeToRemove = timeItemDiv.querySelector('input[type="time"]').value;
                 scheduleTimes = scheduleTimes.filter(t => t !== timeToRemove);
                 renderScheduleTimes();
@@ -5074,7 +5540,7 @@
             function dewPointC_Magnus(Tc, RHpct) {
                 const T = Number(Tc), RH = Number(RHpct);
                 if (!Number.isFinite(T) || !Number.isFinite(RH)) return null;
-                const a = 17.62, b = 243.12; // °C
+                const a = 17.62, b = 243.12;
                 const gamma = (a * T) / (b + T) + Math.log(RH / 100);
                 return (b * gamma) / (a - gamma);
             }
@@ -5111,33 +5577,21 @@
                     }
                 }
             }
-
-            // ✨ [REPLACE] อัปเกรดฟังก์ชัน updateAlertCards ให้ฉลาดขึ้น
             function updateAlertCards(payload) {
                 let critCount = 0;
                 let warnCount = 0;
-
-                // --- ส่วนที่แก้ไข ---
-                // เช็คว่า payload ที่เข้ามาเป็นแบบ summary ({ critical_count: ... }) หรือแบบเต็ม ({ alerts: [...] })
                 if (payload.critical_count !== undefined || payload.warning_count !== undefined) {
-                    // แบบ Summary (จาก /api/alerts/summary)
                     critCount = Number(payload.critical_count || 0);
                     warnCount = Number(payload.warning_count || 0);
                 } else if (Array.isArray(payload.alerts)) {
-                    // แบบเต็ม (เผื่อใช้ในอนาคต)
                     const allActiveAlerts = payload.alerts;
                     critCount = allActiveAlerts.filter(a => a.level === 'critical' && (a.status === 'open' || a.status === 'ack')).length;
                     warnCount = allActiveAlerts.filter(a => a.level === 'warning' && (a.status === 'open' || a.status === 'ack')).length;
                 }
-                // --- สิ้นสุดส่วนที่แก้ไข ---
-
                 const critEl = document.getElementById('count-critical');
                 const warnEl = document.getElementById('count-warning');
-
                 if (critEl) critEl.textContent = String(critCount);
                 if (warnEl) warnEl.textContent = String(warnCount);
-
-                // อัปเดต KPI หลัก
                 const activeAlertsEl = document.getElementById('kpi-active-alerts');
                 if (activeAlertsEl) {
                     activeAlertsEl.textContent = String(critCount + warnCount);
@@ -5147,7 +5601,7 @@
                 const mac = window.ROOM_TO_MAC_MAP?.[roomId];
                 if (!mac) {
                     console.log(`[Alerts] No MAC address for room ${roomId}, returning empty array.`);
-                    return []; // ถ้าไม่มี MAC ก็ return Array ว่างไปเลย
+                    return [];
                 }
 
                 try {
@@ -5155,26 +5609,20 @@
 
                     if (!response.ok) {
                         console.error(`[Alerts] API request for ${roomId} failed with status ${response.status}`);
-                        return []; // ถ้า API ตอบกลับมาไม่สำเร็จ ก็ return Array ว่าง
+                        return [];
                     }
-
                     const data = await response.json();
-
-                    // --- จุดแก้ไขที่สำคัญที่สุด ---
-                    // ตรวจสอบว่าข้อมูลที่ได้เป็น Array โดยตรง หรือเป็น Object ที่มี property 'alerts' เป็น Array
                     if (Array.isArray(data)) {
-                        return data; // กรณี API ส่งมาถูกต้องเป็น Array
+                        return data;
                     } else if (data && Array.isArray(data.alerts)) {
-                        return data.alerts; // ✨ [FIX] เปิดกล่องแล้วส่ง Array ข้างในออกไป
+                        return data.alerts;
                     } else {
                         console.warn(`[Alerts] API for ${roomId} did not return a valid array or {alerts: [...]}. Got:`, data);
-                        return []; // ถ้ามาในรูปแบบอื่นที่ไม่รู้จัก ก็ return array ว่าง
+                        return [];
                     }
-                    // --- สิ้นสุดส่วนที่แก้ไข ---
-
                 } catch (error) {
                     console.error(`[Alerts] Failed to fetch or parse alerts for ${roomId}:`, error);
-                    return []; // ถ้าเกิด Error ใดๆ ก็ตามระหว่าง fetch ก็ return Array ว่าง
+                    return [];
                 }
             }
             async function fetchAlertSummaryAndRender() {
@@ -5184,8 +5632,6 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     console.debug('[AlertSummary] data =', data);
-
-                    // โยนเข้าโค้ดเดิมของคุณ
                     updateAlertCards({
                         critical_count: Number(data.critical_count || 0),
                         warning_count: Number(data.warning_count || 0)
@@ -5386,9 +5832,16 @@
                 updateSensorList(roomData.live, roomId);
             }
             function updateDetailKPIs(history) {
-                const set = (id, val) => {
+                const set = (id, val, unit = '') => {
                     const el = document.getElementById(id);
-                    el && (el.textContent = (isNaN(val) ? '—' : Number(val).toFixed(1)));
+                    if (!el) return;
+                    const startValue = parseFloat(el.textContent) || val || 0;
+                    const endValue = isNaN(val) ? startValue : Number(val);
+                    if (isNaN(val)) {
+                        el.textContent = '—';
+                    } else {
+                        animateValue(el, startValue, endValue, 500, unit);
+                    }
                 };
 
                 if (!history || history.length === 0) {
@@ -5407,53 +5860,36 @@
                     set('kpi-temp-min', latest.min_temp);
                     set('kpi-temp-avg', latest.temp_overall);
                     set('kpi-temp-max', latest.max_temp);
-
                     set('kpi-rh-min', latest.min_hum);
                     set('kpi-rh-avg', latest.rh_overall);
                     set('kpi-rh-max', latest.max_hum);
-
                     set('kpi-dew-avg', dewPointC_Magnus(latest.temp_overall, latest.rh_overall));
                     return;
                 }
-
                 const nums = a => a.filter(v => typeof v === 'number' && !isNaN(v));
                 const T = nums(history.map(h => h.temp_overall));
                 const H = nums(history.map(h => h.rh_overall));
                 const D = nums(history.map(h => dewPointC_Magnus(h.temp_overall, h.rh_overall)));
-
-                const stat = arr => arr.length ? ({
-                    min: Math.min(...arr),
-                    avg: arr.reduce((s, v) => s + v, 0) / arr.length,
-                    max: Math.max(...arr),
-                }) : { min: NaN, avg: NaN, max: NaN };
-
+                const stat = arr => arr.length ? ({ min: Math.min(...arr), avg: arr.reduce((s, v) => s + v, 0) / arr.length, max: Math.max(...arr) }) : { min: NaN, avg: NaN, max: NaN };
                 const t = stat(T), h = stat(H), d = stat(D);
-
                 set('kpi-temp-min', t.min); set('kpi-temp-avg', t.avg); set('kpi-temp-max', t.max);
                 set('kpi-rh-min', h.min); set('kpi-rh-avg', h.avg); set('kpi-rh-max', h.max);
                 set('kpi-dew-avg', d.avg);
             }
-
             function updateSensorList(liveData, roomId) {
                 const listEl = document.getElementById('detail-sensor-list');
                 if (!listEl) return;
 
-                // ✨ จุดที่แก้ไข: ตรวจสอบข้อมูลก่อน ถ้าไม่มีข้อมูลเลย ให้ออกจากฟังก์ชันทันที
-                // โดยไม่ไปยุ่งกับ HTML เดิมที่แสดงอยู่
                 if (!liveData || Object.keys(liveData).length === 0) {
-                    // ถ้า listEl ยังว่างอยู่ (เช่น เปิดครั้งแรกสุด) ให้แสดงข้อความ Waiting...
-                    if (!listEl.hasChildNodes()) {
+                    if (!listEl.hasChildNodes() || listEl.querySelector('li')?.textContent.includes('Waiting')) {
                         listEl.innerHTML = '<li class="text-center text-[var(--muted)] mt-4">Waiting for live data...</li>';
                     }
-                    return; // ออกจากฟังก์ชันไปเลย
+                    return;
                 }
 
                 roomId = roomId || document.getElementById('detail-room-name')?.dataset?.currentRoom || null;
-
-                // ✨ ย้ายมาไว้ตรงนี้! จะล้างข้อมูลก็ต่อเมื่อมี liveData ใหม่แล้วเท่านั้น
                 listEl.innerHTML = '';
                 const pins = ['25', '26', '32', '33'];
-
 
                 const isNum = v => typeof v === 'number' && Number.isFinite(v);
                 const fmt1 = v => isNum(v) ? v.toFixed(1) : '—';
@@ -5477,10 +5913,10 @@
                     const havg = get(pkt, ['avg_hum', 'havg', 'rh']);
                     const hmax = get(pkt, ['max_hum', 'hmax', 'max_rh']);
                     const customName = pinNames[`name_pin_${pin}`] || `Pin ${pin}`;
-
                     const li = document.createElement('li');
+                    li.className = 'live-row text-sm p-3 py-2 bg-[var(--panel)] rounded-md border border-[var(--border)] clickable-sensor-row flash-update-row';
+                    setTimeout(() => li.classList.remove('flash-update-row'), 800);
 
-                    li.className = 'live-row text-sm p-3 py-2 bg-[var(--panel)] rounded-md border border-[var(--border)] clickable-sensor-row';
                     li.dataset.mac = mac;
                     li.dataset.sensor = customName;
 
@@ -5519,31 +5955,30 @@
                 });
             }
 
-            // ===== Modals & Actions =====
             function openModal(id) {
                 const el = document.getElementById(id);
                 if (!el) return;
-
+                el.classList.add('modal-is-entering');
                 el.classList.remove('hidden');
-
-                if (el.classList.contains('config-overlay')) {
-                    el.classList.add('active');
-                }
-
-                const centerIds = new Set(['modal-reboot', 'modal-export', 'modal-device-map', 'modal-settings', 'modal-room-detail', 'modal-pin-map', 'modal-recipients', 'modal-sensor-rules', 'modal-alert-center']); // <-- เพิ่ม 'modal-alert-center' เข้าไป
-                if (centerIds.has(id)) {
-                    el.classList.add('centered');
-                }
+                if (el.classList.contains('config-overlay')) el.classList.add('active');
+                const centerIds = new Set(['modal-reboot', 'modal-export', 'modal-device-map', 'modal-settings', 'modal-room-detail', 'modal-pin-map', 'modal-recipients', 'modal-sensor-rules', 'modal-alert-center', 'modal-ack', 'modal-confirm']);
+                if (centerIds.has(id)) el.classList.add('centered');
+                requestAnimationFrame(() => {
+                    el.classList.remove('modal-is-entering');
+                });
             }
 
             window.closeModal = function (id) {
                 const el = document.getElementById(id);
-                if (!el) return;
-
-                el.classList.remove('active');
-                el.classList.remove('centered');
-                el.classList.add('hidden');
-
+                if (!el || el.classList.contains('hidden')) return;
+                if (id === 'modal-settings') {
+                    lockSettingsForm();
+                }
+                el.classList.add('modal-is-exiting');
+                setTimeout(() => {
+                    el.classList.add('hidden');
+                    el.classList.remove('active', 'centered', 'modal-is-exiting');
+                }, 200);
                 if (document.activeElement?.blur) document.activeElement.blur();
             }
             async function openRoomDetailModal(roomId) {
@@ -5552,19 +5987,19 @@
                     roomToMacMap[rId] = mac;
                 });
                 const mac = roomToMacMap[roomId];
+                if (mac) {
+                    await fetchAllEffectiveRules(mac);
+                }
                 const defaultName = roomId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const finalName = window.ROOM_NAMES?.[roomId] || defaultName;
-
-                // ✨ [FIX] ทำลาย Chart Instance เก่าทิ้งก่อนเสมอ ✨
                 if (window._detailCharts.temp) {
                     window._detailCharts.temp.destroy();
-                    window._detailCharts.temp = null; // ตั้งค่ากลับเป็น null
+                    window._detailCharts.temp = null;
                 }
                 if (window._detailCharts.rh) {
                     window._detailCharts.rh.destroy();
-                    window._detailCharts.rh = null; // ตั้งค่ากลับเป็น null
+                    window._detailCharts.rh = null;
                 }
-                // ✨ [END FIX] ✨
                 renderDetailAlerts([]);
                 if (!window._detailCharts.temp || !window._detailCharts.rh) {
                     console.log('[ChartJS] Initializing detail charts for the first time...');
@@ -5712,57 +6147,69 @@
                 fetchAndRenderRange();
                 fetchAndRenderUptimeChart(roomId, 'detail-uptime-chart-canvas', 'detail-uptime-pct');
             }
+            async function savePinMapToServer(roomId, formData) {
+                const mac = window.ROOM_TO_MAC_MAP?.[roomId];
+                if (!mac) {
+                    showPopup(`❌ ไม่พบ MAC Address สำหรับห้อง ${roomId}`, { type: 'fail' });
+                    return false;
+                }
+
+                const payload = {
+                    mac: mac,
+                    name_pin_25: formData.get('name_pin_25')?.trim() || '',
+                    name_pin_26: formData.get('name_pin_26')?.trim() || '',
+                    name_pin_32: formData.get('name_pin_32')?.trim() || '',
+                    name_pin_33: formData.get('name_pin_33')?.trim() || '',
+                };
+
+                try {
+                    const response = await fetch('/api/pin-map', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!result.ok) throw new Error(result.error || 'Unknown error');
+                    await loadPinMapFromServer();
+                    showPopup('✅ บันทึกชื่อเซ็นเซอร์สำเร็จ!', { type: 'success' });
+                    return true;
+                } catch (error) {
+                    console.error('[Pin Map] Error saving to server:', error);
+                    showPopup(`❌ บันทึกไม่สำเร็จ: ${error.message}`, { type: 'fail' });
+                    return false;
+                }
+            }
             function showPopup(message, opts = {}) {
                 const type = opts.type || 'info';
                 const timeout = (typeof opts.timeout === 'number') ? opts.timeout : 4000;
-
-                // 1. หาหรือสร้าง Container หลักสำหรับ Toast
                 let container = document.getElementById('toast-container');
                 if (!container) {
                     container = document.createElement('div');
                     container.id = 'toast-container';
                     document.body.appendChild(container);
                 }
-
-                // 2. สร้าง Toast element
                 const toast = document.createElement('div');
                 toast.className = 'toast-notification';
-
-                // 3. สร้าง Icon ตามประเภท
                 const icon = document.createElement('div');
                 icon.className = 'toast-icon';
                 icon.innerHTML = (type === 'success') ? '✅' : (type === 'warn') ? '⚠️' : (type === 'fail') ? '❌' : 'ℹ️';
-
-                // 4. สร้างข้อความ
                 const msg = document.createElement('div');
                 msg.className = 'qa-msg';
                 msg.textContent = message;
-
-                // ✨ 5. สร้างปุ่มปิด (X)
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'toast-close-btn';
-                closeBtn.innerHTML = '&times;'; // &times; คือเครื่องหมายกากบาท (X)
-
-                // ✨ 6. เพิ่ม Event Listener ให้ปุ่มปิด
+                closeBtn.innerHTML = '&times;';
                 closeBtn.addEventListener('click', () => {
                     toast.remove();
-                    // ถ้าไม่มี Toast อื่นเหลือแล้ว ก็ลบ Container ออกไปได้เลย
                     if (container && !container.hasChildNodes()) {
                         container.remove();
                     }
                 });
-
-                // 7. ประกอบร่าง Toast
                 toast.appendChild(icon);
                 toast.appendChild(msg);
-                toast.appendChild(closeBtn); // ✨ เอาปุ่มปิดไปใส่ใน Toast
-
-                // 8. เพิ่ม Toast ที่สร้างเสร็จแล้วเข้าไปใน Container
+                toast.appendChild(closeBtn);
                 container.appendChild(toast);
-
-                // 9. ตั้งเวลาเพื่อลบ Toast ออกโดยอัตโนมัติ (ถ้าผู้ใช้ไม่กดปิดเอง)
                 const timeoutId = setTimeout(() => {
-                    // ทำให้ Toast หายไปอย่างนุ่มนวลก่อนลบจริง
                     toast.style.animation = 'fadeOut 0.4s ease-out forwards';
                     setTimeout(() => {
                         if (toast.parentElement) {
@@ -5771,10 +6218,8 @@
                                 container.remove();
                             }
                         }
-                    }, 400); // รอให้ animation fadeOut จบก่อน
+                    }, 400);
                 }, timeout);
-
-                // ✨ 10. เมื่อคลิกปุ่มปิด ให้ยกเลิก timeout อัตโนมัติด้วย
                 closeBtn.addEventListener('click', () => {
                     clearTimeout(timeoutId);
                 });
@@ -5782,7 +6227,6 @@
             document.addEventListener('click', e => { const id = e.target?.dataset?.close; if (id) closeModal(id); });
             document.getElementById('qa-reboot')?.addEventListener('click', () => openModal('modal-reboot'));
             document.getElementById('detail-btn-export')?.addEventListener('click', () => {
-                // --- ส่วนที่เพิ่มเข้ามา ---
                 const detailRoomNameEl = document.getElementById('detail-room-name');
                 const roomId = detailRoomNameEl?.dataset.currentRoom;
 
@@ -5792,7 +6236,6 @@
                         exportForm.room.value = roomId;
                     }
                 }
-                // --- สิ้นสุดส่วนที่เพิ่ม ---
                 openModal('modal-export');
             });
 
@@ -5826,10 +6269,24 @@
                 } catch (e) { console.error(e); }
             });
 
-            document.getElementById('form-reboot')?.addEventListener('submit', e => {
+            document.getElementById('form-reboot')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
                 const roomId = new FormData(form).get('target') || 'room-a';
+                const roomName = roomId === 'all' ? 'All Devices' : (window.ROOM_NAMES?.[roomId] || roomId);
+
+                const confirmed = await showConfirmationModal(
+                    'Confirm Reboot',
+                    `Are you sure you want to reboot <strong>${roomName}</strong>? This action is irreversible.`,
+                    {
+                        confirmText: 'Yes, Reboot',
+                        confirmClass: 'btn-reset',
+                        iconClass: 'fa-power-off',
+                        iconColorClass: 'text-red-400'
+                    }
+                );
+
+                if (!confirmed) return;
 
                 const roomToMac = Object.fromEntries(
                     Object.entries(window.MAC_TO_ROOM_MAP || {}).map(([mac, rid]) => [rid, mac])
@@ -5854,7 +6311,6 @@
                 const mac = normalizeMAC(roomToMac[roomId] || '');
                 if (!mac) {
                     safeClose();
-                    const roomName = window.ROOM_NAMES?.[roomId] || roomId;
                     showPopup(`❌ ยังไม่ได้ตั้งค่า MAC ให้ ${roomName} (เปิด Device Map เพื่อตั้งค่า)`, { type: 'fail' });
                     return;
                 }
@@ -5867,37 +6323,61 @@
                 const block = document.getElementById('export-custom');
                 if (block) block.classList.toggle('hidden', e.target.value !== 'custom');
             });
-            document.getElementById('form-export')?.addEventListener('submit', e => {
+            document.getElementById('form-export')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const fd = new FormData(e.currentTarget);
+                const form = document.getElementById('form-export');
+                const fd = new FormData(form);
                 const room = fd.get('room') || 'all';
-                const type = fd.get('type');
+                const type = fd.get('type').toUpperCase();
                 const from = fd.get('from') ? new Date(fd.get('from')).toISOString() : null;
                 const to = fd.get('to') ? new Date(fd.get('to')).toISOString() : null;
+                const roomName = room === 'all' ? 'All Rooms' : (window.ROOM_NAMES?.[room] || room);
 
                 if (from && to && from >= to) {
-                    showQAStatus('❌ Error: Start date must be before end date.');
+                    showPopup('❌ Error: Start date must be before end date.', { type: 'fail' });
                     return;
                 }
+
+                const confirmed = await showConfirmationModal(
+                    `Confirm ${type} Export`,
+                    `Are you sure you want to generate a <strong>${type}</strong> report for <strong>${roomName}</strong>?`,
+                    {
+                        confirmText: `Yes, Export ${type}`,
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-file-arrow-down',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+
+                if (!confirmed) return;
 
                 if (typeof uibuilder !== 'undefined') {
                     uibuilder.send({
                         topic: `reports/${room}/export`,
-                        payload: {
-                            command: 'export',
-                            room: room,
-                            type,
-                            from,
-                            to
-                        }
+                        payload: { command: 'export', room: room, type: type.toLowerCase(), from, to }
                     });
                 }
-                showQAStatus(`✅ ส่งคำขอ Export สำหรับ ${room.toUpperCase()} เรียบร้อย`);
+                showPopup(`✅ Export request for ${roomName} has been sent.`, { type: 'success' });
                 closeModal('modal-export');
             });
             document.getElementById('form-device-map')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const ok = await saveDeviceMapToServer(new FormData(e.currentTarget));
+                const form = document.getElementById('form-device-map');
+
+                const confirmed = await showConfirmationModal(
+                    'Confirm Device Map',
+                    'Saving these changes will map devices to rooms and may require a page refresh. Proceed?',
+                    {
+                        confirmText: 'Confirm & Save',
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-diagram-project',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+
+                if (!confirmed) return;
+
+                const ok = await saveDeviceMapToServer(new FormData(form));
                 if (ok) {
                     closeModal('modal-device-map');
                     setTimeout(() => {
@@ -5930,15 +6410,30 @@
             });
             document.getElementById('form-pin-map')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const modal = e.currentTarget.closest('#modal-pin-map');
+                const form = document.getElementById('form-pin-map');
+                const modal = form.closest('#modal-pin-map');
                 const roomId = modal?.dataset.currentRoom;
+                const roomName = window.ROOM_NAMES?.[roomId] || roomId;
 
                 if (!roomId) {
                     showPopup('เกิดข้อผิดพลาด: ไม่พบ Room ID', { type: 'fail' });
                     return;
                 }
 
-                const ok = await savePinMapToServer(roomId, new FormData(e.currentTarget));
+                const confirmed = await showConfirmationModal(
+                    'Confirm Sensor Names',
+                    `Are you sure you want to save these names for <strong>${roomName}</strong>?`,
+                    {
+                        confirmText: 'Confirm & Save',
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-tags',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+
+                if (!confirmed) return;
+
+                const ok = await savePinMapToServer(roomId, new FormData(form));
                 if (ok) {
                     closeModal('modal-pin-map');
                     const currentRoomData = window.roomDataStore[roomId];
@@ -5951,7 +6446,6 @@
                 }
             });
             if (typeof uibuilder !== 'undefined') {
-                // ensure globals
                 window.roomDataStore = window.roomDataStore || {};
                 window._roomTimeouts = window._roomTimeouts || {};
                 window.pinStatuses = window.pinStatuses || {};
@@ -5966,29 +6460,93 @@
                 };
 
                 uibuilder.onChange('msg', function (msg) {
+                    if (msg.topic === 'system_summary_pro') {
+                        const data = msg.payload;
+                        const updateProKPI = (valueId, roomId, value, room, unit = '', options = {}) => {
+                            const valueEl = document.getElementById(valueId);
+                            const roomEl = document.getElementById(roomId);
+                            if (!valueEl || !roomEl) return;
+
+                            const prefix = options.prefix || '';
+                            const decimals = options.decimals !== undefined ? options.decimals : 1;
+
+                            if (value !== null && typeof value !== 'undefined' && isFinite(value)) {
+                                valueEl.textContent = `${prefix}${Number(value).toFixed(decimals)}${unit}`;
+                            } else {
+                                valueEl.textContent = '—';
+                            }
+
+                            roomEl.textContent = room ? `@ ${room}` : '';
+                            roomEl.title = room || '';
+                        };
+
+                        updateProKPI('kpi-pro-temp-max', 'kpi-pro-temp-max-room', data.temp_max, data.temp_max_room, '°C');
+                        updateProKPI('kpi-pro-hum-max', 'kpi-pro-hum-max-room', data.hum_max, data.hum_max_room, '%');
+                        updateProKPI('kpi-pro-dew-max', 'kpi-pro-dew-max-room', data.dew_max, data.dew_max_room, '°C');
+                        updateProKPI('kpi-pro-temp-rise', 'kpi-pro-temp-rise-room', data.temp_rise_max, data.temp_rise_max_room, '°C', {
+                            prefix: (data.temp_rise_max > 0) ? '+' : ''
+                        });
+
+                        return;
+                    }
                     if (!msg) return;
                     const data = safeParse(msg.payload);
                     if (!data || typeof data !== 'object') return;
+                    if (data.mac && data.status && data.avg_temp === undefined) {
+                        const mac = findMACInObject(data);
+                        const roomId = mac ? window.MAC_TO_ROOM_MAP[mac] : null;
+
+                        if (roomId) {
+                            console.log(`[Direct Status] Received status for ${roomId}: ${data.status}`);
+                            if (data.status === 'offline') {
+                                resetRoomUI(roomId);
+                            } else {
+                                const statusDot = document.getElementById(`status-dot-${roomId}`);
+                                if (statusDot) setLed(statusDot, 'led--green');
+                            }
+                        }
+                        return;
+                    }
 
                     const topic = msg.topic || '';
-                    if (topic === 'alert_event' && data.type) {
-                        const roomName = data.room_name || 'Unknown Room';
-                        const metric = data.metric === 'temp' ? 'Temperature' : 'Humidity';
-                        const value = Number(data.value).toFixed(1);
-                        const unit = data.metric === 'temp' ? '°C' : '%';
 
-                        if (data.type === 'triggered') {
-                            const level = data.level; // 'critical' or 'warning'
-                            const message = `${level.toUpperCase()} on ${roomName}: ${metric} is ${value}${unit}.`;
-                            const toastType = level === 'critical' ? 'fail' : 'warn';
-                            showPopup(message, { type: toastType, timeout: 10000 });
-                        } else if (data.type === 'recovered') {
-                            const message = `RECOVERY on ${roomName}: ${metric} is back to normal.`;
-                            showPopup(message, { type: 'success', timeout: 7000 });
+                    if (topic === 'alert_event') {
+                        if (data.type) {
+                            const roomName = data.room_name || 'Unknown Room';
+                            const metricMap = {
+                                temp: 'Temperature',
+                                hum: 'Humidity',
+                                connectivity: 'Device Status'
+                            };
+                            const metricText = metricMap[data.metric] || data.metric;
+
+                            if (data.type === 'triggered') {
+                                const level = data.level;
+                                const toastType = level === 'critical' ? 'fail' : 'warn';
+                                let message = '';
+
+                                if (data.metric === 'connectivity') {
+                                    message = `${level.toUpperCase()} on ${roomName}: Device is now Offline.`;
+                                } else {
+                                    const value = Number(data.value).toFixed(1);
+                                    const unit = data.metric === 'temp' ? '°C' : '%';
+                                    message = `${level.toUpperCase()} on ${roomName}: ${metricText} is ${value}${unit}.`;
+                                }
+                                showPopup(message, { type: toastType, timeout: 10000 });
+
+                            } else if (data.type === 'recovered') {
+                                let message = '';
+                                if (data.metric === 'connectivity') {
+                                    message = `RECOVERY on ${roomName}: Device is back online.`;
+                                } else {
+                                    message = `RECOVERY on ${roomName}: ${metricText} is back to normal.`;
+                                }
+                                showPopup(message, { type: 'success', timeout: 7000 });
+                            }
                         }
-                        return; // จบการทำงานสำหรับ msg นี้
+                        refreshVisibleAlertViews();
                     }
-                    // 1) ESP32 config response → resolve promise แล้วจบ
+
                     if (topic.startsWith('esp32/response/') && topic.endsWith('/config')) {
                         const incomingId = (data?.requestId || '').toString();
                         if (incomingId && window._configPromises[incomingId]) {
@@ -6001,13 +6559,11 @@
 
                     if (topic === 'uibuilder') return;
 
-                    // 2) Quick Actions ack
                     if (data.actionId || topic === 'actions/ack') {
                         _dispatchQA(msg);
                         return;
                     }
 
-                    // 3) Pin status update (เก็บเป็น global state)
                     if (topic === 'pin_status_update') {
                         const statuses = Array.isArray(msg.payload) ? msg.payload : [];
                         let changed = false;
@@ -6030,36 +6586,29 @@
 
                     if (!window._gotFirstMsg) window._gotFirstMsg = true;
 
-                    // 4) Live sensor/general update
                     const mac = findMACInObject(data);
                     const roomId = mac ? window.MAC_TO_ROOM_MAP[mac] : null;
 
-                    // อัปเดต heartbeat/latency ถ้ามี
                     if (data.status) {
                         updateDeviceStatus(data.status, data.ping_ms);
                     }
 
                     if (!roomId) {
-                        // global KPIs/alerts
                         updateKPIs(data);
                         updateAlertCards(data);
                         return;
                     }
 
-                    // init store
                     if (!window.roomDataStore[roomId]) {
                         window.roomDataStore[roomId] = { history: [], live: {} };
                     }
                     const store = window.roomDataStore[roomId];
-
-                    // normalize pin
                     const pinVal = (typeof data.pin === 'number' || /^\d+$/.test(data.pin)) ? Number(data.pin) : data.pin || 'OVERALL';
 
-                    // เก็บแพ็กเก็ตล่าสุดต่อ pin
                     store.live[pinVal] = data;
 
-                    // ถ้าเป็น OVERALL ก็เพิ่มเข้า history (จำกัด 100)
                     if (pinVal === 'OVERALL') {
+                        updateRoomUI(roomId, data);
                         const last = store.history.length ? store.history[store.history.length - 1] : {};
                         const newHistoryEntry = {
                             timestamp: data.timestamp,
@@ -6091,14 +6640,10 @@
                             updateSensorList(store.live);
                         }
                     }
+
                     if (typeof ensurePanel === 'function') ensurePanel(roomId);
                     if (typeof checkAndFetchConfig === 'function') checkAndFetchConfig(roomId);
-                    updateRoomUI(roomId, data);
                     updateKPIs(data);
-                    if (window._roomTimeouts[roomId]) clearTimeout(window._roomTimeouts[roomId]);
-                    window._roomTimeouts[roomId] = setTimeout(() => {
-                        resetRoomUI(roomId);
-                    }, 120000);
                 });
             }
 
@@ -6162,15 +6707,22 @@
                     }
 
                     if (e.key === 'Enter') {
+                        if (m.id === 'modal-settings') {
+                            const settingsPanel = m.querySelector('.config-panel');
+                            if (settingsPanel && settingsPanel.classList.contains('settings-locked')) {
+                                console.log('[Keybind] Enter key ignored: Settings form is locked.');
+                                return;
+                            }
+                        }
                         const tag = document.activeElement?.tagName?.toLowerCase();
                         if (tag === 'textarea') return;
                         e.preventDefault(); e.stopPropagation();
                         clickPrimary(m);
                     }
                 }, { capture: true });
-                applyRoomNames();
-                initAllRoomsOffline();
             })();
+            applyRoomNames();
+            initAllRoomsOffline();
             function isVisible(el) {
                 if (!el) return false;
                 const st = getComputedStyle(el);
@@ -6218,6 +6770,7 @@
                 series: { overall: true, pin25: true, pin26: true, pin32: true, pin33: true, dew: true },
                 range: { mode: '24h', start: null, end: null }
             };
+            window.allEffectiveRules = {};
 
             function initDetailToolbar() {
                 document.querySelectorAll('#detail-toolbar [data-range]').forEach(btn => {
@@ -6260,16 +6813,6 @@
                     closeModal(val);
                 }
             }, { capture: true });
-            // ==== RANGE HELPERS ====
-            function toLocalDatetimeInputValue(d) {
-                const pad = n => String(n).padStart(2, '0');
-                const y = d.getFullYear();
-                const m = pad(d.getMonth() + 1);
-                const day = pad(d.getDate());
-                const hh = pad(d.getHours());
-                const mm = pad(d.getMinutes());
-                return `${y}-${m}-${day}T${hh}:${mm}`;
-            }
             function setDefault24hRange() {
                 const end = new Date();
                 const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
@@ -6340,49 +6883,21 @@
                     }
                 });
             });
-            // =================================================================
-            // ✨ ALERT CENTER LOGIC V2 (CORRECTED & ENHANCED) ✨
-            // =================================================================
+            let allAlertsCache = [];
 
-            const qaAlertsButton = document.getElementById('qa-alerts');
-            const alertCenterModalEl = document.getElementById('modal-alert-center');
-            const alertTableBodyEl = document.getElementById('alert-table-body');
-            const qaAlertCountEl = document.getElementById('qa-alert-count');
-            const bulkAckButton = document.getElementById('btn-bulk-ack');
-            const ackAllCheckbox = document.getElementById('ack-all-checkbox');
-
-            // --- State Management ---
-            let allAlertsCache = []; // เก็บข้อมูลทั้งหมดที่โหลดมาครั้งแรก
-
-            // --- Filter Elements ---
-            const searchInput = document.getElementById('alert-filter-search');
-            const levelSelect = document.getElementById('alert-filter-level');
-            const statusSelect = document.getElementById('alert-filter-status');
-            const startDateInput = document.getElementById('alert-filter-start-date');
-            const endDateInput = document.getElementById('alert-filter-end-date');
-            const applyButton = document.getElementById('alert-filter-apply');
-            const resetButton = document.getElementById('alert-filter-reset');
-
-            // --- Event Listeners ---
             qaAlertsButton?.addEventListener('click', () => {
                 openModal('modal-alert-center');
-                resetFilters(); // รีเซ็ตฟิลเตอร์ทุกครั้งที่เปิด
+                resetFilters();
                 loadAndCacheAlerts();
             });
-
-            // ทำให้ฟิลเตอร์ทำงานทันที ไม่ต้องรอ Apply (ยกเว้น Date ที่ต้องกด Apply)
             searchInput?.addEventListener('input', applyFilters);
             levelSelect?.addEventListener('change', applyFilters);
-            statusSelect?.addEventListener('change', loadAndCacheAlerts); // โหลดใหม่เมื่อเปลี่ยนสถานะหลัก
+            statusSelect?.addEventListener('change', loadAndCacheAlerts);
             applyButton?.addEventListener('click', applyFilters);
             resetButton?.addEventListener('click', () => {
                 resetFilters();
                 applyFilters();
             });
-
-            // --- Core Functions ---
-
-            // 1. โหลดข้อมูลจาก Server และเก็บใน Cache
             async function loadAndCacheAlerts() {
                 const status = statusSelect.value || 'open,ack';
                 alertTableBodyEl.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-[var(--muted)]">Loading alerts...</td></tr>';
@@ -6391,115 +6906,129 @@
                     const res = await fetch(`/api/alerts?status=${encodeURIComponent(status)}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
-
                     allAlertsCache = Array.isArray(data) ? data : (data?.alerts || []);
-
-                    // อัปเดตตัวเลขแจ้งเตือนที่ปุ่ม Quick Action (นับเฉพาะ 'open')
                     const openCount = allAlertsCache.filter(a => a.status === 'open').length;
                     updateQAAlertCount(openCount);
 
-                    applyFilters(); // กรองและแสดงผลทันทีหลังโหลดข้อมูล
+                    applyFilters();
                 } catch (err) {
                     console.error('[AlertCenter] loadAlerts error:', err);
                     allAlertsCache = [];
                     renderAlertTable([]);
                 }
             }
-
-            // 🎯 [REPLACE] อัปเกรดฟังก์ชัน applyFilters ให้ค้นหาได้ทุกคอลัมน์
-            // 2. กรองข้อมูลจาก Cache ตามฟิลเตอร์ปัจจุบัน
             function applyFilters() {
                 const searchTerm = searchInput.value.toLowerCase();
                 const level = levelSelect.value;
                 const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
                 let endDate = endDateInput.value ? new Date(endDateInput.value) : null;
-
-                // ทำให้ endDate ครอบคลุมทั้งวัน
                 if (endDate) {
                     endDate.setHours(23, 59, 59, 999);
                 }
-
                 const filteredAlerts = allAlertsCache.filter(alert => {
-                    const alertDate = new Date(alert.opened_at);
-
-                    // ✨ --- START: ส่วนที่แก้ไข --- ✨
-                    // ดึงชื่อ Sensor ที่ตั้งเองมาเพื่อใช้ในการค้นหา
+                    const alertDate = new Date(alert.opened_at); า
                     const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
                     const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
-
-                    // Check search term (ค้นหาทุกคอลัมน์!)
                     const inSearch = searchTerm === '' ||
-                        (alert.opened_at?.toLowerCase().includes(searchTerm)) ||       // ค้นหา 'เวลา'
-                        (alert.room_name?.toLowerCase().includes(searchTerm)) ||       // ค้นหา 'Room'
-                        (customSensorName.toLowerCase().includes(searchTerm)) ||       // ค้นหา 'Sensor' (ชื่อที่ตั้งเอง)
-                        (alert.metric?.toLowerCase().includes(searchTerm)) ||          // ค้นหา 'Metric'
-                        (alert.level?.toLowerCase().includes(searchTerm)) ||           // ค้นหา 'Level'
-                        String(alert.trigger_value).toLowerCase().includes(searchTerm) || // ค้นหา 'Value'
-                        (alert.status?.toLowerCase().includes(searchTerm)) ||          // ค้นหา 'Status'
-                        (alert.ack_by?.toLowerCase().includes(searchTerm)) ||          // ค้นหา 'Ack By'
-                        (alert.ack_note?.toLowerCase().includes(searchTerm)) ||        // ค้นหา 'Note'
-                        (alert.mac?.toLowerCase().includes(searchTerm));               // ค้นหา 'MAC Address' (ยังเก็บไว้เผื่อค้นหา)
-                    // ✨ --- END: ส่วนที่แก้ไข --- ✨
-
-                    // Check level
+                        (alert.opened_at?.toLowerCase().includes(searchTerm)) ||
+                        (alert.room_name?.toLowerCase().includes(searchTerm)) ||
+                        (customSensorName.toLowerCase().includes(searchTerm)) ||
+                        (alert.metric?.toLowerCase().includes(searchTerm)) ||
+                        (alert.level?.toLowerCase().includes(searchTerm)) ||
+                        String(alert.trigger_value).toLowerCase().includes(searchTerm) ||
+                        (alert.status?.toLowerCase().includes(searchTerm)) ||
+                        (alert.ack_by?.toLowerCase().includes(searchTerm)) ||
+                        (alert.ack_note?.toLowerCase().includes(searchTerm)) ||
+                        (alert.mac?.toLowerCase().includes(searchTerm));
                     const inLevel = level === '' || alert.level === level;
-
-                    // Check date range
                     const inDateRange = (!startDate || alertDate >= startDate) && (!endDate || alertDate <= endDate);
-
                     return inSearch && inLevel && inDateRange;
                 });
 
                 renderAlertTable(filteredAlerts);
             }
-
-            // 3. แสดงผลข้อมูลลงตาราง
             function renderAlertTable(alerts) {
+                const alertTableBodyEl = document.getElementById('alert-table-body');
+                if (!alertTableBodyEl) return;
                 alertTableBodyEl.innerHTML = '';
+
                 if (!alerts || alerts.length === 0) {
                     alertTableBodyEl.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-[var(--muted)]">No alerts match the current filters.</td></tr>';
                     return;
                 }
-
+                const currentTab = document.getElementById('alert-filter-status').value || 'open,ack';
+                const metricMap = {
+                    temp: 'Temperature',
+                    hum: 'Humidity',
+                    connectivity: 'Connectivity'
+                };
                 alerts.forEach(alert => {
                     const row = document.createElement('tr');
-                    row.className = 'border-b border-[var(--border)] hover:bg-white/5';
-
-                    const openedAt = alert.opened_at ? new Date(alert.opened_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false }).replace(',', '') : '-';
-
+                    row.className = 'border-b border-[var(--border)]';
+                    const primaryTime = fmtDate(resolvePrimaryTime(alert, currentTab));
                     const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
                     const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
-                    const ackNoteDisplay = alert.ack_note || '<i class="opacity-50">No note</i>';
-                    const ackByDisplay = alert.ack_by || '-';
-
+                    const displayMetric = metricMap[alert.metric] || alert.metric;
                     row.innerHTML = `
             <td class="p-3 text-center"><input type="checkbox" class="ack-checkbox" data-event-id="${alert.event_id}" ${alert.status !== 'open' ? 'disabled' : ''}></td>
-            <td class="p-3 whitespace-nowrap">${openedAt}</td>
+            <td class="p-3 whitespace-nowrap time-cell cursor-pointer">${primaryTime}</td>
             <td class="p-3">${alert.room_name}</td>
             <td class="p-3">${customSensorName}</td>
-            <td class="p-3">${alert.metric}</td>
-            <td class="p-3"><span class="badge badge-${alert.level}">${alert.level}</span></td>
+            <td class="p-3">${displayMetric}</td> <td class="p-3"><span class="badge badge-${alert.level}">${alert.level}</span></td>
             <td class="p-3">${alert.trigger_value !== null ? Number(alert.trigger_value).toFixed(2) : 'N/A'}</td>
             <td class="p-3 capitalize">${alert.status}</td>
-            <td class="p-3">${ackByDisplay}</td>
-            <td class="p-3 truncate max-w-xs" title="${alert.ack_note || ''}">${ackNoteDisplay}</td>
+            <td class="p-3">${alert.ack_by || '-'}</td>
+            <td class="p-3 truncate max-w-xs" title="${alert.ack_note || ''}">${alert.ack_note || '<i class="opacity-50">No note</i>'}</td>
             <td class="p-3 text-center">
                 ${alert.status === 'open' ? `<button class="btn text-xs py-1 px-2 btn-ack-single" data-event-id="${alert.event_id}">ACK</button>` : ''}
             </td>
         `;
+
+                    const timeCell = row.querySelector('.time-cell');
+                    if (timeCell) {
+                        timeCell.addEventListener('mouseenter', (e) => {
+                            alertLifecycleTooltip.innerHTML = buildLifecycleTooltipHTML(alert, currentTab);
+                            alertLifecycleTooltip.style.opacity = 1;
+                        });
+                        timeCell.addEventListener('mousemove', (e) => {
+                            alertLifecycleTooltip.style.left = `${e.pageX + 15}px`;
+                            alertLifecycleTooltip.style.top = `${e.pageY}px`;
+                            alertLifecycleTooltip.style.transform = 'translateY(-50%)';
+                        });
+                        timeCell.addEventListener('mouseleave', () => {
+                            alertLifecycleTooltip.style.opacity = 0;
+                        });
+                    }
+
                     alertTableBodyEl.appendChild(row);
                 });
             }
 
-            // 4. รีเซ็ตฟิลเตอร์ทั้งหมด
+            /**
+             * 
+             * @param {Date} d 
+             * @returns {string} 
+             */
+            function toLocalDatetimeInputValue(d) {
+                if (!(d instanceof Date) || isNaN(d)) return '';
+                const pad = n => String(n).padStart(2, '0');
+                const y = d.getFullYear();
+                const m = pad(d.getMonth() + 1);
+                const day = pad(d.getDate());
+                const hh = pad(d.getHours());
+                const mm = pad(d.getMinutes());
+                return `${y}-${m}-${day}T${hh}:${mm}`;
+            }
+
             function resetFilters() {
                 searchInput.value = '';
                 levelSelect.value = '';
-                startDateInput.value = '';
-                endDateInput.value = '';
+                const end = new Date();
+                const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+                startDateInput.value = toLocalDatetimeInputValue(start);
+                endDateInput.value = toLocalDatetimeInputValue(end);
             }
 
-            // --- Helper Functions ---
             function updateQAAlertCount(count) {
                 if (qaAlertCountEl) {
                     if (count > 0) {
@@ -6511,8 +7040,6 @@
                     }
                 }
             }
-
-            // --- Logic สำหรับ ACK (เหมือนเดิมแต่ย้ายมา) ---
             document.getElementById('alert-table-body').addEventListener('click', (e) => {
                 const btn = e.target.closest('.btn-ack-single');
                 if (btn) {
@@ -6551,22 +7078,14 @@
                     updateBulkAckButtonState();
                 }
             });
-            // =================================================================
-            // ✨ ALERT ACK MODAL LOGIC (Vanilla JS) ✨
-            // =================================================================
-
             function openAckModal(eventIds) {
                 if (!Array.isArray(eventIds)) eventIds = [eventIds];
                 if (eventIds.length === 0) return;
-
                 const modal = document.getElementById('modal-ack');
-                modal.dataset.eventIds = JSON.stringify(eventIds); // เก็บ event_id ไว้ที่ modal
-
-                // Reset form
+                modal.dataset.eventIds = JSON.stringify(eventIds);
                 document.getElementById('ack-by-input').value = '';
                 document.getElementById('ack-note-input').value = '';
                 document.getElementById('ack-by-error').classList.add('hidden');
-
                 openModal('modal-ack');
                 document.getElementById('ack-by-input').focus();
             }
@@ -6576,12 +7095,9 @@
                 const ackNoteInput = document.getElementById('ack-note-input');
                 const errorEl = document.getElementById('ack-by-error');
                 const modal = document.getElementById('modal-ack');
-
                 const ackBy = ackByInput.value.trim();
                 const ackNote = ackNoteInput.value.trim();
                 const eventIds = JSON.parse(modal.dataset.eventIds || '[]');
-
-                // Validation
                 if (!ackBy) {
                     errorEl.classList.remove('hidden');
                     ackByInput.focus();
@@ -6604,35 +7120,27 @@
                 );
 
                 try {
-                    // รอให้ fetch requests ทั้งหมดเสร็จสิ้น และเก็บผลลัพธ์ไว้
                     const responses = await Promise.all(promises);
-
-                    // ตรวจสอบว่าทุก response ที่ได้กลับมานั้น .ok (status 200-299) หรือไม่
                     const allSuccess = responses.every(res => res.ok);
 
                     if (allSuccess) {
-                        // ถ้าทุกอย่างสำเร็จเรียบร้อย ถึงจะแสดง Popup สำเร็จ
                         showPopup(`✅ Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
                         closeModal('modal-ack');
-                        loadAndCacheAlerts(); // โหลดข้อมูลใหม่เพื่ออัปเดตตาราง
+                        await refreshVisibleAlertViews();
                     } else {
-                        // ถ้ามีอย่างน้อยหนึ่ง request ที่ไม่สำเร็จ
-                        // เราจะดึงข้อความ error จาก response ตัวแรกที่ล้มเหลวมาแสดง
                         const failedResponse = responses.find(res => !res.ok);
                         let errorMessage = `Server responded with status ${failedResponse.status}`;
                         try {
                             const errorJson = await failedResponse.json();
                             errorMessage = errorJson.error || errorMessage;
-                        } catch (e) { /* ไม่ต้องทำอะไรถ้าอ่าน json ไม่ได้ */ }
+                        } catch (e) { }
 
-                        throw new Error(errorMessage); // โยน Error เพื่อให้ไปเข้า catch block
+                        throw new Error(errorMessage);
                     }
                 } catch (err) {
-                    // catch block จะจัดการทั้ง network error และ error ที่เราโยนมาเอง
                     showPopup(`❌ Failed to acknowledge alerts: ${err.message}`, { type: 'fail' });
                     console.error("ACK Error:", err);
                 } finally {
-                    // ส่วนนี้เหมือนเดิม คือคืนสภาพปุ่มให้กดได้อีกครั้ง
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Confirm';
                 }
@@ -6644,22 +7152,17 @@
                     showPopup('Error: Cannot identify sensor to reset.', { type: 'fail' });
                     return;
                 }
-
-                // สร้าง Payload สำหรับ "ลบ" โดยการตั้งค่า active = 0
                 const rulePayload = [
                     { scope: 'sensor', mac, sensor_name: sensorName, metric: 'temp', active: 0 },
                     { scope: 'sensor', mac, sensor_name: sensorName, metric: 'hum', active: 0 }
                 ];
-
                 try {
                     const res = await fetch('/api/alert-rules', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(rulePayload)
                     });
-
                     if (!res.ok) throw new Error('Server returned an error');
-
                     showPopup('Sensor rule has been reset to inherit.', { type: 'success' });
                     await loadSensorRuleData(mac, sensorName);
                     const overrideToggle = document.getElementById('toggle-override');
@@ -6673,9 +7176,7 @@
                     console.error('Failed to reset/delete sensor rule:', err);
                 }
             }
-            // --- Event Listeners for new ACK Modal ---
             document.getElementById('btn-confirm-ack')?.addEventListener('click', handleConfirmAck);
-
             document.getElementById('alert-table-body').addEventListener('click', (e) => {
                 const btn = e.target.closest('.btn-ack-single');
                 if (btn) {
@@ -6683,39 +7184,31 @@
                     openAckModal([eventId]);
                 }
             });
-
             document.getElementById('btn-bulk-ack')?.addEventListener('click', () => {
                 const selectedIds = Array.from(document.querySelectorAll('.ack-checkbox:checked')).map(cb => cb.dataset.eventId);
                 if (selectedIds.length > 0) {
                     openAckModal(selectedIds);
                 }
             });
-            // 🎯 [ADD] ฟังก์ชันและ Event Listeners สำหรับการคลิก Alerts Card
             function handleAlertCardClick(levelFilter = '') {
-                // กำหนดค่าฟิลเตอร์ใน Modal ตามที่คลิก
                 document.getElementById('alert-filter-status').value = 'open,ack';
                 document.getElementById('alert-filter-level').value = levelFilter;
-
-                // เปิด Modal แล้วโหลดข้อมูลตามฟิลเตอร์
                 openModal('modal-alert-center');
-                loadAndCacheAlerts(); // ฟังก์ชันนี้จะอ่านค่าจาก select boxes เอง
+                loadAndCacheAlerts();
             }
-
-            // ผูก Event Listener เข้ากับการ์ดต่างๆ
             document.getElementById('qa-alert-card')?.addEventListener('click', (e) => {
-                // ป้องกันไม่ให้ทำงานซ้ำซ้อนถ้าคลิกที่การ์ดย่อย
                 if (e.target.closest('#card-critical') || e.target.closest('#card-warning')) {
                     return;
                 }
-                handleAlertCardClick(''); // คลิกการ์ดใหญ่ = ไม่กรอง level
+                handleAlertCardClick('');
             });
 
             document.getElementById('card-critical')?.addEventListener('click', () => {
-                handleAlertCardClick('critical'); // คลิกการ์ดแดง = กรอง critical
+                handleAlertCardClick('critical');
             });
 
             document.getElementById('card-warning')?.addEventListener('click', () => {
-                handleAlertCardClick('warning'); // คลิกการ์ดเหลือง = กรอง warning
+                handleAlertCardClick('warning');
             });
 
             function updateBulkAckButtonState() {
@@ -6741,9 +7234,6 @@
                     updateBulkAckButtonState();
                 }
             });
-            const drawerEl = document.getElementById('modal-sensor-rules');
-            const ruleFormFields = document.getElementById('sensor-rule-form-fields');
-            const overrideToggle = document.getElementById('toggle-override');
 
             function openSensorRuleEditor(mac, sensorName, metric) {
                 const modalEl = document.getElementById('modal-sensor-rules');
@@ -6755,11 +7245,9 @@
                 document.getElementById('drawer-sensor-subtitle').textContent = `${roomName} / ${sensorName}`;
 
                 loadSensorRuleData(mac, sensorName);
-                openModal('modal-sensor-rules'); // <--- แก้ไขบรรทัดนี้
+                openModal('modal-sensor-rules');
             }
-            // Load rule data into the drawer
             async function loadSensorRuleData(mac, sensorName) {
-                // --- จุดที่ 1: ดึงข้อมูลพร้อมกัน 2 อย่าง ---
                 const [resTemp, resHum] = await Promise.all([
                     fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${sensorName}&metric=temp`),
                     fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${sensorName}&metric=hum`)
@@ -6767,38 +7255,67 @@
 
                 const effectiveTempRule = await resTemp.json();
                 const effectiveHumRule = await resHum.json();
-
-                // --- จุดที่ 2: ดึงข้อมูล Override (เหมือนเดิม) ---
                 const resOverride = await fetch(`/api/alert-rules?scope=sensor&mac=${mac}&sensor_name=${sensorName}`);
                 const overrideData = await resOverride.json();
                 const tempRule = overrideData.find(r => r.metric === 'temp' && r.active) || {};
                 const humRule = overrideData.find(r => r.metric === 'hum' && r.active) || {};
-
                 const hasOverride = tempRule.id || humRule.id;
                 overrideToggle.checked = hasOverride;
                 ruleFormFields.classList.toggle('opacity-50', !hasOverride);
                 ruleFormFields.classList.toggle('pointer-events-none', !hasOverride);
-
-                // --- จุดที่ 3: กรอกข้อมูลลงฟอร์ม (อัปเดตเล็กน้อย) ---
                 document.getElementById('rule-temp-crit-low').value = tempRule.crit_min ?? effectiveTempRule.crit_min ?? '';
                 document.getElementById('rule-temp-warn-low').value = tempRule.warn_min ?? effectiveTempRule.warn_min ?? '';
                 document.getElementById('rule-temp-warn-high').value = tempRule.warn_max ?? effectiveTempRule.warn_max ?? '';
                 document.getElementById('rule-temp-crit-high').value = tempRule.crit_max ?? effectiveTempRule.crit_max ?? '';
-
                 document.getElementById('rule-hum-crit-low').value = humRule.crit_min ?? effectiveHumRule.crit_min ?? '';
                 document.getElementById('rule-hum-warn-low').value = humRule.warn_min ?? effectiveHumRule.warn_min ?? '';
                 document.getElementById('rule-hum-warn-high').value = humRule.warn_max ?? effectiveHumRule.warn_max ?? '';
                 document.getElementById('rule-hum-crit-high').value = humRule.crit_max ?? effectiveHumRule.crit_max ?? '';
-
-                // --- จุดที่ 4: ส่งข้อมูลทั้ง 2 ชุดไปให้ฟังก์ชันแสดงผล ---
                 displayEffectiveRule(effectiveTempRule, effectiveHumRule);
+            }
+            async function fetchAllEffectiveRules(mac) {
+                if (!mac) return null;
+                if (window.allEffectiveRules[mac]) {
+                    console.log(`[Rules] Using cached effective rules for ${mac}`);
+                    return window.allEffectiveRules[mac];
+                }
+
+                try {
+                    console.log(`[Rules] Fetching all effective rules for ${mac}...`);
+                    const allRules = {
+                        room: {},
+                        sensors: {}
+                    };
+                    const roomTempRes = await fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=overall&metric=temp`);
+                    const roomHumRes = await fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=overall&metric=hum`);
+                    allRules.room.temp = await roomTempRes.json();
+                    allRules.room.hum = await roomHumRes.json();
+                    const pinMap = window.MAC_PIN_NAMES?.[mac] || {};
+                    const sensorNames = ['25', '26', '32', '33'].map(pin => pinMap[`name_pin_${pin}`] || `Pin ${pin}`);
+
+                    for (const sensorName of sensorNames) {
+                        const sensorTempRes = await fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${encodeURIComponent(sensorName)}&metric=temp`);
+                        const sensorHumRes = await fetch(`/api/alert-rules/effective?mac=${mac}&sensor_name=${encodeURIComponent(sensorName)}&metric=hum`);
+
+                        allRules.sensors[sensorName] = {
+                            temp: await sensorTempRes.json(),
+                            hum: await sensorHumRes.json()
+                        };
+                    }
+
+                    window.allEffectiveRules[mac] = allRules;
+                    console.log(`[Rules] Successfully fetched and cached all rules for ${mac}`, allRules);
+                    return allRules;
+
+                } catch (error) {
+                    console.error(`[Rules] Failed to fetch all effective rules for ${mac}:`, error);
+                    return null;
+                }
             }
 
             function displayEffectiveRule(tempRule, humRule) {
                 const container = document.getElementById('effective-rule-display');
-                container.innerHTML = ''; // ล้างของเก่าทิ้ง
-
-                // --- สร้างฟังก์ชันย่อยเพื่อไม่ให้โค้ดซ้ำซ้อน ---
+                container.innerHTML = '';
                 const renderSection = (title, rule, metricFields) => {
                     let sectionHtml = `<h6 class="font-semibold text-base mb-1 ${title.includes('Temp') ? 'text-red-400' : 'text-blue-400'}">${title}</h6>`;
 
@@ -6824,20 +7341,15 @@
                     'Crit Low': 'crit_min', 'Warn Low': 'warn_min',
                     'Warn High': 'warn_max', 'Crit High': 'crit_max'
                 };
-
-                // --- นำมาประกอบร่างแล้วแสดงผล ---
                 container.innerHTML += renderSection('🌡️ Temperature', tempRule, tempFields);
                 container.innerHTML += '<div class="border-t border-dashed border-[var(--border)] my-3"></div>';
                 container.innerHTML += renderSection('💧 Humidity', humRule, humFields);
             }
-
-            // Toggle override fields
             overrideToggle?.addEventListener('change', (e) => {
                 const enabled = e.target.checked;
                 ruleFormFields.classList.toggle('opacity-50', !enabled);
                 ruleFormFields.classList.toggle('pointer-events-none', !enabled);
             });
-
             document.querySelectorAll('.config-tab').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const name = btn.dataset.tab;
@@ -6847,7 +7359,6 @@
                     }
                     document.querySelectorAll('.config-tab').forEach(b => b.classList.remove('active'));
                     document.querySelectorAll('.config-section').forEach(s => s.classList.remove('active'));
-
                     btn.classList.add('active');
                     const sectionToActivate = document.getElementById('tab-' + name);
                     if (sectionToActivate) {
@@ -6857,11 +7368,23 @@
                     }
                 });
             });
-            document.getElementById('btn-reset-rule')?.addEventListener('click', () => {
-                handleDeleteSensorRule();
+            document.getElementById('btn-reset-rule')?.addEventListener('click', async () => {
+                const sensorName = drawerEl.dataset.sensor;
+                const confirmed = await showConfirmationModal(
+                    'Confirm Reset',
+                    `This will remove the specific rule for <strong>${sensorName}</strong> and it will inherit from the room/system default. Are you sure?`,
+                    {
+                        confirmText: 'Yes, Reset',
+                        confirmClass: 'btn-reset',
+                        iconClass: 'fa-trash-arrow-up',
+                        iconColorClass: 'text-red-400'
+                    }
+                );
+                if (confirmed) {
+                    handleDeleteSensorRule();
+                }
             });
             document.addEventListener('click', function (e) {
-                // ✨ จุดที่แก้ไข: เปลี่ยนจาก .btn-edit-sensor-rules เป็น .clickable-sensor-row
                 const sensorRow = e.target.closest('.clickable-sensor-row');
                 if (sensorRow) {
                     const mac = sensorRow.dataset.mac;
@@ -6883,8 +7406,6 @@
                     showPopup('Error: Cannot identify the sensor.', { type: 'fail' });
                     return;
                 }
-
-                // รวบรวมค่าจากฟอร์ม
                 const getVal = id => {
                     const val = document.getElementById(id).value;
                     return val === '' ? null : parseFloat(val);
@@ -6892,7 +7413,7 @@
 
                 const tempRule = {
                     scope: 'sensor', mac, sensor_name: sensorName, metric: 'temp',
-                    active: overrideEnabled ? 1 : 0, // ถ้าปิด Override ให้ส่ง active=0 เพื่อลบ Rule
+                    active: overrideEnabled ? 1 : 0,
                     crit_min: getVal('rule-temp-crit-low'),
                     warn_min: getVal('rule-temp-warn-low'),
                     warn_max: getVal('rule-temp-warn-high'),
@@ -6900,7 +7421,7 @@
                 };
                 const humRule = {
                     scope: 'sensor', mac, sensor_name: sensorName, metric: 'hum',
-                    active: overrideEnabled ? 1 : 0, // ถ้าปิด Override ให้ส่ง active=0 เพื่อลบ Rule
+                    active: overrideEnabled ? 1 : 0,
                     crit_min: getVal('rule-hum-crit-low'),
                     warn_min: getVal('rule-hum-warn-low'),
                     warn_max: getVal('rule-hum-warn-high'),
@@ -6911,7 +7432,7 @@
                     const res = await fetch('/api/alert-rules', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify([tempRule, humRule]) // ส่งไปเป็น Array
+                        body: JSON.stringify([tempRule, humRule])
                     });
 
                     if (!res.ok) {
@@ -6920,9 +7441,7 @@
                     }
 
                     showPopup('✅ Sensor rules saved successfully!', { type: 'success' });
-                    closeModal('modal-sensor-rules'); // ปิดหน้าต่างเมื่อสำเร็จ
-
-                    // Reload rules in the background for immediate effect
+                    closeModal('modal-sensor-rules');
                     await loadPinMapFromServer();
 
                 } catch (err) {
@@ -6930,7 +7449,22 @@
                     console.error('Failed to save sensor rule:', err);
                 }
             }
-            document.getElementById('btn-save-rule')?.addEventListener('click', handleSaveSensorRule);
+            document.getElementById('btn-save-rule')?.addEventListener('click', async () => {
+                const sensorName = drawerEl.dataset.sensor;
+                const confirmed = await showConfirmationModal(
+                    'Confirm Rule Changes',
+                    `Are you sure you want to save these rules for sensor <strong>${sensorName}</strong>?`,
+                    {
+                        confirmText: 'Save Rules',
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-save',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+                if (confirmed) {
+                    handleSaveSensorRule();
+                }
+            });
             document.getElementById('detail-alert-list').addEventListener('click', (e) => {
                 const ackButton = e.target.closest('.btn-ack-chip');
                 if (!ackButton) return;
@@ -6940,6 +7474,9 @@
                     console.log(`ACK button in chip clicked for event_id: ${eventId}`);
                     openAckModal([eventId]);
                 }
+            });
+            document.getElementById('form-settings')?.addEventListener('submit', e => {
+                e.preventDefault();
             });
         });
 
