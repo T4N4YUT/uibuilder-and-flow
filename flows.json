@@ -452,29 +452,6 @@
         "h": 122
     },
     {
-        "id": "1c9684d00c28d451",
-        "type": "group",
-        "z": "c0cdca176eedd227",
-        "g": "e0c8d7b3e0c8d7b3",
-        "name": "",
-        "style": {
-            "stroke": "#ff0000",
-            "fill": "#ffbfbf",
-            "label": true
-        },
-        "nodes": [
-            "1bf671abeb440373",
-            "155f14d9caf7f584",
-            "5254f9b4133929d9",
-            "6a53bd4692157e10",
-            "635f66dcda15ad8f"
-        ],
-        "x": 2514,
-        "y": 739,
-        "w": 452,
-        "h": 182
-    },
-    {
         "id": "485f41e4e681df5d",
         "type": "group",
         "z": "c0cdca176eedd227",
@@ -502,6 +479,29 @@
         "y": 1539,
         "w": 2192,
         "h": 82
+    },
+    {
+        "id": "1c9684d00c28d451",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "",
+        "style": {
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": true
+        },
+        "nodes": [
+            "1bf671abeb440373",
+            "155f14d9caf7f584",
+            "5254f9b4133929d9",
+            "6a53bd4692157e10",
+            "635f66dcda15ad8f"
+        ],
+        "x": 2514,
+        "y": 739,
+        "w": 452,
+        "h": 182
     },
     {
         "id": "44b7cf7bb078606f",
@@ -3038,7 +3038,7 @@
         "z": "c0cdca176eedd227",
         "g": "c786c427801548b2",
         "name": "system summary",
-        "func": "// ✅ Function Node: System Summary (Final Version - ส่งค่า temp_rise ของทุกห้อง)\n\n// --- Contexts ---\nlet liveData = flow.get('liveRoomData') || {};\nlet historyData = flow.get('historyRoomData') || {};\nconst deviceMap = flow.get('device_map', 'file') || {};\n\nconst BASELINE_SPAN_MS = 300000;   // 5 นาที\nconst BASELINE_STALE_MS = 3600000;  // 60 นาที\n\n// --- MAC → RoomName map ---\nconst macToRoomInfo = {};\nfor (const key in deviceMap) {\n  if (!Object.prototype.hasOwnProperty.call(deviceMap, key)) continue;\n  if (key.startsWith('room')) {\n    const mac = deviceMap[key];\n    const idx = key.slice(-1).toUpperCase();\n    const nameKey = `name${idx}`;\n    const roomName = deviceMap[nameKey] || key;\n    if (mac) macToRoomInfo[mac] = { name: roomName };\n  }\n}\nfunction getRoomName(mac) {\n  return macToRoomInfo[mac] ? macToRoomInfo[mac].name : mac;\n}\n\n// --- Helpers ---\nfunction dewPointC(temp, rh) {\n  if (typeof temp !== 'number' || typeof rh !== 'number' || !isFinite(temp) || !isFinite(rh) || rh <= 0) return null;\n  const RH = Math.min(100, Math.max(0, rh));\n  const a = 17.62, b = 243.12;\n  const gamma = (a * temp) / (b + temp) + Math.log(RH / 100.0);\n  return (b * gamma) / (a - gamma);\n}\n\n// --- Input & Update liveData ---\nconst now = Date.now();\nconst mac = msg.payload.mac || msg.payload.mac_address || null;\nconst pin = msg.payload.pin;\n\nif (mac && pin === 'OVERALL') {\n  const roomName = getRoomName(mac);\n  if (roomName) {\n    const t_avg = Number(msg.payload.avg_temp);\n    const h_avg = Number(msg.payload.avg_hum);\n    const t_max = Number(msg.payload.max_temp);\n    const h_max = Number(msg.payload.max_hum);\n\n    liveData[mac] = {\n      mac,\n      name: roomName,\n      temp: isFinite(t_avg) ? t_avg : null,\n      hum: isFinite(h_avg) ? h_avg : null,\n      temp_max_device: isFinite(t_max) ? t_max : null,\n      hum_max_device: isFinite(h_max) ? h_max : null,\n      timestamp: now\n    };\n    flow.set('liveRoomData', liveData);\n  }\n}\n\n// --- Compute summary ---\nlet summary = {\n  temp_max: null, temp_max_room: null,\n  hum_max: null, hum_max_room: null,\n  dew_max: null, dew_max_room: null,\n  temp_rise_max: null, temp_rise_max_room: null,\n  // VVVVVV --- เพิ่มส่วนนี้ --- VVVVVV\n  temp_rise_per_room: {} // Object สำหรับเก็บค่า temp_rise ของแต่ละห้อง\n  // ^^^^^^ -------------------- ^^^^^^\n};\n\nconst rooms = Object.values(liveData);\nif (rooms.length > 0) {\n  for (const room of rooms) {\n    if (!room || !room.mac) continue;\n    const curMac = room.mac;\n\n    const tempForMax = room.temp_max_device ?? room.temp;\n    if (typeof tempForMax === 'number' && (summary.temp_max === null || tempForMax > summary.temp_max)) {\n      summary.temp_max = tempForMax;\n      summary.temp_max_room = room.name;\n    }\n\n    const humForMax = room.hum_max_device ?? room.hum;\n    if (typeof humForMax === 'number' && (summary.hum_max === null || humForMax > summary.hum_max)) {\n      summary.hum_max = humForMax;\n      summary.hum_max_room = room.name;\n    }\n\n    const dp = dewPointC(room.temp, room.hum);\n    if (dp !== null && (summary.dew_max === null || dp > summary.dew_max)) {\n      summary.dew_max = dp;\n      summary.dew_max_room = room.name;\n    }\n\n    const base = historyData[curMac];\n    if (base && typeof base.temp === 'number' && typeof room.temp === 'number') {\n      const rise = room.temp - base.temp;\n      // VVVVVV --- เพิ่มส่วนนี้ --- VVVVVV\n      summary.temp_rise_per_room[curMac] = rise; // เก็บค่า rise ของห้องนี้\n      // ^^^^^^ -------------------- ^^^^^^\n      if (summary.temp_rise_max === null || rise > summary.temp_rise_max) {\n        summary.temp_rise_max = rise;\n        summary.temp_rise_max_room = room.name;\n      }\n    }\n  }\n\n  if (summary.temp_rise_max === null) {\n    summary.temp_rise_max = 0;\n    summary.temp_rise_max_room = summary.temp_max_room;\n  }\n}\n\n// --- Refresh baselines ---\nObject.keys(liveData).forEach(m => {\n  const live = liveData[m];\n  const base = historyData[m];\n  if (!base || (live.timestamp - base.timestamp) >= BASELINE_SPAN_MS) {\n    historyData[m] = { ...live };\n  }\n});\n\nObject.keys(historyData).forEach(m => {\n  if (now - historyData[m].timestamp > BASELINE_STALE_MS) {\n    delete historyData[m];\n  }\n});\n\n// --- Persist & Output ---\nflow.set('historyRoomData', historyData);\n\nmsg.payload = summary;\nmsg.topic = \"system_summary_pro\";\nreturn msg;",
+        "func": "// ✅ Function Node: System Summary (V2 - Includes temp_rise_per_room)\n\n// --- Contexts ---\nlet liveData = flow.get('liveRoomData') || {};\nlet historyData = flow.get('historyRoomData') || {};\nconst deviceMap = flow.get('device_map', 'file') || {};\n\nconst BASELINE_SPAN_MS = 300000;   // 5 นาที\nconst BASELINE_STALE_MS = 3600000;  // 60 นาที\n\n// --- MAC → RoomName map ---\nconst macToRoomInfo = {};\nfor (const key in deviceMap) {\n  if (!Object.prototype.hasOwnProperty.call(deviceMap, key)) continue;\n  if (key.startsWith('room')) {\n    const mac = deviceMap[key];\n    const idx = key.slice(-1).toUpperCase();\n    const nameKey = `name${idx}`;\n    const roomName = deviceMap[nameKey] || key;\n    if (mac) macToRoomInfo[mac] = { name: roomName };\n  }\n}\nfunction getRoomName(mac) {\n  return macToRoomInfo[mac] ? macToRoomInfo[mac].name : mac;\n}\n\n// --- Helpers ---\nfunction dewPointC(temp, rh) {\n  if (typeof temp !== 'number' || typeof rh !== 'number' || !isFinite(temp) || !isFinite(rh) || rh <= 0) return null;\n  const RH = Math.min(100, Math.max(0, rh));\n  const a = 17.62, b = 243.12;\n  const gamma = (a * temp) / (b + temp) + Math.log(RH / 100.0);\n  return (b * gamma) / (a - gamma);\n}\n\n// --- Input & Update liveData ---\nconst now = Date.now();\nconst mac = msg.payload.mac || msg.payload.mac_address || null;\nconst pin = msg.payload.pin;\n\nif (mac && pin === 'OVERALL') {\n  const roomName = getRoomName(mac);\n  if (roomName) {\n    const t_avg = Number(msg.payload.avg_temp);\n    const h_avg = Number(msg.payload.avg_hum);\n    const t_max = Number(msg.payload.max_temp);\n    const h_max = Number(msg.payload.max_hum);\n\n    liveData[mac] = {\n      mac,\n      name: roomName,\n      temp: isFinite(t_avg) ? t_avg : null,\n      hum: isFinite(h_avg) ? h_avg : null,\n      temp_max_device: isFinite(t_max) ? t_max : null,\n      hum_max_device: isFinite(h_max) ? h_max : null,\n      timestamp: now\n    };\n    flow.set('liveRoomData', liveData);\n  }\n}\n\n// --- Compute summary ---\nlet summary = {\n  temp_max: null, temp_max_room: null,\n  hum_max: null, hum_max_room: null,\n  dew_max: null, dew_max_room: null,\n  temp_rise_max: null, temp_rise_max_room: null,\n  temp_rise_per_room: {} // ✨ เพิ่ม key นี้เข้ามาใหม่\n};\n\nconst rooms = Object.values(liveData);\nif (rooms.length > 0) {\n  for (const room of rooms) {\n    if (!room || !room.mac) continue;\n    const curMac = room.mac;\n\n    const tempForMax = room.temp_max_device ?? room.temp;\n    if (typeof tempForMax === 'number' && (summary.temp_max === null || tempForMax > summary.temp_max)) {\n      summary.temp_max = tempForMax;\n      summary.temp_max_room = room.name;\n    }\n\n    const humForMax = room.hum_max_device ?? room.hum;\n    if (typeof humForMax === 'number' && (summary.hum_max === null || humForMax > summary.hum_max)) {\n      summary.hum_max = humForMax;\n      summary.hum_max_room = room.name;\n    }\n\n    const dp = dewPointC(room.temp, room.hum);\n    if (dp !== null && (summary.dew_max === null || dp > summary.dew_max)) {\n      summary.dew_max = dp;\n      summary.dew_max_room = room.name;\n    }\n\n    const base = historyData[curMac];\n    if (base && typeof base.temp === 'number' && typeof room.temp === 'number') {\n      const rise = room.temp - base.temp;\n      // ✨ เก็บค่า rise ของห้องนี้ไว้\n      summary.temp_rise_per_room[curMac] = rise;\n\n      if (summary.temp_rise_max === null || rise > summary.temp_rise_max) {\n        summary.temp_rise_max = rise;\n        summary.temp_rise_max_room = room.name;\n      }\n    }\n  }\n\n  if (summary.temp_rise_max === null) {\n    summary.temp_rise_max = 0;\n    summary.temp_rise_max_room = summary.temp_max_room;\n  }\n}\n\n// --- Refresh baselines & Persist ---\nObject.keys(liveData).forEach(m => {\n  const live = liveData[m];\n  const base = historyData[m];\n  if (!base || (live.timestamp - base.timestamp) >= BASELINE_SPAN_MS) {\n    historyData[m] = { ...live };\n  }\n});\nObject.keys(historyData).forEach(m => {\n  if (now - historyData[m].timestamp > BASELINE_STALE_MS) {\n    delete historyData[m];\n  }\n});\nflow.set('historyRoomData', historyData);\n\nmsg.payload = summary;\nmsg.topic = \"system_summary_pro\";\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -3051,35 +3051,6 @@
             [
                 "0b3358f711e7ed0b"
             ]
-        ]
-    },
-    {
-        "id": "0b3358f711e7ed0b",
-        "type": "uibuilder",
-        "z": "c0cdca176eedd227",
-        "name": "",
-        "topic": "",
-        "url": "dashboard",
-        "okToGo": true,
-        "fwdInMessages": false,
-        "allowScripts": true,
-        "allowStyles": true,
-        "templateFolder": "blank",
-        "extTemplate": "",
-        "reload": false,
-        "sourceFolder": "src",
-        "deployedVersion": "7.4.3",
-        "showMsgUib": false,
-        "title": "",
-        "descr": "",
-        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
-        "x": 1310,
-        "y": 680,
-        "wires": [
-            [
-                "1143feaf4788fd3f"
-            ],
-            []
         ]
     },
     {
@@ -3314,6 +3285,53 @@
         "x": 4420,
         "y": 2440,
         "wires": []
+    },
+    {
+        "id": "41fef632c94cf9b7",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "name": "system summary",
+        "func": "// ✅ Function Node: System Summary (Final Version - ส่งค่า temp_rise ของทุกห้อง)\n\n// --- Contexts ---\nlet liveData = flow.get('liveRoomData') || {};\nlet historyData = flow.get('historyRoomData') || {};\nconst deviceMap = flow.get('device_map', 'file') || {};\n\nconst BASELINE_SPAN_MS = 300000;   // 5 นาที\nconst BASELINE_STALE_MS = 3600000;  // 60 นาที\n\n// --- MAC → RoomName map ---\nconst macToRoomInfo = {};\nfor (const key in deviceMap) {\n  if (!Object.prototype.hasOwnProperty.call(deviceMap, key)) continue;\n  if (key.startsWith('room')) {\n    const mac = deviceMap[key];\n    const idx = key.slice(-1).toUpperCase();\n    const nameKey = `name${idx}`;\n    const roomName = deviceMap[nameKey] || key;\n    if (mac) macToRoomInfo[mac] = { name: roomName };\n  }\n}\nfunction getRoomName(mac) {\n  return macToRoomInfo[mac] ? macToRoomInfo[mac].name : mac;\n}\n\n// --- Helpers ---\nfunction dewPointC(temp, rh) {\n  if (typeof temp !== 'number' || typeof rh !== 'number' || !isFinite(temp) || !isFinite(rh) || rh <= 0) return null;\n  const RH = Math.min(100, Math.max(0, rh));\n  const a = 17.62, b = 243.12;\n  const gamma = (a * temp) / (b + temp) + Math.log(RH / 100.0);\n  return (b * gamma) / (a - gamma);\n}\n\n// --- Input & Update liveData ---\nconst now = Date.now();\nconst mac = msg.payload.mac || msg.payload.mac_address || null;\nconst pin = msg.payload.pin;\n\nif (mac && pin === 'OVERALL') {\n  const roomName = getRoomName(mac);\n  if (roomName) {\n    const t_avg = Number(msg.payload.avg_temp);\n    const h_avg = Number(msg.payload.avg_hum);\n    const t_max = Number(msg.payload.max_temp);\n    const h_max = Number(msg.payload.max_hum);\n\n    liveData[mac] = {\n      mac,\n      name: roomName,\n      temp: isFinite(t_avg) ? t_avg : null,\n      hum: isFinite(h_avg) ? h_avg : null,\n      temp_max_device: isFinite(t_max) ? t_max : null,\n      hum_max_device: isFinite(h_max) ? h_max : null,\n      timestamp: now\n    };\n    flow.set('liveRoomData', liveData);\n  }\n}\n\n// --- Compute summary ---\nlet summary = {\n  temp_max: null, temp_max_room: null,\n  hum_max: null, hum_max_room: null,\n  dew_max: null, dew_max_room: null,\n  temp_rise_max: null, temp_rise_max_room: null,\n  // VVVVVV --- เพิ่มส่วนนี้ --- VVVVVV\n  temp_rise_per_room: {} // Object สำหรับเก็บค่า temp_rise ของแต่ละห้อง\n  // ^^^^^^ -------------------- ^^^^^^\n};\n\nconst rooms = Object.values(liveData);\nif (rooms.length > 0) {\n  for (const room of rooms) {\n    if (!room || !room.mac) continue;\n    const curMac = room.mac;\n\n    const tempForMax = room.temp_max_device ?? room.temp;\n    if (typeof tempForMax === 'number' && (summary.temp_max === null || tempForMax > summary.temp_max)) {\n      summary.temp_max = tempForMax;\n      summary.temp_max_room = room.name;\n    }\n\n    const humForMax = room.hum_max_device ?? room.hum;\n    if (typeof humForMax === 'number' && (summary.hum_max === null || humForMax > summary.hum_max)) {\n      summary.hum_max = humForMax;\n      summary.hum_max_room = room.name;\n    }\n\n    const dp = dewPointC(room.temp, room.hum);\n    if (dp !== null && (summary.dew_max === null || dp > summary.dew_max)) {\n      summary.dew_max = dp;\n      summary.dew_max_room = room.name;\n    }\n\n    const base = historyData[curMac];\n    if (base && typeof base.temp === 'number' && typeof room.temp === 'number') {\n      const rise = room.temp - base.temp;\n      // VVVVVV --- เพิ่มส่วนนี้ --- VVVVVV\n      summary.temp_rise_per_room[curMac] = rise; // เก็บค่า rise ของห้องนี้\n      // ^^^^^^ -------------------- ^^^^^^\n      if (summary.temp_rise_max === null || rise > summary.temp_rise_max) {\n        summary.temp_rise_max = rise;\n        summary.temp_rise_max_room = room.name;\n      }\n    }\n  }\n\n  if (summary.temp_rise_max === null) {\n    summary.temp_rise_max = 0;\n    summary.temp_rise_max_room = summary.temp_max_room;\n  }\n}\n\n// --- Refresh baselines ---\nObject.keys(liveData).forEach(m => {\n  const live = liveData[m];\n  const base = historyData[m];\n  if (!base || (live.timestamp - base.timestamp) >= BASELINE_SPAN_MS) {\n    historyData[m] = { ...live };\n  }\n});\n\nObject.keys(historyData).forEach(m => {\n  if (now - historyData[m].timestamp > BASELINE_STALE_MS) {\n    delete historyData[m];\n  }\n});\n\n// --- Persist & Output ---\nflow.set('historyRoomData', historyData);\n\nmsg.payload = summary;\nmsg.topic = \"system_summary_pro\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1250,
+        "y": 1080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0b3358f711e7ed0b",
+        "type": "uibuilder",
+        "z": "c0cdca176eedd227",
+        "name": "",
+        "topic": "",
+        "url": "dashboard",
+        "okToGo": true,
+        "fwdInMessages": false,
+        "allowScripts": true,
+        "allowStyles": true,
+        "templateFolder": "blank",
+        "extTemplate": "",
+        "reload": false,
+        "sourceFolder": "src",
+        "deployedVersion": "7.4.3",
+        "showMsgUib": false,
+        "title": "",
+        "descr": "",
+        "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
+        "x": 1310,
+        "y": 680,
+        "wires": [
+            [
+                "1143feaf4788fd3f"
+            ],
+            []
+        ]
     },
     {
         "id": "8301192ec347dbc9",
