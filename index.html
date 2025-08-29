@@ -6393,6 +6393,8 @@
                     const exportForm = document.getElementById('form-export');
                     if (exportForm && exportForm.room) {
                         exportForm.room.value = roomId;
+                        const exportRoomSelect = exportForm.querySelector('select[name="room"]');
+                        populateSensorCheckboxes(exportRoomSelect.value);
                     }
                 }
                 openModal('modal-export');
@@ -6644,33 +6646,13 @@
                         updateProKPI('kpi-pro-temp-rise', 'kpi-pro-temp-rise-room', data.temp_rise_max, data.temp_rise_max_room, '°C', {
                             prefix: (data.temp_rise_max > 0) ? '+' : ''
                         });
-
-                        // --- Part 2: VVVVVV ส่วนใหม่ที่เพิ่มเข้ามา VVVVVV ---
-                        // --- อัปเดตข้อมูลสำหรับ Modal "Temperature Rise per Room" ---
-                        const riseData = data.temp_rise_per_room || {};
-                        const riseContainer = document.getElementById('temp-rise-card-body'); // **สำคัญ: ต้องมี ID นี้ใน HTML ของ Modal**
-
-                        if (riseContainer) {
-                            const rises = [];
-                            for (const mac in riseData) {
-                                const roomName = (window.ROOM_NAMES && window.MAC_TO_ROOM_MAP) ? window.ROOM_NAMES[window.MAC_TO_ROOM_MAP[mac]] : mac;
-                                rises.push({ name: roomName, rise: riseData[mac] });
-                            }
-
-                            if (rises.length === 0) {
-                                riseContainer.innerHTML = `<div class="text-center text-[var(--muted)] p-4">No active rooms to display or not enough data.</div>`;
-                            } else {
-                                rises.sort((a, b) => b.rise - a.rise);
-                                riseContainer.innerHTML = rises.map(r =>
-                                    `<div class="flex justify-between items-center p-2 border-b border-[var(--border)]">
-                                       <span class="font-medium">${r.name}</span>
-                                       <span class="font-bold text-lg ${r.rise > 0 ? 'text-amber-400' : 'text-sky-400'}">${r.rise >= 0 ? '+' : ''}${r.rise.toFixed(2)}°C</span>
-                                     </div>`
-                                ).join('');
-                            }
+                        lastSystemSummary = {
+                            temp_rise_per_room: data.temp_rise_per_room || {}
+                        };
+                        const modal = document.getElementById('modal-summary-detail');
+                        if (modal && !modal.classList.contains('hidden')) {
+                            refreshSummaryModal();
                         }
-                        // --- ^^^^^^ สิ้นสุดส่วนที่เพิ่มเข้ามา ^^^^^^ ---
-
                         return;
                     }
                     if (!msg) return;
@@ -7691,9 +7673,6 @@
             document.getElementById('summary-card-dew-max')?.addEventListener('click', () => {
                 openSummaryDetailModal('dew_max', 'Highest Dew Point per Room', '°C');
             });
-            document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
-                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room (5 min)', '°C');
-            });
 
             function calculateTempRiseForRoom(roomId) {
                 const history = window.roomDataStore[roomId]?.history;
@@ -7797,11 +7776,6 @@
                     listEl.innerHTML = '<li class="text-center text-[var(--muted)]">No active rooms to display or not enough data.</li>';
                 }
             }
-
-
-            document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
-                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room (5 min baseline)', '°C');
-            });
             document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
                 const modal = document.getElementById('modal-summary-detail');
                 const titleEl = document.getElementById('summary-detail-title');
@@ -7865,7 +7839,7 @@
                 openSummaryDetailModal('dew_max', 'Highest Dew Point per Room', '°C');
             });
             document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
-                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room (5 min)', '°C');
+                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room', '°C');
             });
 
         });
