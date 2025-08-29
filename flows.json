@@ -475,6 +475,32 @@
         "h": 182
     },
     {
+        "id": "e5b1d9c8.a5e4f8",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "name": "Export Report API (/api/export) v10 - User's Correct Logic",
+        "style": {
+            "stroke": "#14532d",
+            "fill": "#bbf7d0",
+            "label": true,
+            "color": "#000000",
+            "border": true
+        },
+        "nodes": [
+            "EXPORT_HTTP_IN_V10",
+            "EXPORT_PREPARE_V10",
+            "EXPORT_MYSQL_SENSORS_V10",
+            "EXPORT_PREPARE_ALERTS_V10",
+            "EXPORT_MYSQL_ALERTS_V10",
+            "EXPORT_GENERATE_CSV_V10",
+            "EXPORT_HTTP_OUT_V10"
+        ],
+        "x": 2414,
+        "y": 1739,
+        "w": 1582,
+        "h": 82
+    },
+    {
         "id": "44b7cf7bb078606f",
         "type": "http in",
         "z": "c0cdca176eedd227",
@@ -619,11 +645,11 @@
         "g": "6711b2b169daf3d2",
         "protocol": "Automatic",
         "mode": "timed",
-        "name": "94:B9:7E:CE:01:EF",
+        "name": "Ping",
         "host": "192.168.42.30",
         "timer": "3",
         "inputs": 0,
-        "x": 190,
+        "x": 150,
         "y": 500,
         "wires": [
             [
@@ -3052,6 +3078,126 @@
             ],
             []
         ]
+    },
+    {
+        "id": "EXPORT_HTTP_IN_V10",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "name": "GET /api/export",
+        "url": "/api/export",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 2520,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_PREPARE_V10"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_PREPARE_V10",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "name": "1. Prepare Info & Sensor Query",
+        "func": "const q = msg.req.query || {};\nconst { room, type, from, to, sensors } = q;\n\nif (!room || !type || !from || !to) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Missing required parameters' };\n    return msg;\n}\n\nconst deviceMap = flow.get('device_map', 'file') || {};\nconst pinMap = global.get('mac_pin_names') || {};\nlet macs = [];\nlet roomNameMap = {};\n\nif (room === 'all') {\n    ['A', 'B', 'C', 'D'].forEach(char => {\n        const mac = deviceMap[`room${char}`];\n        if (mac && mac.includes(':')) {\n            macs.push(mac);\n            roomNameMap[mac] = deviceMap[`name${char}`] || `Room ${char}`;\n        }\n    });\n} else {\n    const roomKey = `room${room.slice(-1).toUpperCase()}`;\n    const nameKey = `name${room.slice(-1).toUpperCase()}`;\n    const mac = deviceMap[roomKey];\n    if (mac) {\n        macs.push(mac);\n        roomNameMap[mac] = deviceMap[nameKey] || room.replace('-', ' ');\n    }\n}\n\nif (macs.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: `No MAC address found for room: ${room}` };\n    return msg;\n}\n\nmsg.reportInfo = {\n    type: type,\n    filename: `Report_${room.replace('-', '_')}_${new Date().toISOString().slice(0, 10)}.${type}`,\n    maps: {\n        roomNames: roomNameMap,\n        pinNames: pinMap\n    },\n    params: { from, to, macs, sensors, room: room }\n};\n\nlet sensorSql = `\nSELECT \n    t.timestamp, t.mac, t.pin AS sensor_pin, t.avg_temp AS temperature, t.avg_hum AS humidity,\n    (243.12 * (LN(GREATEST(1e-6, t.avg_hum/100)) + (17.62*t.avg_temp)/(243.12+t.avg_temp)) ) / (17.62 - (LN(GREATEST(1e-6, t.avg_hum/100)) + (17.62*t.avg_temp)/(243.12+t.avg_temp))) AS dew_point\nFROM dht_22 t\nWHERE t.mac IN (${macs.map(() => '?').join(',')}) AND t.timestamp BETWEEN ? AND ?`;\nconst sensorParams = [...macs, from, to];\n\nif (sensors && room !== 'all') {\n    const sensorList = sensors.split(',');\n    sensorSql += ` AND t.pin IN (${sensorList.map(() => '?').join(',')})`;\n    sensorParams.push(...sensorList);\n}\nsensorSql += ` ORDER BY t.timestamp ASC;`;\n\nmsg.topic = sensorSql;\nmsg.payload = sensorParams;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2800,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_MYSQL_SENSORS_V10"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_MYSQL_SENSORS_V10",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "mydb": "5e560f07cfec117a",
+        "name": "Query Sensors",
+        "x": 3030,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_PREPARE_ALERTS_V10"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_PREPARE_ALERTS_V10",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "name": "2. Prepare Alert Query",
+        "func": "msg.results = {\n    sensors: msg.payload\n};\n\nconst { from, to, macs } = msg.reportInfo.params;\n\nconst alertSql = `\nSELECT \n    opened_at AS alert_time, mac, room_name, sensor_name, metric, level, trigger_value, \n    status, ack_by AS acknowledged_by, ack_at AS acknowledged_time, closed_at AS closed_time \nFROM alert_events \nWHERE mac IN (${macs.map(() => '?').join(',')}) AND opened_at BETWEEN ? AND ? \nORDER BY opened_at ASC;`;\nconst alertParams = [...macs, from, to];\n\nmsg.topic = alertSql;\nmsg.payload = alertParams;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 3240,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_MYSQL_ALERTS_V10"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_MYSQL_ALERTS_V10",
+        "type": "mysql",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "mydb": "5e560f07cfec117a",
+        "name": "Query Alerts",
+        "x": 3450,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_GENERATE_CSV_V10"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_GENERATE_CSV_V10",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "name": "3. Generate File (CSV only)",
+        "func": "const alerts = msg.payload;\nconst sensors = msg.results.sensors;\nconst reportInfo = msg.reportInfo;\n\nif (!reportInfo) {\n    node.error(\"Critical Error: reportInfo object is missing.\", msg);\n    msg.statusCode = 500;\n    msg.payload = \"Server error: Could not process report data.\";\n    return msg;\n}\n\nconst { filename, type } = reportInfo;\nconst { roomNames, pinNames } = reportInfo.maps;\n\n// Stop if not CSV, as other types are handled differently\nif (type !== 'csv') {\n    msg.payload = `File generation for ${type.toUpperCase()} is not yet implemented.`;\n    msg.headers = { 'Content-Type': 'text/plain' };\n    return msg;\n}\n\n// --- Manual CSV Generation Logic ---\nconst csvSafe = (val) => {\n    if (val === null || val === undefined) return '';\n    let str = String(val);\n    if (str.includes(',') || str.includes('\"') || str.includes('\\n')) {\n        str = str.replace(/\"/g, '\"\"');\n        return `\"${str}\"`;\n    }\n    return str;\n};\n\nconst formatDate = (isoString) => {\n    if (!isoString) return '';\n    try {\n        return new Date(isoString).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });\n    } catch (e) { return isoString; }\n};\n\nlet csvString = '';\n\n// -- Sensor Data Section --\nconst sensorHeaders = ['Timestamp', 'Room Name', 'MAC Address', 'Sensor Pin', 'Sensor Name', 'Temperature', 'Humidity', 'Dew Point'];\ncsvString += '### SENSOR DATA ###\\n';\ncsvString += sensorHeaders.join(',') + '\\n';\n\nsensors.forEach(s => {\n    const sensor_name = (pinNames[s.mac] && pinNames[s.mac][`name_pin_${s.sensor_pin}`]) || `Pin ${s.sensor_pin}`;\n    const row = [\n        formatDate(s.timestamp),\n        roomNames[s.mac] || s.mac,\n        s.mac,\n        s.sensor_pin,\n        sensor_name,\n        s.temperature,\n        s.humidity,\n        s.dew_point\n    ];\n    csvString += row.map(csvSafe).join(',') + '\\n';\n});\n\n// -- Alert History Section --\nconst alertHeaders = ['Alert Time', 'Room Name', 'Sensor Name', 'Metric', 'Level', 'Value', 'Status', 'Ack By', 'Ack Time', 'Closed Time'];\ncsvString += '\\n### ALERT HISTORY ###\\n';\ncsvString += alertHeaders.join(',') + '\\n';\n\nalerts.forEach(a => {\n    const row = [\n        formatDate(a.alert_time),\n        a.room_name,\n        a.sensor_name,\n        a.metric,\n        a.level,\n        a.trigger_value,\n        a.status,\n        a.acknowledged_by,\n        formatDate(a.acknowledged_time),\n        formatDate(a.closed_time)\n    ];\n    csvString += row.map(csvSafe).join(',') + '\\n';\n});\n\nmsg.headers = {\n    'Content-Disposition': `attachment; filename=\"${filename}\"`,\n    'Content-Type': 'text/csv; charset=utf-8'\n};\n\nmsg.payload = csvString;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 3670,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_HTTP_OUT_V10"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_HTTP_OUT_V10",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "g": "e5b1d9c8.a5e4f8",
+        "name": "File Response",
+        "statusCode": "",
+        "headers": {},
+        "x": 3890,
+        "y": 1780,
+        "wires": []
     },
     {
         "id": "8301192ec347dbc9",
