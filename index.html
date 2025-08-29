@@ -2732,7 +2732,6 @@
                         <select name="type"
                             class="config-select mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
                             <option value="csv">CSV</option>
-                            <option value="xlsx">XLSX (Excel)</option>
                             <option value="pdf">PDF</option>
                         </select>
                     </label>
@@ -5161,6 +5160,28 @@
                 }
                 setRoomCardsBlank(roomId, true);
             }
+            function pushHistorySample(roomId, sample) {
+                if (!window.roomDataStore) {
+                    window.roomDataStore = {};
+                }
+                if (!window.roomDataStore[roomId]) {
+                    window.roomDataStore[roomId] = {
+                        name: sample.room_name || roomId,
+                        history: [],
+                        live: {}
+                    };
+                }
+
+                const bucket = window.roomDataStore[roomId];
+                const ts = sample.timestamp ? new Date(sample.timestamp).getTime() : Date.now();
+                const temp = Number(sample.avg_temp);
+                if (!Number.isFinite(temp) || !Number.isFinite(ts)) return;
+                const h = bucket.history;
+                if (h.length && h[h.length - 1].ts >= ts) return;
+                h.push({ ts, temp_overall: temp });
+                const cutoff = Date.now() - 5 * 60 * 1000;
+                bucket.history = h.filter(x => x.ts >= cutoff);
+            }
             function updateRoomUI(roomId, data) {
                 const roomCardEl = document.querySelector(`.room-card[data-room="${roomId}"]`);
                 if (roomCardEl) {
@@ -6623,7 +6644,7 @@
                         updateProKPI('kpi-pro-temp-rise', 'kpi-pro-temp-rise-room', data.temp_rise_max, data.temp_rise_max_room, '°C', {
                             prefix: (data.temp_rise_max > 0) ? '+' : ''
                         });
-                        refreshSummaryModal();
+
                         return;
                     }
                     if (!msg) return;
@@ -6746,6 +6767,7 @@
 
                     if (pinVal === 'OVERALL') {
                         updateRoomUI(roomId, data);
+                        pushHistorySample(roomId, data);
                         const last = store.history.length ? store.history[store.history.length - 1] : {};
                         const newHistoryEntry = {
                             timestamp: data.timestamp,
