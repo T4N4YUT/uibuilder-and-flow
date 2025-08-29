@@ -416,6 +416,14 @@
             max-width: min(92vw, 32rem) !important;
         }
 
+        #modal-summary-detail.centered .config-panel {
+            right: auto !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            max-width: min(92vw, 32rem) !important;
+        }
+
         #modal-reboot.centered>div,
         #modal-export.centered>div,
         #modal-device-map.centered>div {
@@ -2455,7 +2463,7 @@
                 </div>
             </div>
         </div>
-        <div id="modal-summary-detail" class="config-overlay hidden">
+        <div id="modal-summary-detail" class="config-overlay hidden centered">
             <div class="config-panel" style="width: 32rem; max-width: 90vw;">
                 <div class="config-header">
                     <h5 id="summary-detail-title" class="font-semibold text-lg">Metric Details</h5>
@@ -6090,7 +6098,7 @@
                 el.classList.add('modal-is-entering');
                 el.classList.remove('hidden');
                 if (el.classList.contains('config-overlay')) el.classList.add('active');
-                const centerIds = new Set(['modal-reboot', 'modal-export', 'modal-device-map', 'modal-settings', 'modal-room-detail', 'modal-pin-map', 'modal-recipients', 'modal-sensor-rules', 'modal-alert-center', 'modal-ack', 'modal-confirm']);
+                const centerIds = new Set(['modal-reboot', 'modal-export', 'modal-device-map', 'modal-settings', 'modal-room-detail', 'modal-pin-map', 'modal-recipients', 'modal-sensor-rules', 'modal-alert-center', 'modal-ack', 'modal-confirm', 'modal-summary-detail']);
                 if (centerIds.has(id)) el.classList.add('centered');
                 requestAnimationFrame(() => {
                     el.classList.remove('modal-is-entering');
@@ -6615,7 +6623,7 @@
                         updateProKPI('kpi-pro-temp-rise', 'kpi-pro-temp-rise-room', data.temp_rise_max, data.temp_rise_max_room, '°C', {
                             prefix: (data.temp_rise_max > 0) ? '+' : ''
                         });
-
+                        refreshSummaryModal();
                         return;
                     }
                     if (!msg) return;
@@ -7616,36 +7624,89 @@
             });
             function openSummaryDetailModal(metric, title, unit) {
                 const modal = document.getElementById('modal-summary-detail');
-                const titleEl = document.getElementById('summary-detail-title');
-                const listEl = document.getElementById('summary-detail-list');
+                if (!modal) return;
 
-                if (!modal || !titleEl || !listEl) {
-                    console.error("Summary detail modal elements not found!");
+                modal.dataset.metric = metric;
+                modal.dataset.title = title;
+                modal.dataset.unit = unit;
+
+                refreshSummaryModal();
+                openModal('modal-summary-detail');
+            }
+
+            document.getElementById('summary-card-temp-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('temp_max', 'Highest Temperature per Room', '°C');
+            });
+            document.getElementById('summary-card-hum-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('hum_max', 'Highest Humidity per Room', '%');
+            });
+            document.getElementById('summary-card-dew-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('dew_max', 'Highest Dew Point per Room', '°C');
+            });
+            document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
+                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room (5 min)', '°C');
+            });
+
+            function calculateTempRiseForRoom(roomId) {
+                const history = window.roomDataStore[roomId]?.history;
+                if (!history || history.length < 1) return null;
+                const latest = history[history.length - 1];
+                if (typeof latest.temp_overall !== 'number') return null;
+                const fiveMinutesAgo = new Date(latest.timestamp).getTime() - 300000;
+                let baseline = null;
+                for (let i = history.length - 2; i >= 0; i--) {
+                    const pointTime = new Date(history[i].timestamp).getTime();
+                    if (pointTime <= fiveMinutesAgo) {
+                        baseline = history[i];
+                        break;
+                    }
+                }
+                if (!baseline && history.length > 1) {
+                    baseline = history[0];
+                }
+                if (baseline && typeof baseline.temp_overall === 'number') {
+                    return latest.temp_overall - baseline.temp_overall;
+                }
+                return 0;
+            }
+            let lastSystemSummary = {};
+            function refreshSummaryModal() {
+                const modal = document.getElementById('modal-summary-detail');
+                if (!modal || modal.classList.contains('hidden')) {
                     return;
                 }
 
-                titleEl.textContent = title;
-                listEl.innerHTML = '<li class="text-center text-[var(--muted)]">Loading room data...</li>';
+                const metric = modal.dataset.metric;
+                const title = modal.dataset.title;
+                const unit = modal.dataset.unit;
+                const titleEl = document.getElementById('summary-detail-title');
+                const listEl = document.getElementById('summary-detail-list');
 
+                if (!metric || !titleEl || !listEl) return;
+
+                titleEl.textContent = title;
                 const roomIds = ['room-a', 'room-b', 'room-c', 'room-d'];
                 const allRoomData = [];
 
                 roomIds.forEach(roomId => {
-                    const roomDataStore = window.roomDataStore[roomId];
                     const roomName = window.ROOM_NAMES[roomId] || roomId;
-                    const lastData = roomDataStore?.history?.[roomDataStore.history.length - 1];
-
+                    const mac = window.ROOM_TO_MAC_MAP[roomId];
                     const statusDot = document.getElementById(`status-dot-${roomId}`);
                     const isOnline = statusDot && statusDot.classList.contains('led--green');
 
-                    if (isOnline && lastData) {
+                    if (isOnline && mac) {
                         let value = null;
-                        if (metric === 'temp_max') {
-                            value = lastData.max_temp;
-                        } else if (metric === 'hum_max') {
-                            value = lastData.max_hum;
-                        } else if (metric === 'dew_max') {
-                            value = dewPointC_Magnus(lastData.temp_overall, lastData.rh_overall);
+                        const roomDataStore = window.roomDataStore[roomId];
+                        const lastData = roomDataStore?.history?.[roomDataStore.history.length - 1];
+
+                        if (metric === 'temp_rise') {
+                            if (lastSystemSummary.temp_rise_per_room && lastSystemSummary.temp_rise_per_room[mac] !== undefined) {
+                                value = lastSystemSummary.temp_rise_per_room[mac];
+                            }
+                        } else if (lastData) {
+                            if (metric === 'temp_max') value = lastData.max_temp;
+                            else if (metric === 'hum_max') value = lastData.max_hum;
+                            else if (metric === 'dew_max') value = dewPointC_Magnus(lastData.temp_overall, lastData.rh_overall);
                         }
 
                         if (value !== null && isFinite(value)) {
@@ -7658,9 +7719,22 @@
 
                 if (allRoomData.length > 0) {
                     listEl.innerHTML = allRoomData.map(data => {
-                        const iconClass = metric === 'temp_max' ? 'fa-temperature-high text-red-400'
-                            : metric === 'hum_max' ? 'fa-droplet text-blue-400'
-                                : 'fa-wind text-teal-400';
+                        const value = data.value;
+                        let colorClass = 'text-slate-300';
+                        let iconClass = 'fa-thermometer-half';
+                        let sign = '';
+
+                        if (metric === 'temp_rise') {
+                            colorClass = value > 0.1 ? 'text-amber-400' : value < -0.1 ? 'text-sky-400' : 'text-slate-400';
+                            iconClass = value > 0.1 ? 'fa-arrow-trend-up' : value < -0.1 ? 'fa-arrow-trend-down' : 'fa-minus';
+                            if (value > 0) sign = '+';
+                        } else if (metric === 'temp_max') {
+                            iconClass = 'fa-temperature-high text-red-400';
+                        } else if (metric === 'hum_max') {
+                            iconClass = 'fa-droplet text-blue-400';
+                        } else if (metric === 'dew_max') {
+                            iconClass = 'fa-wind text-teal-400';
+                        }
 
                         return `
                 <li class="flex items-center justify-between p-3 bg-[var(--panel-2)] rounded-lg border border-[var(--border)]">
@@ -7668,45 +7742,18 @@
                         <i class="fas ${iconClass} w-5 text-center"></i>
                         <span class="font-medium">${data.name}</span>
                     </div>
-                    <span class="font-bold text-lg">${data.value.toFixed(1)}${unit}</span>
-                </li>
-            `;
+                    <span class="font-bold text-lg ${colorClass}">${sign}${value.toFixed(1)}${unit}</span>
+                </li>`;
                     }).join('');
                 } else {
-                    listEl.innerHTML = '<li class="text-center text-[var(--muted)]">No active rooms to display.</li>';
+                    listEl.innerHTML = '<li class="text-center text-[var(--muted)]">No active rooms to display or not enough data.</li>';
                 }
-
-                openModal('modal-summary-detail');
             }
 
-            document.getElementById('summary-card-temp-max')?.addEventListener('click', () => {
-                openSummaryDetailModal('temp_max', 'Highest Temperature per Room', '°C');
+
+            document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
+                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room (5 min baseline)', '°C');
             });
-
-            document.getElementById('summary-card-hum-max')?.addEventListener('click', () => {
-                openSummaryDetailModal('hum_max', 'Highest Humidity per Room', '%');
-            });
-
-            document.getElementById('summary-card-dew-max')?.addEventListener('click', () => {
-                openSummaryDetailModal('dew_max', 'Highest Dew Point per Room', '°C');
-            });
-            function calculateTempRiseForRoom(roomId) {
-                const history = window.roomDataStore[roomId]?.history;
-                if (!history || history.length < 2) {
-                    return null;
-                }
-
-                const latest = history[history.length - 1];
-                const previous = history[history.length - 2];
-
-                if (typeof latest.temp_overall === 'number' && typeof previous.temp_overall === 'number') {
-                    const tempDiff = latest.temp_overall - previous.temp_overall;
-                    return tempDiff;
-                }
-
-                return null;
-            }
-
             document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
                 const modal = document.getElementById('modal-summary-detail');
                 const titleEl = document.getElementById('summary-detail-title');
@@ -7759,6 +7806,18 @@
                 }
 
                 openModal('modal-summary-detail');
+            });
+            document.getElementById('summary-card-temp-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('temp_max', 'Highest Temperature per Room', '°C');
+            });
+            document.getElementById('summary-card-hum-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('hum_max', 'Highest Humidity per Room', '%');
+            });
+            document.getElementById('summary-card-dew-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('dew_max', 'Highest Dew Point per Room', '°C');
+            });
+            document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
+                openSummaryDetailModal('temp_rise', 'Temperature Rise per Room (5 min)', '°C');
             });
 
         });
