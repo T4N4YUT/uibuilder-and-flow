@@ -2002,6 +2002,7 @@
 
         #summary-card-temp-max,
         #summary-card-hum-max,
+        #summary-card-temp-rise,
         #summary-card-dew-max {
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
         }
@@ -2215,7 +2216,7 @@
                                 </div>
 
                                 <div id="summary-card-temp-rise"
-                                    class="rounded-lg border border-[var(--border)] p-3 bg-amber-500/10 flex flex-col justify-between items-center text-center cursor-pointer">
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-amber-500/10 flex flex-col justify-between items-center text-center cursor-pointer hover:border-[var(--accent)] transition-all">
                                     <div class="text-sm text-amber-300/80">Fastest Temp Rise</div>
                                     <div class="text-3xl font-extrabold leading-tight text-amber-400"
                                         id="kpi-pro-temp-rise">—</div>
@@ -6620,20 +6621,19 @@
                 uibuilder.onChange('msg', function (msg) {
                     if (msg.topic === 'system_summary_pro') {
                         const data = msg.payload;
+
+                        // --- Part 1: อัปเดตการ์ด System Summary (เหมือนเดิม) ---
                         const updateProKPI = (valueId, roomId, value, room, unit = '', options = {}) => {
                             const valueEl = document.getElementById(valueId);
                             const roomEl = document.getElementById(roomId);
                             if (!valueEl || !roomEl) return;
-
                             const prefix = options.prefix || '';
                             const decimals = options.decimals !== undefined ? options.decimals : 1;
-
                             if (value !== null && typeof value !== 'undefined' && isFinite(value)) {
                                 valueEl.textContent = `${prefix}${Number(value).toFixed(decimals)}${unit}`;
                             } else {
                                 valueEl.textContent = '—';
                             }
-
                             roomEl.textContent = room ? `@ ${room}` : '';
                             roomEl.title = room || '';
                         };
@@ -6644,6 +6644,32 @@
                         updateProKPI('kpi-pro-temp-rise', 'kpi-pro-temp-rise-room', data.temp_rise_max, data.temp_rise_max_room, '°C', {
                             prefix: (data.temp_rise_max > 0) ? '+' : ''
                         });
+
+                        // --- Part 2: VVVVVV ส่วนใหม่ที่เพิ่มเข้ามา VVVVVV ---
+                        // --- อัปเดตข้อมูลสำหรับ Modal "Temperature Rise per Room" ---
+                        const riseData = data.temp_rise_per_room || {};
+                        const riseContainer = document.getElementById('temp-rise-card-body'); // **สำคัญ: ต้องมี ID นี้ใน HTML ของ Modal**
+
+                        if (riseContainer) {
+                            const rises = [];
+                            for (const mac in riseData) {
+                                const roomName = (window.ROOM_NAMES && window.MAC_TO_ROOM_MAP) ? window.ROOM_NAMES[window.MAC_TO_ROOM_MAP[mac]] : mac;
+                                rises.push({ name: roomName, rise: riseData[mac] });
+                            }
+
+                            if (rises.length === 0) {
+                                riseContainer.innerHTML = `<div class="text-center text-[var(--muted)] p-4">No active rooms to display or not enough data.</div>`;
+                            } else {
+                                rises.sort((a, b) => b.rise - a.rise);
+                                riseContainer.innerHTML = rises.map(r =>
+                                    `<div class="flex justify-between items-center p-2 border-b border-[var(--border)]">
+                                       <span class="font-medium">${r.name}</span>
+                                       <span class="font-bold text-lg ${r.rise > 0 ? 'text-amber-400' : 'text-sky-400'}">${r.rise >= 0 ? '+' : ''}${r.rise.toFixed(2)}°C</span>
+                                     </div>`
+                                ).join('');
+                            }
+                        }
+                        // --- ^^^^^^ สิ้นสุดส่วนที่เพิ่มเข้ามา ^^^^^^ ---
 
                         return;
                     }
