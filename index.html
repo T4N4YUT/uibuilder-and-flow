@@ -2694,6 +2694,7 @@
                         <select name="type"
                             class="config-select mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
                             <option value="csv">CSV</option>
+                            <option value="xlsx">XLSX (Excel)</option>
                             <option value="pdf">PDF</option>
                         </select>
                     </label>
@@ -2710,13 +2711,20 @@
                     </label>
                 </div>
 
-                <!-- เหลือแค่ปุ่ม Confirm สีฟ้า -->
+                <div class="pt-1">
+                    <label class="block text-sm mb-2 text-[var(--muted)]">Select Sensors</label>
+                    <div id="export-sensor-list"
+                        class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 p-3 rounded-lg bg-[var(--panel-2)] border border-[var(--border)] max-h-36 overflow-y-auto">
+                        <span class="text-xs text-[var(--muted)] col-span-full text-center">Please select a single room
+                            to see sensors</span>
+                    </div>
+                </div>
                 <div class="flex items-center justify-end pt-1">
                     <button type="submit" class="px-6 py-3 rounded-lg font-semibold
-                           bg-blue-600 text-white
-                           hover:bg-blue-700
-                           focus:outline-none focus:ring-2 focus:ring-blue-400
-                           transition">
+                       bg-blue-600 text-white
+                       hover:bg-blue-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-400
+                       transition">
                         <i class="fa-solid fa-check mr-2"></i>Confirm
                     </button>
                 </div>
@@ -3157,6 +3165,117 @@
             await Promise.all([loadDeviceMapFromServer(), loadPinMapFromServer()]);
             if (typeof applyRoomNames === 'function') applyRoomNames?.();
             if (typeof applyPinNames === 'function') applyPinNames?.();
+            const exportModal = document.getElementById('modal-export');
+            const exportRoomSelect = exportModal.querySelector('select[name="room"]');
+            const exportSensorList = document.getElementById('export-sensor-list');
+            const exportForm = document.getElementById('form-export');
+
+            async function populateSensorCheckboxes(roomId) {
+                if (!exportSensorList) return;
+
+                if (!roomId || roomId === 'all') {
+                    exportSensorList.innerHTML = '<span class="text-xs text-[var(--muted)] col-span-full text-center">Sensor selection is available for a single room.</span>';
+                    return;
+                }
+
+                const mac = window.ROOM_TO_MAC_MAP?.[roomId];
+                if (!mac) {
+                    exportSensorList.innerHTML = '<span class="text-xs text-[var(--muted)] col-span-full text-center">This room is not configured.</span>';
+                    return;
+                }
+
+                const pinMap = window.MAC_PIN_NAMES?.[mac] || {};
+                const sensorPins = ['25', '26', '32', '33'];
+
+                exportSensorList.innerHTML = '';
+
+                const createCheckbox = (value, text, isChecked = true, isBold = false) => {
+                    const label = document.createElement('label');
+                    label.className = `inline-flex items-center gap-2 text-sm ${isBold ? 'font-semibold' : ''}`;
+                    label.innerHTML = `<input type="checkbox" name="sensors" value="${value}" class="form-checkbox" ${isChecked ? 'checked' : ''}> ${text}`;
+                    return label;
+                };
+
+                const allLabel = createCheckbox('all', 'Select All', true, true);
+                allLabel.querySelector('input').id = 'export-select-all-sensors';
+                exportSensorList.appendChild(allLabel);
+                exportSensorList.appendChild(createCheckbox('OVERALL', 'Overall Avg.', true));
+
+                sensorPins.forEach(pin => {
+                    const sensorName = pinMap[`name_pin_${pin}`] || `Pin ${pin}`;
+                    exportSensorList.appendChild(createCheckbox(pin, sensorName, true));
+                });
+
+                exportSensorList.querySelector('#export-select-all-sensors').addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    exportSensorList.querySelectorAll('input[name="sensors"]').forEach(chk => {
+                        chk.checked = isChecked;
+                    });
+                });
+            }
+
+            exportRoomSelect.addEventListener('change', () => {
+                populateSensorCheckboxes(exportRoomSelect.value);
+            });
+
+            document.getElementById('qa-export')?.addEventListener('click', () => {
+                const end = new Date();
+                const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+                exportForm.from.value = toLocalDatetimeInputValue(start);
+                exportForm.to.value = toLocalDatetimeInputValue(end);
+
+                populateSensorCheckboxes(exportRoomSelect.value);
+                openModal('modal-export');
+            });
+
+            exportForm?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fd = new FormData(exportForm);
+                const room = fd.get('room');
+                const type = fd.get('type').toLowerCase();
+                const from = fd.get('from') ? new Date(fd.get('from')).toISOString() : null;
+                const to = fd.get('to') ? new Date(fd.get('to')).toISOString() : null;
+
+                const selectedSensors = Array.from(exportForm.querySelectorAll('input[name="sensors"]:checked')).map(cb => cb.value).join(',');
+                const roomName = exportRoomSelect.options[exportRoomSelect.selectedIndex].text;
+
+                if (!from || !to) {
+                    showPopup('❌ Please select a start and end date.', { type: 'fail' });
+                    return;
+                }
+
+                if (room !== 'all' && !selectedSensors) {
+                    showPopup('❌ Please select at least one sensor.', { type: 'fail' });
+                    return;
+                }
+
+                const confirmed = await showConfirmationModal(
+                    `Confirm ${type.toUpperCase()} Export`,
+                    `Generate a <strong>${type.toUpperCase()}</strong> report for <strong>${roomName}</strong>?`,
+                    {
+                        confirmText: `Yes, Export ${type.toUpperCase()}`,
+                        confirmClass: 'btn-confirm',
+                        iconClass: 'fa-file-arrow-down',
+                        iconColorClass: 'text-sky-400'
+                    }
+                );
+
+                if (!confirmed) return;
+
+                const params = new URLSearchParams({
+                    room: room,
+                    type: type,
+                    from: from,
+                    to: to,
+                    sensors: selectedSensors
+                });
+
+                window.open(`/api/export?${params.toString()}`);
+
+                showPopup(`✅ Generating your ${type.toUpperCase()} report...`, { type: 'success' });
+                closeModal('modal-export');
+            });
+
             uibuilder.start();
             initAllRoomsOffline();
             fetchAlertSummaryAndRender();
