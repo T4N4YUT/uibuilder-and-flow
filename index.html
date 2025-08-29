@@ -1991,6 +1991,21 @@
             pointer-events: none;
             cursor: not-allowed;
         }
+
+        #summary-card-temp-max,
+        #summary-card-hum-max,
+        #summary-card-dew-max {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+
+        #summary-card-temp-max:hover,
+        #summary-card-hum-max:hover,
+        #summary-card-temp-rise:hover,
+        #summary-card-dew-max:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+        }
     </style>
 
 </head>
@@ -2167,32 +2182,32 @@
                             <h4 class="text-lg font-semibold mb-3">📈 System Summary</h4>
                             <div class="grid grid-cols-2 gap-3 h-full grid-rows-2">
 
-                                <div
-                                    class="rounded-lg border border-[var(--border)] p-3 bg-red-500/10 flex flex-col justify-between items-center text-center">
+                                <div id="summary-card-temp-max"
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-red-500/10 flex flex-col justify-between items-center text-center cursor-pointer">
                                     <div class="text-sm text-red-300/80">Highest Temp</div>
                                     <div class="text-3xl font-extrabold leading-tight text-red-400"
                                         id="kpi-pro-temp-max">—</div>
                                     <div class="text-xs text-red-400/70" id="kpi-pro-temp-max-room"></div>
                                 </div>
 
-                                <div
-                                    class="rounded-lg border border-[var(--border)] p-3 bg-blue-500/10 flex flex-col justify-between items-center text-center">
+                                <div id="summary-card-hum-max"
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-blue-500/10 flex flex-col justify-between items-center text-center cursor-pointer">
                                     <div class="text-sm text-blue-300/80">Highest Humidity</div>
                                     <div class="text-3xl font-extrabold leading-tight text-blue-400"
                                         id="kpi-pro-hum-max">—</div>
                                     <div class="text-xs text-blue-400/70" id="kpi-pro-hum-max-room"></div>
                                 </div>
 
-                                <div
-                                    class="rounded-lg border border-[var(--border)] p-3 bg-teal-500/10 flex flex-col justify-between items-center text-center">
+                                <div id="summary-card-dew-max"
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-teal-500/10 flex flex-col justify-between items-center text-center cursor-pointer">
                                     <div class="text-sm text-teal-300/80">Highest Dew Point</div>
                                     <div class="text-3xl font-extrabold leading-tight text-teal-400"
                                         id="kpi-pro-dew-max">—</div>
                                     <div class="text-xs text-teal-400/70" id="kpi-pro-dew-max-room"></div>
                                 </div>
 
-                                <div
-                                    class="rounded-lg border border-[var(--border)] p-3 bg-amber-500/10 flex flex-col justify-between items-center text-center">
+                                <div id="summary-card-temp-rise"
+                                    class="rounded-lg border border-[var(--border)] p-3 bg-amber-500/10 flex flex-col justify-between items-center text-center cursor-pointer">
                                     <div class="text-sm text-amber-300/80">Fastest Temp Rise</div>
                                     <div class="text-3xl font-extrabold leading-tight text-amber-400"
                                         id="kpi-pro-temp-rise">—</div>
@@ -2437,6 +2452,21 @@
                         </div>
                     </div>
 
+                </div>
+            </div>
+        </div>
+        <div id="modal-summary-detail" class="config-overlay hidden">
+            <div class="config-panel" style="width: 32rem; max-width: 90vw;">
+                <div class="config-header">
+                    <h5 id="summary-detail-title" class="font-semibold text-lg">Metric Details</h5>
+                    <button data-close="modal-summary-detail"
+                        class="w-11 h-11 flex items-center justify-center rounded-lg btn-close-custom">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div class="config-body p-4">
+                    <ul id="summary-detail-list" class="space-y-3">
+                    </ul>
                 </div>
             </div>
         </div>
@@ -3383,12 +3413,6 @@
                     ctx.restore();
                 }
             };
-            /**
- * แปลงวันที่เป็น String ในรูปแบบที่อ่านง่าย (วัน/เดือน/ปี เวลา)
- * @param {string | Date} t - เวลาที่ต้องการแปลง
- * @param {string} locale - (Optional) รูปแบบภาษา เช่น 'th-TH' หรือ 'en-GB'
- * @returns {string} - วันที่ที่จัดรูปแบบแล้ว หรือ '-' ถ้าไม่มีข้อมูล
- */
             function fmtDate(t, locale = 'th-TH') {
                 if (!t) return '-';
                 try {
@@ -3401,13 +3425,6 @@
                     return 'Invalid Date';
                 }
             }
-
-            /**
-             * สร้างเนื้อหา HTML สำหรับ Custom Tooltip ตาม Lifecycle ของ Alert
-             * @param {object} row - ข้อมูล Alert ทั้งแถวจาก API
-             * @param {string} currentTab - สถานะของแท็บที่กำลังดูอยู่ ('open', 'ack', 'closed', 'open,ack')
-             * @returns {string} - โค้ด HTML สำหรับใส่ใน Tooltip
-             */
             function buildLifecycleTooltipHTML(row, currentTab) {
                 const opened = fmtDate(row.opened_at);
                 const acked = fmtDate(row.ack_at);
@@ -3433,13 +3450,6 @@
                 }
                 return `<div class="custom-tooltip-body">${lines.join('')}</div>`;
             }
-
-            /**
-             * 
-             * @param {object} row
-             * @param {string} currentTab
-             * @returns {string | Date}
-             */
             function resolvePrimaryTime(row, currentTab) {
                 if (currentTab === 'closed') return row.closed_at || row.opened_at;
                 if (currentTab === 'ack') return row.ack_at || row.opened_at;
@@ -7604,6 +7614,153 @@
             document.getElementById('form-settings')?.addEventListener('submit', e => {
                 e.preventDefault();
             });
+            function openSummaryDetailModal(metric, title, unit) {
+                const modal = document.getElementById('modal-summary-detail');
+                const titleEl = document.getElementById('summary-detail-title');
+                const listEl = document.getElementById('summary-detail-list');
+
+                if (!modal || !titleEl || !listEl) {
+                    console.error("Summary detail modal elements not found!");
+                    return;
+                }
+
+                titleEl.textContent = title;
+                listEl.innerHTML = '<li class="text-center text-[var(--muted)]">Loading room data...</li>';
+
+                const roomIds = ['room-a', 'room-b', 'room-c', 'room-d'];
+                const allRoomData = [];
+
+                roomIds.forEach(roomId => {
+                    const roomDataStore = window.roomDataStore[roomId];
+                    const roomName = window.ROOM_NAMES[roomId] || roomId;
+                    const lastData = roomDataStore?.history?.[roomDataStore.history.length - 1];
+
+                    const statusDot = document.getElementById(`status-dot-${roomId}`);
+                    const isOnline = statusDot && statusDot.classList.contains('led--green');
+
+                    if (isOnline && lastData) {
+                        let value = null;
+                        if (metric === 'temp_max') {
+                            value = lastData.max_temp;
+                        } else if (metric === 'hum_max') {
+                            value = lastData.max_hum;
+                        } else if (metric === 'dew_max') {
+                            value = dewPointC_Magnus(lastData.temp_overall, lastData.rh_overall);
+                        }
+
+                        if (value !== null && isFinite(value)) {
+                            allRoomData.push({ name: roomName, value: value });
+                        }
+                    }
+                });
+
+                allRoomData.sort((a, b) => b.value - a.value);
+
+                if (allRoomData.length > 0) {
+                    listEl.innerHTML = allRoomData.map(data => {
+                        const iconClass = metric === 'temp_max' ? 'fa-temperature-high text-red-400'
+                            : metric === 'hum_max' ? 'fa-droplet text-blue-400'
+                                : 'fa-wind text-teal-400';
+
+                        return `
+                <li class="flex items-center justify-between p-3 bg-[var(--panel-2)] rounded-lg border border-[var(--border)]">
+                    <div class="flex items-center gap-3">
+                        <i class="fas ${iconClass} w-5 text-center"></i>
+                        <span class="font-medium">${data.name}</span>
+                    </div>
+                    <span class="font-bold text-lg">${data.value.toFixed(1)}${unit}</span>
+                </li>
+            `;
+                    }).join('');
+                } else {
+                    listEl.innerHTML = '<li class="text-center text-[var(--muted)]">No active rooms to display.</li>';
+                }
+
+                openModal('modal-summary-detail');
+            }
+
+            document.getElementById('summary-card-temp-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('temp_max', 'Highest Temperature per Room', '°C');
+            });
+
+            document.getElementById('summary-card-hum-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('hum_max', 'Highest Humidity per Room', '%');
+            });
+
+            document.getElementById('summary-card-dew-max')?.addEventListener('click', () => {
+                openSummaryDetailModal('dew_max', 'Highest Dew Point per Room', '°C');
+            });
+            function calculateTempRiseForRoom(roomId) {
+                const history = window.roomDataStore[roomId]?.history;
+                if (!history || history.length < 2) {
+                    return null;
+                }
+
+                const latest = history[history.length - 1];
+                const previous = history[history.length - 2];
+
+                if (typeof latest.temp_overall === 'number' && typeof previous.temp_overall === 'number') {
+                    const tempDiff = latest.temp_overall - previous.temp_overall;
+                    return tempDiff;
+                }
+
+                return null;
+            }
+
+            document.getElementById('summary-card-temp-rise')?.addEventListener('click', () => {
+                const modal = document.getElementById('modal-summary-detail');
+                const titleEl = document.getElementById('summary-detail-title');
+                const listEl = document.getElementById('summary-detail-list');
+
+                if (!modal || !titleEl || !listEl) return;
+
+                titleEl.textContent = 'Temperature Rise per Room';
+                listEl.innerHTML = '';
+
+                const roomIds = ['room-a', 'room-b', 'room-c', 'room-d'];
+                const allRoomData = [];
+
+                roomIds.forEach(roomId => {
+                    const roomName = window.ROOM_NAMES[roomId] || roomId;
+                    const statusDot = document.getElementById(`status-dot-${roomId}`);
+                    const isOnline = statusDot && statusDot.classList.contains('led--green');
+
+                    if (isOnline) {
+                        const riseValue = calculateTempRiseForRoom(roomId);
+                        if (riseValue !== null) {
+                            allRoomData.push({ name: roomName, value: riseValue });
+                        }
+                    }
+                });
+
+                allRoomData.sort((a, b) => b.value - a.value);
+
+                if (allRoomData.length > 0) {
+                    listEl.innerHTML = allRoomData.map(data => {
+                        const value = data.value;
+                        const isRise = value > 0;
+                        const isFall = value < 0;
+                        const colorClass = isRise ? 'text-amber-400' : isFall ? 'text-sky-400' : 'text-slate-400';
+                        const iconClass = isRise ? 'fa-arrow-trend-up' : isFall ? 'fa-arrow-trend-down' : 'fa-minus';
+                        const sign = isRise ? '+' : '';
+
+                        return `
+                <li class="flex items-center justify-between p-3 bg-[var(--panel-2)] rounded-lg border border-[var(--border)]">
+                    <div class="flex items-center gap-3">
+                        <i class="fas ${iconClass} w-5 text-center ${colorClass}"></i>
+                        <span class="font-medium">${data.name}</span>
+                    </div>
+                    <span class="font-bold text-lg ${colorClass}">${sign}${value.toFixed(1)}°C</span>
+                </li>
+            `;
+                    }).join('');
+                } else {
+                    listEl.innerHTML = '<li class="text-center text-[var(--muted)]">Not enough data to calculate temperature rise.</li>';
+                }
+
+                openModal('modal-summary-detail');
+            });
+
         });
 
     </script>
