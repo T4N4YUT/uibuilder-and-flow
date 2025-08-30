@@ -196,7 +196,7 @@
         ],
         "x": 1654,
         "y": 699,
-        "w": 612,
+        "w": 712,
         "h": 162
     },
     {
@@ -325,11 +325,13 @@
             "5d528147da6dc93e",
             "94de46be975ab45a",
             "a79e121a9cb2f576",
-            "67a399bfc19977a1"
+            "67a399bfc19977a1",
+            "bd2552419d704073",
+            "039e9d893c12bfae"
         ],
         "x": 2488,
         "y": 439,
-        "w": 1238,
+        "w": 1258,
         "h": 508
     },
     {
@@ -479,6 +481,33 @@
         "y": 1539,
         "w": 2192,
         "h": 82
+    },
+    {
+        "id": "EXPORT_GROUP",
+        "type": "group",
+        "z": "c0cdca176eedd227",
+        "name": "Export Report API (PDF/CSV)",
+        "style": {
+            "stroke": "#14532d",
+            "fill": "#bbf7d0",
+            "label": true,
+            "color": "#000000",
+            "border": true
+        },
+        "nodes": [
+            "EXPORT_HTTP_IN",
+            "EXPORT_PREPARE_QUERIES",
+            "EXPORT_QUERY_SENSORS",
+            "EXPORT_QUERY_ALERTS",
+            "EXPORT_QUERY_UPTIME",
+            "EXPORT_AGGREGATE_DATA",
+            "EXPORT_EXEC_PYTHON",
+            "EXPORT_HTTP_OUT"
+        ],
+        "x": 1654,
+        "y": 1659,
+        "w": 1402,
+        "h": 162
     },
     {
         "id": "1c9684d00c28d451",
@@ -1396,7 +1425,7 @@
         "name": "200/400 Response",
         "statusCode": "",
         "headers": {},
-        "x": 2150,
+        "x": 2250,
         "y": 820,
         "wires": []
     },
@@ -3298,11 +3327,198 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1250,
-        "y": 1080,
+        "x": 850,
+        "y": 1440,
         "wires": [
             []
         ]
+    },
+    {
+        "id": "EXPORT_HTTP_IN",
+        "type": "http in",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "GET /api/export",
+        "url": "/api/export",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 1760,
+        "y": 1740,
+        "wires": [
+            [
+                "EXPORT_PREPARE_QUERIES"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_PREPARE_QUERIES",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "1. Validate & Prepare Info",
+        "func": "const q = msg.req.query || {};\nconst { room, type, from, to, sensors } = q;\n\n// --- Validation ---\nif (!room || !type || !from || !to) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Missing required parameters: room, type, from, to' };\n    return [null, msg]; // Send to HTTP Response directly\n}\n\n// --- Get MACs and Room Names ---\nconst deviceMap = flow.get('device_map', 'file') || {};\nconst pinMap = global.get('mac_pin_names') || {};\nlet macs = [];\nlet roomNameMap = {};\n\nif (room === 'all') {\n    ['A', 'B', 'C', 'D'].forEach(char => {\n        const mac = deviceMap[`room${char}`];\n        if (mac && mac.includes(':')) {\n            macs.push(mac);\n            roomNameMap[mac] = deviceMap[`name${char}`] || `Room ${char}`;\n        }\n    });\n} else {\n    // Assuming room is like 'room-a'\n    const roomKeySuffix = room.slice(-1).toUpperCase();\n    const mac = deviceMap[`room${roomKeySuffix}`];\n    if (mac) {\n        macs.push(mac);\n        roomNameMap[mac] = deviceMap[`name${roomKeySuffix}`] || room.replace('-', ' ');\n    } else {\n        macs.push(room); // Fallback if a MAC is passed directly\n        roomNameMap[room] = 'Unknown Room';\n    }\n}\n\nif (macs.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: `No MAC address configured for room: ${room}` };\n    return [null, msg];\n}\n\n// --- Store info for later nodes ---\nmsg.reportInfo = {\n    type: type,\n    filename: `Report_${room.replace('-', '_')}_${new Date().toISOString().slice(0, 10)}.${type}`,\n    maps: {\n        roomNames: roomNameMap,\n        pinNames: pinMap\n    },\n    params: { from, to, macs, sensors, room: room }\n};\n\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2010,
+        "y": 1740,
+        "wires": [
+            [
+                "EXPORT_QUERY_SENSORS",
+                "EXPORT_QUERY_ALERTS",
+                "EXPORT_QUERY_UPTIME"
+            ],
+            [
+                "EXPORT_HTTP_OUT"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_QUERY_SENSORS",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "Query: Sensors",
+        "func": "const { macs, from, to, sensors, room } = msg.reportInfo.params;\nlet sql = `\nSELECT \n    t.timestamp, t.mac, t.pin AS sensor_pin, t.avg_temp AS temperature, t.avg_hum AS humidity,\n    (243.12 * (LN(GREATEST(1e-6, t.avg_hum/100)) + (17.62*t.avg_temp)/(243.12+t.avg_temp)) ) / (17.62 - (LN(GREATEST(1e-6, t.avg_hum/100)) + (17.62*t.avg_temp)/(243.12+t.avg_temp))) AS dew_point\nFROM dht_22 t\nWHERE t.mac IN (${macs.map(() => '?').join(',')}) AND t.timestamp BETWEEN ? AND ?`;\n\nconst params = [...macs, from, to];\n\nif (sensors && room !== 'all') {\n    const sensorList = sensors.split(',');\n    sql += ` AND t.pin IN (${sensorList.map(() => '?').join(',')})`;\n    params.push(...sensorList);\n}\nsql += ` ORDER BY t.timestamp ASC;`;\n\nreturn { topic: sql, payload: params, topic_key: 'sensors' };",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2270,
+        "y": 1740,
+        "wires": [
+            [
+                "EXPORT_AGGREGATE_DATA"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_QUERY_ALERTS",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "Query: Alerts",
+        "func": "const { macs, from, to } = msg.reportInfo.params;\nconst sql = `\nSELECT \n    opened_at AS alert_time, mac, room_name, sensor_name, metric, level, trigger_value, \n    status, ack_by AS acknowledged_by, ack_at AS acknowledged_time, closed_at AS closed_time \nFROM alert_events \nWHERE mac IN (${macs.map(() => '?').join(',')}) AND opened_at BETWEEN ? AND ? \nORDER BY opened_at DESC LIMIT 15;`;\n\nconst params = [...macs, from, to];\nreturn { topic: sql, payload: params, topic_key: 'alerts' };",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2250,
+        "y": 1780,
+        "wires": [
+            [
+                "EXPORT_AGGREGATE_DATA"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_QUERY_UPTIME",
+        "type": "function",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "Query: Uptime",
+        "func": "const { macs, from, to } = msg.reportInfo.params;\n\nconst sql = `\nSELECT mac, status, time \nFROM esp_status_log \nWHERE mac IN (${macs.map(() => '?').join(',')}) AND time >= ? AND time <= ? \nORDER BY time ASC;`;\n\nconst params = [...macs, from, to];\nreturn { topic: sql, payload: params, topic_key: 'uptime' };",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2260,
+        "y": 1700,
+        "wires": [
+            [
+                "EXPORT_AGGREGATE_DATA"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_AGGREGATE_DATA",
+        "type": "join",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "2. Aggregate Data",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic_key",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": true,
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 2510,
+        "y": 1740,
+        "wires": [
+            [
+                "EXPORT_EXEC_PYTHON",
+                "84afccaaf984341f"
+            ]
+        ]
+    },
+    {
+        "id": "EXPORT_EXEC_PYTHON",
+        "type": "exec",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "command": "/usr/bin/python3",
+        "addpay": "payload",
+        "append": "/path/to/your/scripts/generate_report.py",
+        "useSpawn": "true",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "3. Call Python for PDF",
+        "x": 2750,
+        "y": 1740,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "EXPORT_HTTP_OUT",
+        "type": "http response",
+        "z": "c0cdca176eedd227",
+        "g": "EXPORT_GROUP",
+        "name": "4. Send File",
+        "statusCode": "",
+        "headers": {},
+        "x": 2960,
+        "y": 1740,
+        "wires": []
+    },
+    {
+        "id": "84afccaaf984341f",
+        "type": "debug",
+        "z": "c0cdca176eedd227",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2700,
+        "y": 1900,
+        "wires": []
     },
     {
         "id": "0b3358f711e7ed0b",
@@ -3332,6 +3548,42 @@
             ],
             []
         ]
+    },
+    {
+        "id": "bd2552419d704073",
+        "type": "mqtt out",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "Send rules to device",
+        "topic": "",
+        "qos": "1",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8301192ec347dbc9",
+        "x": 3200,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "039e9d893c12bfae",
+        "type": "debug",
+        "z": "c0cdca176eedd227",
+        "g": "e0c8d7b3e0c8d7b3",
+        "name": "debug 7",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 3640,
+        "y": 540,
+        "wires": []
     },
     {
         "id": "8301192ec347dbc9",
