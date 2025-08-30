@@ -2733,6 +2733,7 @@
                         <select name="type"
                             class="config-select mt-1 w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2">
                             <option value="csv">CSV</option>
+                            <option value="pdf">PDF</option>
                         </select>
                     </label>
                 </div>
@@ -7363,11 +7364,11 @@
                 }
             });
             function handleAlertCardClick(levelFilter = '') {
+                openModal('modal-alert-center');
+                resetFilters();
                 document.getElementById('alert-filter-status').value = 'open,ack';
                 document.getElementById('alert-filter-level').value = levelFilter;
-                openModal('modal-alert-center');
                 loadAndCacheAlerts();
-                resetFilters();
             }
             document.getElementById('qa-alert-card')?.addEventListener('click', (e) => {
                 if (e.target.closest('#card-critical') || e.target.closest('#card-warning')) {
