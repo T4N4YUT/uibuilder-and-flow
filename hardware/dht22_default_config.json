@@ -1,0 +1,34 @@
+{
+    "CON_HUM_MIN": 40,
+    "HUM_MIN": 0,
+    "CON_HUM_WARN_LOW": 45,
+    "HUM_MAX": 100,
+    "DHT22_INTERVAL": 2,
+    "LED_PIN": 13,
+    "DHT22_PINS": [
+        25,
+        26,
+        32,
+        33
+    ],
+    "CON_TEMP_MAX": 30,
+    "CON_HUM_MAX": 80,
+    "CON_HUM_WARN_HIGH": 60,
+    "CON_TEMP_WARN_LOW": 20,
+    "CON_TEMP_MIN": 18,
+    "Calibrate_hum": 0,
+    "Calibrate_temp": 0,
+    "SAMPLE_COUNT": 2,
+    "PER_TEMP_ALARM": 0,
+    "PER_HUM_ALARM": 0,
+    "CON_TEMP_WARN_HIGH": 25,
+    "SENSOR_LOCATIONS": {
+        "32": "ตำแหน่งที่ 3",
+        "26": "ตำแหน่งที่ 2",
+        "25": "ตำแหน่งที่ 1",
+        "33": "ตำแหน่งที่ 4"
+    },
+    "READ_DELAY": 2,
+    "TEMP_MAX": 80,
+    "TEMP_MIN": -40
+}
