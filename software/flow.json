@@ -1,5 +1,126 @@
 [
     {
+        "id": "c392309919969efb",
+        "type": "subflow",
+        "name": "Send Notification",
+        "info": "Subflow to handle sending notifications via Email.",
+        "category": "",
+        "in": [
+            {
+                "x": 80,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "b6fb4e59788fbf4c"
+                    }
+                ]
+            }
+        ],
+        "out": [],
+        "env": [],
+        "meta": {},
+        "color": "#DDAA99",
+        "status": {
+            "x": 840,
+            "y": 80,
+            "wires": [
+                {
+                    "id": "ef6afcee92550482",
+                    "port": 0
+                }
+            ]
+        }
+    },
+    {
+        "id": "b6fb4e59788fbf4c",
+        "type": "function",
+        "z": "c392309919969efb",
+        "name": "Prepare Email",
+        "func": "// === Prepare Email (Ready-to-Use) ===\n// รองรับ 3 ทางเลือกของผู้รับ:\n// 1) msg.to  (แรงสุด ใช้ทับได้เหมาะกับทดสอบ)\n// 2) flow.notificationSettings.email.recipients = [\"a@x.com\", ...]\n// 3) flow.notificationSettings.recipients.email = [\"a@x.com\", ...]\n\n// รับ payload รูปแบบ alert จากเอ็นจินเตือนของคุณ\nconst alert = msg.payload || {};\nconst settings = flow.get('notificationSettings') || {};\n\n// ดึงผู้รับจากหลายฟอร์แมต\nlet recipients =\n    (typeof msg.to === 'string' && msg.to.trim() ? msg.to.split(',').map(s => s.trim()).filter(Boolean) : null) ||\n    (settings?.email && Array.isArray(settings.email.recipients) ? settings.email.recipients : null) ||\n    (settings?.recipients && Array.isArray(settings.recipients.email) ? settings.recipients.email : null) ||\n    [];\n\n// sanitize อีเมลแอดเดรสแบบง่าย\nfunction looksLikeEmail(s) {\n    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(s || ''));\n}\nrecipients = recipients.filter(looksLikeEmail);\n\n// ไม่มีผู้รับ: แสดงสถานะแล้วหยุดเงียบๆ\nif (!recipients.length) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: \"no recipients; skipped\" });\n    return null;\n}\n\n// สร้างหัวข้อ\nconst lvl = String(alert.level || \"\").toUpperCase();\nlet subjectPrefix = \"ℹ️ Alert:\";\nif (alert.type === 'triggered' || alert.type === 'open' || alert.type === 'upgrade') {\n    subjectPrefix = `🚨 [${lvl || 'ABNORMAL'}] Alert:`;\n} else if (alert.type === 'recovered' || alert.type === 'recovery' || lvl === 'RECOVERY') {\n    subjectPrefix = `✅ [RECOVERY] Alert Cleared:`;\n}\n\nconst metric = alert.metric || '';\nconst room = alert.room_name || alert.room || '';\nmsg.topic = `${subjectPrefix} ${metric} on ${room}`.trim();\n\n// body แบบข้อความล้วน\nlet body = `An event has occurred for your IoT system.\\n\\n`;\nbody += `Event Type : ${alert.type ?? ''}\\n`;\nbody += `Room       : ${room}\\n`;\nbody += `Sensor     : ${alert.sensor_name ?? ''}\\n`;\nbody += `Metric     : ${metric}\\n`;\nbody += `Level      : ${alert.level ?? ''}\\n`;\nif (typeof alert.value === 'number' && isFinite(alert.value)) {\n    body += `Value      : ${alert.value.toFixed(2)}\\n`;\n}\nconst ts = alert.ts ? new Date(alert.ts) : new Date();\nbody += `Timestamp  : ${ts.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}\\n\\n`;\nbody += `Please check the system dashboard.\\n`;\n\nmsg.payload = body;\nmsg.to = recipients.join(',');\n\n// เคลียร์ฟิลด์ที่อาจทำให้ email node สับสน (กรณีคุณส่งผ่าน subflow ต่อ)\ndelete msg.cc;\ndelete msg.bcc;\ndelete msg.html;\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `to: ${msg.to}` });\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 80,
+        "wires": [
+            [
+                "ef6afcee92550482",
+                "0279f0af589fe7cd"
+            ]
+        ]
+    },
+    {
+        "id": "ef6afcee92550482",
+        "type": "e-mail",
+        "z": "c392309919969efb",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "authtype": "BASIC",
+        "saslformat": false,
+        "token": "oauth2Response.access_token",
+        "secure": true,
+        "tls": false,
+        "name": "armtanayuts@gmail.com",
+        "dname": "Send Email via Gmail",
+        "x": 660,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "0279f0af589fe7cd",
+        "type": "debug",
+        "z": "c392309919969efb",
+        "name": "กล้องส่องข้อมูลอีเมล",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "to",
+        "statusType": "msg",
+        "x": 680,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "bc396425abe52831",
+        "type": "inject",
+        "z": "c392309919969efb",
+        "name": "ปุ่มทดสอบส่งอีเมล",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "to",
+                "v": "test@example.com",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Test Subject from Node-RED",
+        "payload": "This is a test email body.",
+        "payloadType": "str",
+        "x": 450,
+        "y": 40,
+        "wires": [
+            [
+                "ef6afcee92550482"
+            ]
+        ]
+    },
+    {
         "id": "640c6734fdac3595",
         "type": "tab",
         "label": "Server Monitoring",
@@ -196,7 +317,7 @@
         ],
         "x": 1654,
         "y": 699,
-        "w": 712,
+        "w": 732,
         "h": 162
     },
     {
@@ -217,7 +338,7 @@
             "200d49b6f215cbff"
         ],
         "x": 1654,
-        "y": 879,
+        "y": 1099,
         "w": 612,
         "h": 122
     },
@@ -239,59 +360,10 @@
             "b28ee7c1ebe01f7f",
             "91754b0ad2692269"
         ],
-        "x": 1654,
-        "y": 1019,
+        "x": 2294,
+        "y": 1099,
         "w": 932,
         "h": 122
-    },
-    {
-        "id": "161b6ba769e88cab",
-        "type": "group",
-        "z": "640c6734fdac3595",
-        "name": "",
-        "style": {
-            "stroke": "#ff0000",
-            "fill": "#ffbfbf",
-            "label": true
-        },
-        "nodes": [
-            "0b60f52a8ddecd1f",
-            "26340b51bd0426a6",
-            "c440efc3f0573c38",
-            "baddcc0aca2b5724",
-            "76e57a9d8205e980",
-            "9a0e3e6a15164329",
-            "07b915d8d0b8b8df"
-        ],
-        "x": 1654,
-        "y": 1159,
-        "w": 622,
-        "h": 162
-    },
-    {
-        "id": "40886a8abd33af75",
-        "type": "group",
-        "z": "640c6734fdac3595",
-        "name": "",
-        "style": {
-            "stroke": "#ff0000",
-            "fill": "#ffbfbf",
-            "label": true
-        },
-        "nodes": [
-            "628f52e9cc491f45",
-            "31a837170437ca87",
-            "e47bd9f246e106ff",
-            "848ff10c0b865fbd",
-            "2994980d6b5e39ff",
-            "de0b1520af4842b2",
-            "cf5a8443490d2943",
-            "676fc81777e29234"
-        ],
-        "x": 1654,
-        "y": 1339,
-        "w": 932,
-        "h": 162
     },
     {
         "id": "3405bc2648d0e0c4",
@@ -326,12 +398,11 @@
             "636d2940b0ca4e78",
             "cacb1e585749c38b",
             "6c05f5d1fd3fc7c0",
-            "d1b0a1c3da91e3c6",
-            "f8c27a77ce0c77f9"
+            "d1b0a1c3da91e3c6"
         ],
-        "x": 2488,
+        "x": 2548,
         "y": 439,
-        "w": 1258,
+        "w": 1238,
         "h": 508
     },
     {
@@ -356,7 +427,7 @@
         ],
         "x": 74,
         "y": 679,
-        "w": 872,
+        "w": 892,
         "h": 222
     },
     {
@@ -383,7 +454,7 @@
         ],
         "x": 94,
         "y": 1119,
-        "w": 772,
+        "w": 812,
         "h": 242
     },
     {
@@ -459,10 +530,9 @@
         "z": "640c6734fdac3595",
         "name": "Export Report API (/api/export) v13 - Final Fix",
         "style": {
-            "stroke": "#14532d",
-            "fill": "#bbf7d0",
-            "label": true,
-            "color": "#000000",
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": false,
             "border": true
         },
         "nodes": [
@@ -475,12 +545,70 @@
             "f3110649b75fa1f6",
             "3e79a8b6fddc2caf",
             "a7081151ab3a2ad4",
-            "7f021b2b6bf737d9"
+            "7f021b2b6bf737d9",
+            "6e94b291e5b12d2d"
+        ],
+        "x": 2614,
+        "y": 1239,
+        "w": 1192,
+        "h": 182
+    },
+    {
+        "id": "48904a14f4cbefb3",
+        "type": "group",
+        "z": "640c6734fdac3595",
+        "name": "",
+        "style": {
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": false
+        },
+        "nodes": [
+            "31093562cb7659a0",
+            "f253a7b1c4d4eb47",
+            "297a1b865a994b0b",
+            "3981f0f3d29a470c",
+            "ee048f67cf4fa1d6",
+            "b8274aa11208401e",
+            "5d0f5e25fa5197c3",
+            "6373aa23303841cf",
+            "15d9dbfd0c8ce0cb",
+            "2a5b63a94c933684",
+            "734ded21c1daba8b",
+            "33ca16f0ac839ca5"
         ],
         "x": 1654,
-        "y": 1539,
-        "w": 2192,
-        "h": 82
+        "y": 879,
+        "w": 872,
+        "h": 202
+    },
+    {
+        "id": "764e306119ec0e9d",
+        "type": "group",
+        "z": "640c6734fdac3595",
+        "name": "สำหรับ Daily Report",
+        "style": {
+            "stroke": "#ff0000",
+            "fill": "#ffbfbf",
+            "label": false
+        },
+        "nodes": [
+            "e6ece526bf9c5d21",
+            "eb744f586a753274",
+            "745071770a1a0681",
+            "3733a98c8c4bb892",
+            "2856459866b453a6",
+            "980e30697c2aab77",
+            "b86f5c06d6692e5c",
+            "c7f125caa48b240c",
+            "96f558ac37e73c8c",
+            "9ad2c3a4daf2d865",
+            "e43561653a2a4834"
+        ],
+        "x": 1654,
+        "y": 1239,
+        "w": 942,
+        "h": 202
     },
     {
         "id": "f11085f09044723f",
@@ -500,7 +628,7 @@
             "e1ce3e2fa4bb4a4e",
             "e23cd9a179d4070e"
         ],
-        "x": 2514,
+        "x": 2574,
         "y": 739,
         "w": 452,
         "h": 182
@@ -1075,7 +1203,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 1750,
-        "y": 960,
+        "y": 1180,
         "wires": [
             [
                 "f365bff0639c4d0f"
@@ -1096,7 +1224,7 @@
         "finalize": "",
         "libs": [],
         "x": 1920,
-        "y": 960,
+        "y": 1180,
         "wires": [
             [
                 "882559e213bde260"
@@ -1111,7 +1239,7 @@
         "mydb": "5e560f07cfec117a",
         "name": "dht22",
         "x": 2070,
-        "y": 960,
+        "y": 1180,
         "wires": [
             [
                 "04e1039fc59320a4"
@@ -1129,7 +1257,7 @@
             "content-type": "application/json; charset=utf-8"
         },
         "x": 2190,
-        "y": 960,
+        "y": 1180,
         "wires": []
     },
     {
@@ -1321,7 +1449,7 @@
         "z": "640c6734fdac3595",
         "g": "63f59a4d8f7d47e7",
         "name": "Load Pin Map",
-        "func": "const pinMap = global.get('mac_pin_names') || {};\nmsg.payload = pinMap;\nreturn msg;",
+        "func": "let pinMap = global.get('pin_map');\nif (!pinMap) {\n    const src = global.get('mac_pin_names') || {};\n    const out = {};\n    for (const mac of Object.keys(src)) {\n        const obj = src[mac] || {};\n        const dst = {};\n        for (const k of Object.keys(obj)) {\n            const m = /^name_pin_(\\d+)$/.exec(k);\n            if (m && obj[k]) dst[m[1]] = String(obj[k]);\n        }\n        const MAC = String(mac).trim().toUpperCase();   // <<< normalize\n        out[MAC] = dst;\n    }\n    pinMap = out;\n    global.set('pin_map', pinMap);\n    flow.set('pin_map', pinMap);\n}\nmsg.payload = pinMap;\nreturn msg;\n",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1374,7 +1502,7 @@
         "z": "640c6734fdac3595",
         "g": "63f59a4d8f7d47e7",
         "name": "Save Pin Map",
-        "func": "// ตอนนี้ msg.payload ที่เข้ามาจาก Frontend ที่แก้ไขแล้ว จะเป็น { mac: \"XX:XX:..\", name_pin_25: \"...\" }\nconst incomingData = msg.payload;\nconst mac = incomingData.mac;\n\n// 1. ตรวจสอบว่า Client ส่ง mac address มาด้วยหรือไม่\nif (!mac) {\n    msg.statusCode = 400;\n    msg.payload = { ok: false, error: \"MAC address is required in payload\" };\n    return msg;\n}\n\n// 2. อ่านข้อมูล pin map ทั้งหมดที่เคยบันทึกไว้ออกมา จากตัวแปรใหม่\nconst allPinMaps = global.get(\"mac_pin_names\") || {};\n\n// 3. สร้าง Object ใหม่สำหรับข้อมูลของอุปกรณ์นี้\nconst devicePinData = {\n    name_pin_25: incomingData.name_pin_25 || '',\n    name_pin_26: incomingData.name_pin_26 || '',\n    name_pin_32: incomingData.name_pin_32 || '',\n    name_pin_33: incomingData.name_pin_33 || ''\n};\n\n// 4. อัปเดตข้อมูลโดยใช้ MAC address เป็น Key\nallPinMaps[mac] = devicePinData;\n\n// 5. บันทึกข้อมูลทั้งหมดกลับเข้าไปใน global context ตัวใหม่\nglobal.set(\"mac_pin_names\", allPinMaps);\n\n// 6. ส่ง response กลับไปว่าทำสำเร็จ\nmsg.statusCode = 200;\nmsg.payload = { ok: true };\nreturn msg;",
+        "func": "const b = msg.payload || {};\nconst macRaw = String(b.mac || '').trim();\nif (!macRaw) { msg.statusCode = 400; msg.payload = { ok:false, error:'MAC required' }; return msg; }\nconst MAC = macRaw.toUpperCase();  // <<< normalize\n\nconst pinMap = global.get('pin_map') || {};\nconst legacy = global.get('mac_pin_names') || {};\n\nconst normalized = {};\nif (b.map && typeof b.map === 'object') {\n  for (const k of Object.keys(b.map)) {\n    if (/^\\d+$/.test(k) && b.map[k]) normalized[k] = String(b.map[k]).trim();\n  }\n} else {\n  if (b.name_pin_25) normalized['25'] = String(b.name_pin_25).trim();\n  if (b.name_pin_26) normalized['26'] = String(b.name_pin_26).trim();\n  if (b.name_pin_32) normalized['32'] = String(b.name_pin_32).trim();\n  if (b.name_pin_33) normalized['33'] = String(b.name_pin_33).trim();\n}\n\n// merge แทน overwrite\nconst prev = pinMap[MAC] || {};\npinMap[MAC] = { ...prev, ...normalized };\n\nlegacy[MAC] = {\n  name_pin_25: pinMap[MAC]['25'] || '',\n  name_pin_26: pinMap[MAC]['26'] || '',\n  name_pin_32: pinMap[MAC]['32'] || '',\n  name_pin_33: pinMap[MAC]['33'] || ''\n};\n\nglobal.set('pin_map', pinMap);\nflow.set('pin_map', pinMap);\nglobal.set('mac_pin_names', legacy);\n\nmsg.statusCode = 200;\nmsg.payload = { ok:true, pin_map: pinMap[MAC] };\nreturn msg;\n",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1398,7 +1526,7 @@
         "name": "200/400 Response",
         "statusCode": "",
         "headers": {},
-        "x": 2250,
+        "x": 2270,
         "y": 820,
         "wires": []
     },
@@ -1433,8 +1561,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1780,
-        "y": 1100,
+        "x": 2420,
+        "y": 1180,
         "wires": [
             [
                 "58589672a110f473"
@@ -1454,8 +1582,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1990,
-        "y": 1100,
+        "x": 2630,
+        "y": 1180,
         "wires": [
             [
                 "eccd6e3261b7615b"
@@ -1469,8 +1597,8 @@
         "g": "b4a00978e789863d",
         "mydb": "5e560f07cfec117a",
         "name": "Query Status Log",
-        "x": 2190,
-        "y": 1100,
+        "x": 2830,
+        "y": 1180,
         "wires": [
             [
                 "6022786dd2200fa7"
@@ -1490,8 +1618,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2370,
-        "y": 1100,
+        "x": 3010,
+        "y": 1180,
         "wires": [
             [
                 "b28ee7c1ebe01f7f"
@@ -1542,262 +1670,9 @@
             "33": "\"",
             "34": "}"
         },
-        "x": 2510,
-        "y": 1100,
+        "x": 3150,
+        "y": 1180,
         "wires": []
-    },
-    {
-        "id": "0b60f52a8ddecd1f",
-        "type": "http in",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "GET Recipients",
-        "url": "/api/recipients",
-        "method": "get",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 1760,
-        "y": 1240,
-        "wires": [
-            [
-                "26340b51bd0426a6"
-            ]
-        ]
-    },
-    {
-        "id": "26340b51bd0426a6",
-        "type": "function",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "Load Recipients",
-        "func": "// ดึงข้อมูล recipients จาก flow context\n// ถ้ายังไม่มีข้อมูล ให้สร้าง object ว่างๆ ขึ้นมาแทน\nconst recipients = flow.get('recipients') || {\n    emails: [],\n    telegram_chat_ids: []\n};\n\nmsg.payload = recipients;\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "x": 1970,
-        "y": 1240,
-        "wires": [
-            [
-                "c440efc3f0573c38"
-            ]
-        ]
-    },
-    {
-        "id": "c440efc3f0573c38",
-        "type": "http response",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "Response",
-        "statusCode": "",
-        "headers": {},
-        "x": 2190,
-        "y": 1240,
-        "wires": []
-    },
-    {
-        "id": "baddcc0aca2b5724",
-        "type": "http in",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "SAVE Recipients",
-        "url": "/api/recipients",
-        "method": "post",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 1760,
-        "y": 1280,
-        "wires": [
-            [
-                "76e57a9d8205e980"
-            ]
-        ]
-    },
-    {
-        "id": "76e57a9d8205e980",
-        "type": "function",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "Save Recipients",
-        "func": "// รับข้อมูลใหม่จากหน้าเว็บ (Node-RED จะแปลง JSON ให้เราอัตโนมัติ)\nconst newRecipients = msg.payload;\n\n// ตรวจสอบเบื้องต้นว่าเป็น object ที่ถูกต้องหรือไม่\nif (typeof newRecipients !== 'object' || newRecipients === null) {\n    msg.statusCode = 400; // Bad Request\n    msg.payload = { ok: false, error: \"Invalid data format. Expected an object.\" };\n    return msg;\n}\n\n// บันทึกข้อมูลลง flow context (สามารถคงอยู่ได้แม้จะ Deploy ใหม่)\nflow.set('recipients', newRecipients);\n\n// ส่งข้อความยืนยันกลับไป\nmsg.payload = { ok: true, message: \"Recipients saved successfully!\" };\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "x": 1970,
-        "y": 1280,
-        "wires": [
-            [
-                "9a0e3e6a15164329"
-            ]
-        ]
-    },
-    {
-        "id": "9a0e3e6a15164329",
-        "type": "http response",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "Response",
-        "statusCode": "",
-        "headers": {},
-        "x": 2190,
-        "y": 1280,
-        "wires": []
-    },
-    {
-        "id": "628f52e9cc491f45",
-        "type": "http in",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "POST /notification-settings",
-        "url": "/api/notification-settings",
-        "method": "post",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 1790,
-        "y": 1420,
-        "wires": [
-            [
-                "31a837170437ca87"
-            ]
-        ]
-    },
-    {
-        "id": "31a837170437ca87",
-        "type": "function",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "Validate & Set Defaults",
-        "func": "// msg.payload จะเป็น JSON ที่ UI ส่งมา\nlet payload = msg.payload;\n\n// --- 1. ตรวจสอบ Recipients ---\n// ถ้าไม่มี object recipients มา ให้สร้างอันว่างๆ ขึ้นมา\nif (!payload.recipients) {\n    payload.recipients = { email: [], telegram: [] };\n}\nif (!Array.isArray(payload.recipients.email)) {\n    payload.recipients.email = [];\n}\nif (!Array.isArray(payload.recipients.telegram)) {\n    payload.recipients.telegram = [];\n}\n\n// --- 2. ตรวจสอบ Schedule และบังคับใช้ค่า Default ถ้าจำเป็น ---\nconst defaults = {\n    times: [\"08:00\", \"17:00\"],\n    weekdays: [true, true, true, true, true, true, true]\n};\n\nlet schedule = payload.schedule;\nlet isScheduleInvalid = true; // ตั้งธงไว้ก่อนว่าข้อมูลน่าจะผิด\n\n// เช็คว่าข้อมูล schedule ที่ส่งมา hợp lệ (valid) หรือไม่\nif (schedule && Array.isArray(schedule.weekdays) && schedule.weekdays.length === 7 && Array.isArray(schedule.times) && schedule.times.length > 0) {\n    // ถ้าข้อมูลโครงสร้างถูก ต้องเช็คต่อว่ามีการเลือกวันไว้อย่างน้อย 1 วันหรือไม่\n    if (schedule.weekdays.some(dayIsSelected => dayIsSelected === true)) {\n        isScheduleInvalid = false; // ถ้ามีวันถูกเลือกอย่างน้อย 1 วัน ถือว่าข้อมูลถูกต้อง\n    }\n}\n\n// ถ้าธงยังเป็น true (ข้อมูลไม่ถูกต้อง/ว่างเปล่า) ให้แทนที่ด้วยค่า Default\nif (isScheduleInvalid) {\n    node.warn(\"Received empty or invalid schedule. Applying default settings.\");\n    payload.schedule = defaults;\n}\n\n// จัดเรียงเวลาเพื่อให้สร้าง Cron Expression ได้ถูกต้องเสมอ\npayload.schedule.times.sort();\n\nmsg.payload = payload;\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 2050,
-        "y": 1420,
-        "wires": [
-            [
-                "e47bd9f246e106ff"
-            ]
-        ]
-    },
-    {
-        "id": "e47bd9f246e106ff",
-        "type": "change",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "Save to Flow Context",
-        "rules": [
-            {
-                "t": "set",
-                "p": "notificationSettings",
-                "pt": "flow",
-                "to": "payload",
-                "tot": "msg"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 2300,
-        "y": 1420,
-        "wires": [
-            [
-                "848ff10c0b865fbd",
-                "de0b1520af4842b2"
-            ]
-        ]
-    },
-    {
-        "id": "848ff10c0b865fbd",
-        "type": "http response",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "200 OK",
-        "statusCode": "200",
-        "headers": {},
-        "x": 2500,
-        "y": 1420,
-        "wires": []
-    },
-    {
-        "id": "2994980d6b5e39ff",
-        "type": "inject",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "On Deploy",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str",
-                "v": "load_schedule"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 1770,
-        "y": 1460,
-        "wires": [
-            [
-                "de0b1520af4842b2"
-            ]
-        ]
-    },
-    {
-        "id": "de0b1520af4842b2",
-        "type": "function",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "Update Cron Schedule",
-        "func": "// ดึงค่า settings ที่บันทึกไว้ล่าสุด\nconst settings = flow.get(\"notificationSettings\");\n\nif (!settings || !settings.schedule) {\n    node.error(\"Notification settings not found. Cannot update cron jobs.\");\n    return null; // หยุดการทำงานถ้าไม่มีค่า\n}\n\n// แปลง array [true, false, true,...] เป็น string \"0,2,...\" (0=Sun, 1=Mon, ...)\nconst weekdays = settings.schedule.weekdays;\nconst daysOfWeekStr = weekdays\n    .map((isSelected, index) => isSelected ? index : -1)\n    .filter(dayIndex => dayIndex !== -1)\n    .join(',');\n\n// ถ้าไม่มีวันไหนถูกเลือกเลย ให้หยุด cron ทั้งหมด\nif (!daysOfWeekStr) {\n    node.warn(\"No days selected in schedule. Removing all cron jobs.\");\n    const removeMsg = { \"payload\": { \"command\": \"remove-all\" } };\n    return [removeMsg, null]; // ส่ง msg ไปที่ output 1 เพื่อลบ, output 2 ไม่ต้องส่งอะไร\n}\n\n// สร้าง Job Array สำหรับ cron-plus จากเวลาที่ตั้งค่าไว้\nconst cronJobs = settings.schedule.times.map(time => {\n    const [hour, minute] = time.split(':');\n    // สร้าง Cron Expression เช่น \"30 08 * * 1,2,3,4,5\" (ทุก จ-ศ เวลา 08:30)\n    const cronExpression = `${minute} ${hour} * * ${daysOfWeekStr}`;\n    \n    return {\n        \"name\": `digest-${hour}-${minute}`, // ชื่อ job\n        \"expression\": cronExpression,\n        \"type\": \"cron\",\n        \"payload\": { \"type\": \"digest\", \"time\": time } // ส่ง payload ไปกับ trigger ด้วย\n    };\n});\n\n// สร้าง command สำหรับลบของเก่าและเพิ่มของใหม่\nconst removeAllCmd = { \"payload\": { \"command\": \"remove-all\" } };\nconst addJobsCmd = { \"payload\": { \"command\": \"add\", \"jobs\": cronJobs }};\n\n// ส่ง msg ออก 2 port: 1.ลบของเก่า, 2.เพิ่มของใหม่\n// เพื่อให้แน่ใจว่า schedule จะเป็นของใหม่ล่าสุดเสมอ\nreturn [ removeAllCmd, addJobsCmd ];",
-        "outputs": 2,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 2000,
-        "y": 1460,
-        "wires": [
-            [
-                "cf5a8443490d2943"
-            ],
-            [
-                "cf5a8443490d2943"
-            ]
-        ]
-    },
-    {
-        "id": "cf5a8443490d2943",
-        "type": "cronplus",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "Daily Digest Scheduler",
-        "outputField": "payload",
-        "timeZone": "",
-        "storeName": "",
-        "commandResponseMsgOutput": "output1",
-        "defaultLocation": "",
-        "defaultLocationType": "default",
-        "outputs": 1,
-        "options": [],
-        "x": 2240,
-        "y": 1460,
-        "wires": [
-            []
-        ]
     },
     {
         "id": "8ad81ad080bd81df",
@@ -1828,24 +1703,26 @@
         "z": "640c6734fdac3595",
         "g": "c7e3510948f6624e",
         "name": "Check condition",
-        "func": "// Function: eval_alert_v6.1 (Preserve Final Level on Close)\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\n\nfunction getLocalSqlTimestamp() {\n    const d = new Date();\n    const tzOffset = d.getTimezoneOffset() * 60000;\n    const localTime = new Date(d.getTime() - tzOffset);\n    return localTime.toISOString().slice(0, 19).replace('T', ' ');\n}\nvar now_sql = getLocalSqlTimestamp();\n\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    node.error(\"Invalid payload\", msg);\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    for (const key in deviceMap) {\n        if (key.startsWith('room') && deviceMap[key] === mac) {\n            const roomLetter = key.slice(-1).toUpperCase();\n            return deviceMap[`name${roomLetter}`] || mac;\n        }\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    return null;\n}\n\nrule.warn_open_consec = rule.warn_open_consec ?? 2;\nrule.crit_open_consec = rule.crit_open_consec ?? 1;\nrule.clear_consec = rule.clear_consec ?? 2;\n\nvar state = states[dedup_key] || {\n    status: 'closed',\n    level: 'normal',\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    event_id: null,\n};\n\nvar rawLevel = determineRawLevel(value, rule);\n\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else {\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\nvar outputs = [null, null, null];\nvar room = getRoomName(mac);\n\n// A) RECOVERY: Close an existing open or acknowledged incident\nif ((state.status === 'open' || state.status === 'ack') && rawLevel === 'normal' && state.clear_count >= rule.clear_consec) {\n\n    const eventToClose = state.event_id;\n    const originalStatus = state.status;\n    const finalLevel = state.level; \n\n    // Update state in memory for the next event\n    state.status = 'closed';\n    state.level = 'normal';\n    state.event_id = null;\n\n    let updateSql;\n    let updatePayload;\n    let logNote;\n\n    if (originalStatus === 'ack') {\n        // Case 1: Alert was already acknowledged\n        // Just change status to 'closed', set closed_at, and keep ack_by/ack_note\n        logNote = 'System Recovery (post-acknowledgement)';\n        updateSql = `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='closed', \\`closed_at\\`=?\n            WHERE \\`event_id\\`=? AND \\`status\\` = 'ack';\n        `; // <-- FIX: Added AND `status` = 'ack'\n        updatePayload = [now_sql, eventToClose];\n\n    } else { // originalStatus must be 'open'\n        // Case 2: Alert was open but not yet acknowledged\n        // Close the alert and mark it as closed by the system\n        logNote = 'System Recovery';\n        updateSql = `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='closed', \\`closed_at\\`=?, \\`ack_by\\`='system', \\`ack_note\\`=?\n            WHERE \\`event_id\\`=? AND \\`status\\` = 'open';\n        `;\n        updatePayload = [now_sql, logNote, eventToClose];\n    }\n\n    // Create the INSERT statement for the log table (common for both cases)\n    const logSql = `\n        INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`note\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n        VALUES (?, 'close', ?, ?, 'system', ?, ?, ?, ?, ?);\n    `;\n    const logPayload = [eventToClose, finalLevel, value, now_sql, logNote, mac, sensor, metric];\n\n    outputs[0] = {\n        topic: updateSql + logSql,\n        payload: [...updatePayload, ...logPayload]\n    };\n\n    outputs[2] = { payload: { type: 'recovery', event_id: eventToClose, dedup_key: dedup_key, mac, sensor, metric, ts: now_iso } };\n}\n\n// B) OPEN NEW INCIDENT: Always a new row\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= rule.warn_open_consec) newLevel = 'warning';\n\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = uuidv4();\n\n        outputs[0] = {\n            topic: `\n                INSERT INTO \\`alert_events\\` \n                    (\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`, \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`) \n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?);\n                \n                INSERT INTO \\`alert_event_log\\` \n                    (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'open', ?, ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                state.event_id, dedup_key, mac, room, sensor, metric, newLevel, value, rule.id, now_sql,\n                state.event_id, newLevel, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    }\n}\n\n// C) UPDATE EXISTING OPEN INCIDENT (Upgrade or Heartbeat)\nelse if (state.status === 'open' && rawLevel !== 'normal') {\n    const eventToUpdate = state.event_id;\n    if (state.level === 'warning' && rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) {\n        state.level = 'critical';\n\n        outputs[0] = {\n            topic: `\n                UPDATE \\`alert_events\\` \n                SET \\`level\\`='critical', \\`trigger_value\\`=?, \\`room_name\\`=? \n                WHERE \\`event_id\\`=?;\n                \n                INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'upgrade', 'critical', ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                value, room, eventToUpdate,\n                eventToUpdate, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: eventToUpdate, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    } else {\n        // Just a heartbeat update\n        outputs[0] = {\n            topic: `UPDATE \\`alert_events\\` SET \\`last_updated\\`=? WHERE \\`event_id\\`=?;`,\n            payload: [now_sql, eventToUpdate]\n        };\n    }\n}\n\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
+        "func": "// Function: eval_alert_v6.1 (Preserve Final Level on Close) with Enhanced Logging + Rule ID\n\n// --- CONTEXTS ---\nvar states = flow.get('alert_states') || {};\nvar rules = global.get('effectiveRuleMap') || {};\nvar deviceMap = flow.get('device_map', 'file') || {};\nvar now = new Date();\nvar now_iso = now.toISOString();\n\nfunction getLocalSqlTimestamp() {\n    const d = new Date();\n    const tzOffset = d.getTimezoneOffset() * 60000;\n    const localTime = new Date(d.getTime() - tzOffset);\n    return localTime.toISOString().slice(0, 19).replace('T', ' ');\n}\nvar now_sql = getLocalSqlTimestamp();\n\n// --- INPUT PAYLOAD ---\nvar p = msg.payload;\nif (!p || !p.mac || !p.sensor_name || !p.metric || p.value === undefined) {\n    node.error(\"Invalid payload\", msg);\n    return null;\n}\n\nvar mac = p.mac;\nvar sensor = p.sensor_name;\nvar metric = p.metric;\nvar value = Number(p.value);\nvar dedup_key = `${mac}|${sensor}|${metric}`;\n\n// --- HELPERS ---\nfunction getEffectiveRule(mac, sensor, metric) {\n    var sensorKey = `${mac}|${sensor}|${metric}`;\n    if (rules[sensorKey]) return rules[sensorKey];\n    var overallKey = `${mac}|overall|${metric}`;\n    if (rules[overallKey]) return rules[overallKey];\n    return rules[`system_${metric}`] || {};\n}\nfunction numOrNull(x) {\n    return (x === undefined || x === null || x === '') ? null : Number(x);\n}\nfunction determineRawLevel(value, rule) {\n    var crit_max = numOrNull(rule.crit_max);\n    var crit_min = numOrNull(rule.crit_min);\n    var warn_max = numOrNull(rule.warn_max);\n    var warn_min = numOrNull(rule.warn_min);\n    if (crit_max !== null && value > crit_max) return 'critical';\n    if (crit_min !== null && value < crit_min) return 'critical';\n    if (warn_max !== null && value > warn_max) return 'warning';\n    if (warn_min !== null && value < warn_min) return 'warning';\n    return 'normal';\n}\nfunction uuidv4() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\n        return v.toString(16);\n    });\n}\nfunction getRoomName(mac) {\n    for (const key in deviceMap) {\n        if (key.startsWith('room') && deviceMap[key] === mac) {\n            const roomLetter = key.slice(-1).toUpperCase();\n            return deviceMap[`name${roomLetter}`] || mac;\n        }\n    }\n    return mac;\n}\n\nvar rule = getEffectiveRule(mac, sensor, metric);\nif (!rule.id) {\n    return null;\n}\n\n\nrule.warn_open_consec = rule.warn_open_consec ?? 2;\nrule.crit_open_consec = rule.crit_open_consec ?? 1;\nrule.clear_consec = rule.clear_consec ?? 2;\n\nvar state = states[dedup_key] || {\n    status: 'closed',\n    level: 'normal',\n    warn_count: 0,\n    crit_count: 0,\n    clear_count: 0,\n    event_id: null,\n};\n\n\nvar rawLevel = determineRawLevel(value, rule);\n\nif (rawLevel === 'normal') {\n    state.clear_count++;\n    state.warn_count = 0;\n    state.crit_count = 0;\n} else if (rawLevel === 'warning') {\n    state.warn_count++;\n    state.crit_count = 0;\n    state.clear_count = 0;\n} else {\n    state.crit_count++;\n    state.warn_count = 0;\n    state.clear_count = 0;\n}\n\nvar outputs = [null, null, null];\nvar room = getRoomName(mac);\n\n// A) RECOVERY: Close an existing open or acknowledged incident\nif ((state.status === 'open' || state.status === 'ack') && rawLevel === 'normal' && state.clear_count >= rule.clear_consec) {\n    const eventToClose = state.event_id;\n    const originalStatus = state.status;\n    const finalLevel = state.level;\n\n    // ✅ FIX 1: อัปเดตสถานะในหน่วยความจำ (Flow Context) เป็น 'recovery'\n    // เราจะยังไม่ลบ event_id จนกว่า user จะเห็น\n    state.status = 'recovery';\n    state.level = 'normal';\n\n    let updateSql;\n    let updatePayload;\n    let logNote = 'System Recovery';\n\n    // ✅ FIX 2: แก้ไข SQL ให้อัปเดต status ใน DB เป็น 'recovery' เสมอ\n    if (originalStatus === 'ack') {\n        logNote = 'System Recovery (post-ack)';\n        updateSql = `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='recovery', \\`closed_at\\`=?\n            WHERE \\`event_id\\`=? AND \\`status\\` = 'ack';\n        `;\n        updatePayload = [now_sql, eventToClose];\n    } else { // originalStatus must be 'open'\n        updateSql = `\n            UPDATE \\`alert_events\\` \n            SET \\`status\\`='recovery', \\`closed_at\\`=?, \\`ack_by\\`='system', \\`ack_note\\`=?\n            WHERE \\`event_id\\`=? AND \\`status\\` = 'open';\n        `;\n        updatePayload = [now_sql, logNote, eventToClose];\n    }\n\n    const logSql = `\n        INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`note\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n        VALUES (?, 'close', ?, ?, 'system', ?, ?, ?, ?, ?);\n    `;\n    const logPayload = [eventToClose, finalLevel, value, now_sql, logNote, mac, sensor, metric];\n\n    outputs[0] = {\n        topic: updateSql + logSql,\n        payload: [...updatePayload, ...logPayload]\n    };\n    \n    // ส่งข้อความไปหน้าเว็บเพื่อแสดง Toast และจัดการสถานะ unseen\n    outputs[2] = { payload: { type: 'recovery', event_id: eventToClose, dedup_key: dedup_key, mac, sensor, metric, ts: now_iso, status: 'recovery' } };\n}\n\n// B) OPEN NEW INCIDENT: Always a new row\nelse if (state.status === 'closed' && rawLevel !== 'normal') {\n    var newLevel = null;\n    if (rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) newLevel = 'critical';\n    else if (rawLevel === 'warning' && state.warn_count >= rule.warn_open_consec) newLevel = 'warning';\n\n    if (newLevel) {\n        state.status = 'open';\n        state.level = newLevel;\n        state.event_id = uuidv4();\n\n        outputs[0] = {\n            topic: `\n                INSERT INTO \\`alert_events\\` \n                    (\\`event_id\\`, \\`dedup_key\\`, \\`mac\\`, \\`room_name\\`, \\`sensor_name\\`, \\`metric\\`, \\`level\\`, \\`trigger_value\\`, \\`status\\`, \\`rule_id\\`, \\`opened_at\\`) \n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?);\n                \n                INSERT INTO \\`alert_event_log\\` \n                    (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'open', ?, ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                state.event_id, dedup_key, mac, room, sensor, metric, newLevel, value, rule.id, now_sql,\n                state.event_id, newLevel, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'open', level: newLevel, event_id: state.event_id, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    }\n}\n\n// C) UPDATE EXISTING OPEN INCIDENT (Upgrade or Heartbeat)\nelse if (state.status === 'open' && rawLevel !== 'normal') {\n    const eventToUpdate = state.event_id;\n    if (state.level === 'warning' && rawLevel === 'critical' && state.crit_count >= rule.crit_open_consec) {\n        state.level = 'critical';\n        outputs[0] = {\n            topic: `\n                UPDATE \\`alert_events\\` \n                SET \\`level\\`='critical', \\`trigger_value\\`=?, \\`room_name\\`=? \n                WHERE \\`event_id\\`=?;\n                \n                INSERT INTO \\`alert_event_log\\` (\\`event_id\\`, \\`action\\`, \\`level\\`, \\`value\\`, \\`actor\\`, \\`ts\\`, \\`mac\\`, \\`sensor_name\\`, \\`metric\\`) \n                VALUES (?, 'upgrade', 'critical', ?, 'system', ?, ?, ?, ?);\n            `,\n            payload: [\n                value, room, eventToUpdate,\n                eventToUpdate, value, now_sql, mac, sensor, metric\n            ]\n        };\n        outputs[1] = { payload: { type: 'upgrade', level: 'critical', event_id: eventToUpdate, dedup_key: dedup_key, mac, sensor, metric, value, ts: now_iso } };\n    } else {\n        // ✨ [LOG] แจ้งเตือนว่าเป็นแค่ Heartbeat (ไม่มีอะไรเปลี่ยนแปลง)\n        node.warn({\n            message: \"❤️ Condition remains ABNORMAL. Sending heartbeat.\",\n            dedup_key: dedup_key,\n            event_id: state.event_id,\n            current_level: state.level\n        });\n\n        // Just a heartbeat update\n        outputs[0] = {\n            topic: `UPDATE \\`alert_events\\` SET \\`last_updated\\`=? WHERE \\`event_id\\`=?;`,\n            payload: [now_sql, eventToUpdate]\n        };\n    }\n}\n\nstates[dedup_key] = state;\nflow.set('alert_states', states);\n\nif (outputs.some(o => o !== null)) {\n    return outputs;\n}\nreturn null;",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 580,
+        "x": 640,
         "y": 800,
         "wires": [
             [
                 "40dc39f6a661c710"
             ],
             [
-                "edb9aefa4d5efde1"
+                "edb9aefa4d5efde1",
+                "9765ef1ce4746213"
             ],
             [
-                "edb9aefa4d5efde1"
+                "edb9aefa4d5efde1",
+                "9765ef1ce4746213"
             ]
         ]
     },
@@ -1869,12 +1746,12 @@
         "g": "f11085f09044723f",
         "name": "Load Rules every 1 mins",
         "props": [],
-        "repeat": "1",
+        "repeat": "2",
         "crontab": "",
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
-        "x": 2670,
+        "x": 2730,
         "y": 820,
         "wires": [
             [
@@ -1889,7 +1766,7 @@
         "g": "f11085f09044723f",
         "mydb": "5e560f07cfec117a",
         "name": "alert_rules",
-        "x": 2630,
+        "x": 2690,
         "y": 880,
         "wires": [
             [
@@ -1910,7 +1787,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2810,
+        "x": 2870,
         "y": 880,
         "wires": []
     },
@@ -1938,7 +1815,7 @@
         "z": "640c6734fdac3595",
         "g": "be536ff9b21472e1",
         "name": "Query alert evet lists",
-        "func": "// Function: Query alert event lists (V3 - Server-side Date Filtering)\n\n// 1. อ่าน query parameters จากหน้าเว็บ\nconst q = (msg.req && msg.req.query) ? msg.req.query : {};\nconst statusFilter = (q.status || 'open,ack').toLowerCase();\nconst startDate = q.start; // Will be ISO string\nconst endDate = q.end;   // Will be ISO string\n\n// Helper to convert ISO string to MySQL DATETIME format\nfunction toSqlDatetime(isoString) {\n    if (!isoString) return null;\n    try {\n        const d = new Date(isoString);\n        // Adjust for timezone to get local time for DB\n        const tzOffset = d.getTimezoneOffset() * 60000;\n        const localTime = new Date(d.getTime() - tzOffset);\n        return localTime.toISOString().slice(0, 19).replace('T', ' ');\n    } catch (e) {\n        return null;\n    }\n}\n\n// 2. สร้าง SQL SELECT ที่ดึงข้อมูลเวลาทั้งหมดที่จำเป็น และสร้าง display_time ขึ้นมาใหม่\nlet sql = `\nSELECT \n    event_id, mac, room_name, sensor_name, metric, level, status,\n    opened_at, ack_at, closed_at, ack_by, ack_note, trigger_value,\n    \n    -- สร้างคอลัมน์เวลาหลักที่จะแสดงผล โดยเลือกตามสถานะของ event นั้นๆ\n    CASE\n        WHEN status = 'closed' THEN closed_at\n        WHEN status = 'ack' THEN ack_at\n        ELSE opened_at\n    END AS display_time\n    \nFROM alert_events\n`;\n\nconst conditions = [];\nconst params = [];\n\n// 3. สร้างเงื่อนไข WHERE จาก status ที่ส่งมา\nif (statusFilter) {\n    const statuses = statusFilter.split(',').map(s => s.trim()).filter(Boolean);\n    if (statuses.length > 0) {\n        conditions.push(`status IN (${statuses.map(() => '?').join(',')})`);\n        params.push(...statuses);\n    }\n}\n\n// 4. เพิ่มเงื่อนไขการกรองด้วย MAC Address\nif (q.mac) {\n    conditions.push('mac = ?');\n    params.push(q.mac);\n}\n\n// ✨ NEW: เพิ่มเงื่อนไขการกรองด้วยช่วงเวลา\nconst startSql = toSqlDatetime(startDate);\nconst endSql = toSqlDatetime(endDate);\n\nif (startSql && endSql) {\n    // เราจะกรองจากคอลัมน์ opened_at ซึ่งเป็นเวลาเริ่มต้นของทุก event\n    conditions.push('opened_at BETWEEN ? AND ?');\n    params.push(startSql, endSql);\n}\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\n// 5. จัดเรียงตาม display_time\nsql += ' ORDER BY display_time DESC';\n\n// 6. จัดการ Pagination (ยังคงไว้เหมือนเดิม)\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\n// 7. ส่ง SQL และ Parameters\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
+        "func": "// Function: Query alert event lists (V5 - Correct Closed/Recovery Logic)\n\nconst q = (msg.req && msg.req.query) ? msg.req.query : {};\nconst statusFilter = (q.status || 'open,ack').toLowerCase();\nconst startDate = q.start;\nconst endDate = q.end;\n\nfunction toSqlDatetime(isoString) {\n    if (!isoString) return null;\n    try {\n        const d = new Date(isoString);\n        // Adjust for timezone to get local time for DB\n        const tzOffset = d.getTimezoneOffset() * 60000;\n        const localTime = new Date(d.getTime() - tzOffset);\n        return localTime.toISOString().slice(0, 19).replace('T', ' ');\n    } catch (e) {\n        return null;\n    }\n}\n\nlet sql = `\nSELECT \n    event_id, mac, room_name, sensor_name, metric, level, status,\n    opened_at, ack_at, closed_at, ack_by, ack_note, trigger_value,\n    CASE\n        WHEN status = 'closed' OR status = 'recovery' THEN closed_at\n        WHEN status = 'ack' THEN ack_at\n        ELSE opened_at\n    END AS display_time\nFROM alert_events\n`;\n\nconst conditions = [];\nconst params = [];\n\nconst statuses = statusFilter.split(',').map(s => s.trim()).filter(Boolean);\nif (statuses.length > 0) {\n    // ✨ FIX 1: ถ้าผู้ใช้ขอ \"closed\" ให้เราดึงทั้ง \"closed\" และ \"recovery\"\n    if (statuses.includes('closed')) {\n        if (!statuses.includes('recovery')) {\n            statuses.push('recovery');\n        }\n    }\n    conditions.push(`status IN (${statuses.map(() => '?').join(',')})`);\n    params.push(...statuses);\n}\n\nif (q.mac) {\n    conditions.push('mac = ?');\n    params.push(q.mac);\n}\n\n// ✨ FIX 2: ใช้ Date Filtering กับ `closed_at` เมื่อเป็นแท็บ 'closed' เท่านั้น\nif (statusFilter.includes('closed')) {\n    const startSql = toSqlDatetime(startDate);\n    const endSql = toSqlDatetime(endDate);\n    if (startSql && endSql) {\n        conditions.push('closed_at BETWEEN ? AND ?');\n        params.push(startSql, endSql);\n    }\n}\n\nif (conditions.length > 0) {\n    sql += ' WHERE ' + conditions.join(' AND ');\n}\n\nsql += ' ORDER BY display_time DESC';\n\nconst pageSize = parseInt(q.page_size, 10) || 50;\nconst page = parseInt(q.page, 10) || 1;\nconst offset = (page - 1) * pageSize;\nsql += ` LIMIT ${pageSize} OFFSET ${offset}`;\n\nmsg.topic = sql;\nmsg.payload = params;\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -1978,7 +1855,7 @@
         "headers": {
             "content-type": "application/json; charset=utf-8"
         },
-        "x": 520,
+        "x": 660,
         "y": 1260,
         "wires": []
     },
@@ -2031,7 +1908,7 @@
         "method": "put",
         "upload": false,
         "swaggerDoc": "",
-        "x": 2630,
+        "x": 2690,
         "y": 640,
         "wires": [
             [
@@ -2052,7 +1929,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2810,
+        "x": 2870,
         "y": 640,
         "wires": [
             [
@@ -2067,7 +1944,7 @@
         "g": "3405bc2648d0e0c4",
         "mydb": "5e560f07cfec117a",
         "name": "alert_rules",
-        "x": 2970,
+        "x": 3030,
         "y": 640,
         "wires": [
             [
@@ -2088,7 +1965,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3150,
+        "x": 3210,
         "y": 640,
         "wires": [
             [
@@ -2109,7 +1986,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2870,
+        "x": 2930,
         "y": 820,
         "wires": [
             [
@@ -2123,14 +2000,14 @@
         "z": "640c6734fdac3595",
         "g": "c7e3510948f6624e",
         "name": "Adapt Payload",
-        "func": "// Function: Adapt Payload for Alerts\n// แปลงข้อมูลจาก ESP32 ให้อยู่ในรูปแบบที่ eval_alert_v2 ต้องการ\n// จะสร้าง message แยกสำหรับแต่ละ metric (temp, hum)\n\nconst p = msg.payload;\n\n// ตรวจสอบข้อมูลพื้นฐาน\nif (!p || !p.mac || typeof p.pin === 'undefined') {\n    // ไม่ใช่ข้อมูล sensor ที่ถูกต้อง, ไม่ต้องทำอะไรต่อ\n    return null; \n}\n\nconst mac = p.mac;\n// ใช้ pin เป็น sensor_name ไปก่อน ถ้ามีชื่อที่ map ไว้ก็สามารถดึงมาใช้ได้\nconst sensor_name = String(p.pin); \n\nconst outputs = [];\n\n// --- 1. ตรวจสอบข้อมูล Temperature ---\nif (typeof p.avg_temp === 'number' && isFinite(p.avg_temp)) {\n    const tempMsg = {\n        topic: msg.topic, // ใช้ topic เดิม\n        payload: {\n            mac: mac,\n            sensor_name: sensor_name,\n            metric: 'temp', // ระบุว่าเป็น metric ของอุณหภูมิ\n            value: p.avg_temp,\n            ts: p.timestamp || new Date().toISOString()\n        }\n    };\n    outputs.push(tempMsg);\n}\n\n// --- 2. ตรวจสอบข้อมูล Humidity ---\nif (typeof p.avg_hum === 'number' && isFinite(p.avg_hum)) {\n    const humMsg = {\n        topic: msg.topic,\n        payload: {\n            mac: mac,\n            sensor_name: sensor_name,\n            metric: 'hum', // ระบุว่าเป็น metric ของความชื้น\n            value: p.avg_hum,\n            ts: p.timestamp || new Date().toISOString()\n        }\n    };\n    outputs.push(humMsg);\n}\n\n// ถ้ามีข้อมูลที่แปลงแล้วอย่างน้อย 1 ตัว ให้ส่งออกไป\nif (outputs.length > 0) {\n    return [outputs]; // ส่งออกเป็น array ของ message\n}\n\n// ถ้าไม่มีข้อมูล temp หรือ hum เลย ก็ไม่ต้องส่งอะไรออกไป\nreturn null;",
+        "func": "const pin_map = flow.get('pin_map') || global.get('pin_map') || {};\n\nfunction normMac(s) { return s ? String(s).trim().toUpperCase() : ''; }\n\nfunction resolveSensorName(macAddr, pinStr, fallbackName) {\n  const mac = normMac(macAddr);\n  const pin = (pinStr === 0 || pinStr) ? String(pinStr).trim() : '';\n  if (!mac) return String(fallbackName ?? pin ?? 'unknown');\n  if (!pin) return String(fallbackName ?? 'unknown');\n  const m = pin_map[mac] || {};\n  const direct = m?.[pin];\n  const alt = m?.['name_pin_' + pin];\n  const alias = m?.alias?.[pin];\n  return String(direct ?? alt ?? alias ?? fallbackName ?? pin ?? 'unknown');\n}\n\nfunction numOrNull(v) {\n  if (v === undefined || v === null || v === '') return null;\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n}\n\nconst p = msg.payload || {};\n\nlet mac = p.mac || p.MAC || (p.device && p.device.mac) || (p.header && p.header.mac);\nmac = normMac(mac);\n\nlet pin = p.pin;\nif (pin === undefined || pin === null) pin = p.sensor_pin;\nif (pin === undefined || pin === null) pin = p.pin_no;\n\nlet sensorNameIn = p.sensor_name ? String(p.sensor_name).trim() : null;\n\nconst temp = numOrNull(p.avg_temp) ?? numOrNull(p.temperature) ?? numOrNull(p.temp);\nconst hum = numOrNull(p.avg_hum) ?? numOrNull(p.humidity) ?? numOrNull(p.hum);\n\nif (!mac) {\n  node.warn({ where: 'adapt', drop: 'no-mac', raw: p });\n  return null;\n}\n\nconst sensor_name = resolveSensorName(mac, pin, sensorNameIn);\n\nlet sent = 0;\nif (temp !== null) {\n  node.send({ payload: { mac, sensor_name, metric: 'temp', value: temp, pin: (pin === 0 || pin) ? String(pin) : undefined } });\n  sent++;\n}\nif (hum !== null) {\n  node.send({ payload: { mac, sensor_name, metric: 'hum', value: hum, pin: (pin === 0 || pin) ? String(pin) : undefined } });\n  sent++;\n}\n\nif (!sent) {\n  node.warn({ where: 'adapt', drop: 'no-metrics', mac, pin: (pin === 0 || pin) ? String(pin) : undefined, sensor_name, raw: p });\n}\nreturn null;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 400,
+        "x": 420,
         "y": 800,
         "wires": [
             [
@@ -2148,7 +2025,7 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 2630,
+        "x": 2690,
         "y": 700,
         "wires": [
             [
@@ -2169,7 +2046,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2820,
+        "x": 2880,
         "y": 700,
         "wires": [
             [
@@ -2184,7 +2061,7 @@
         "g": "3405bc2648d0e0c4",
         "mydb": "5e560f07cfec117a",
         "name": "alert_rules",
-        "x": 2990,
+        "x": 3050,
         "y": 700,
         "wires": [
             [
@@ -2202,7 +2079,7 @@
         "headers": {
             "content-type": "application/json; charset=utf-8"
         },
-        "x": 3160,
+        "x": 3220,
         "y": 700,
         "wires": []
     },
@@ -2219,7 +2096,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 350,
+        "x": 450,
         "y": 1260,
         "wires": [
             [
@@ -2237,7 +2114,7 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 3090,
+        "x": 3150,
         "y": 780,
         "wires": [
             [
@@ -2258,7 +2135,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3310,
+        "x": 3370,
         "y": 780,
         "wires": [
             [
@@ -2282,7 +2159,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3490,
+        "x": 3550,
         "y": 740,
         "wires": [
             [
@@ -2298,7 +2175,7 @@
         "name": "400 Bad Request",
         "statusCode": "400",
         "headers": {},
-        "x": 3510,
+        "x": 3570,
         "y": 820,
         "wires": []
     },
@@ -2310,7 +2187,7 @@
         "name": "200 OK",
         "statusCode": "200",
         "headers": {},
-        "x": 3640,
+        "x": 3700,
         "y": 740,
         "wires": []
     },
@@ -2410,7 +2287,7 @@
         "name": "สำหรับ Query data ไปสร้างกราฟ Temp&Hum",
         "info": "",
         "x": 1840,
-        "y": 920,
+        "y": 1140,
         "wires": []
     },
     {
@@ -2420,30 +2297,8 @@
         "g": "b4a00978e789863d",
         "name": "สำหรับ Query data แสดง Uptime",
         "info": "",
-        "x": 1810,
-        "y": 1060,
-        "wires": []
-    },
-    {
-        "id": "07b915d8d0b8b8df",
-        "type": "comment",
-        "z": "640c6734fdac3595",
-        "g": "161b6ba769e88cab",
-        "name": "สำหรับ Notification",
-        "info": "",
-        "x": 1770,
-        "y": 1200,
-        "wires": []
-    },
-    {
-        "id": "676fc81777e29234",
-        "type": "comment",
-        "z": "640c6734fdac3595",
-        "g": "40886a8abd33af75",
-        "name": "สำหรับ Daily Report",
-        "info": "",
-        "x": 1770,
-        "y": 1380,
+        "x": 2450,
+        "y": 1140,
         "wires": []
     },
     {
@@ -2464,7 +2319,7 @@
         "topic": "",
         "payload": "{}",
         "payloadType": "json",
-        "x": 2650,
+        "x": 2710,
         "y": 520,
         "wires": [
             [
@@ -2485,7 +2340,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2960,
+        "x": 3020,
         "y": 520,
         "wires": [
             [
@@ -2508,7 +2363,7 @@
         "correl": "",
         "expiry": "",
         "broker": "8301192ec347dbc9",
-        "x": 3180,
+        "x": 3240,
         "y": 520,
         "wires": []
     },
@@ -2525,7 +2380,7 @@
         "nl": false,
         "rap": false,
         "inputs": 0,
-        "x": 2620,
+        "x": 2680,
         "y": 580,
         "wires": [
             [
@@ -2539,14 +2394,14 @@
         "z": "640c6734fdac3595",
         "g": "3405bc2648d0e0c4",
         "name": "Process Config to DB",
-        "func": "// Function to process config from device and prepare it for the database API\n\nconst config = msg.payload || {};\nconst mac = config.mac_address || null;\n\n// Ensure the payload has the required structure\nif (!mac || !config.alerts) {\n    node.warn('Invalid config payload received. Missing mac_address or alerts object. Skipping DB update.');\n    return null;\n}\n\n// --- ✨ 1. กำหนดค่า Default ทั้งหมดไว้ที่นี่ ---\nconst defaultRules = {\n    // ค่า Default ที่ดึงมาจากโค้ด eval_alert_v6.1\n    warn_open_consec: 2,\n    crit_open_consec: 1,\n    clear_consec: 2,\n\n    // ค่า Default ที่แนะนำสำหรับคอลัมน์อื่นๆ ที่มีในตาราง\n    min_gap_seconds_warning: 60,\n    min_gap_seconds_critical: 60,\n    repeat_minutes_warning: 60,\n    repeat_minutes_critical: 15,\n    group_window_seconds: 0,\n    heartbeat_timeout_minutes: 15\n};\n\n// --- ✨ 2. สร้าง Object ที่รวมค่าจากอุปกรณ์กับค่า Default ---\n// ถ้าอุปกรณ์ไม่ได้ส่งค่าไหนมา จะใช้ค่า Default แทนโดยอัตโนมัติ\nconst sharedRules = {\n    warn_open_consec: config.alerts.warn_open_consec ?? defaultRules.warn_open_consec,\n    crit_open_consec: config.alerts.crit_open_consec ?? defaultRules.crit_open_consec,\n    clear_consec: config.alerts.clear_consec ?? defaultRules.clear_consec,\n    min_gap_seconds_warning: config.alerts.min_gap_seconds_warning ?? defaultRules.min_gap_seconds_warning,\n    min_gap_seconds_critical: config.alerts.min_gap_seconds_critical ?? defaultRules.min_gap_seconds_critical,\n    repeat_minutes_warning: config.alerts.repeat_minutes_warning ?? defaultRules.repeat_minutes_warning,\n    repeat_minutes_critical: config.alerts.repeat_minutes_critical ?? defaultRules.repeat_minutes_critical,\n    group_window_seconds: config.alerts.group_window_seconds ?? defaultRules.group_window_seconds,\n    heartbeat_timeout_minutes: config.alerts.heartbeat_timeout_minutes ?? defaultRules.heartbeat_timeout_minutes\n};\n\n\n// Prepare the payload in the format expected by our /api/alert-rules endpoint\nconst rulePayload = [\n    {\n        scope: \"room\",\n        mac: mac,\n        sensor_name: \"overall\",\n        metric: \"temp\",\n        active: 1,\n        crit_min: config.alerts.temp_crit_low,\n        warn_min: config.alerts.temp_warn_low,\n        warn_max: config.alerts.temp_warn_high,\n        crit_max: config.alerts.temp_crit_high,\n        ...sharedRules\n    },\n    {\n        scope: \"room\",\n        mac: mac,\n        sensor_name: \"overall\",\n        metric: \"hum\",\n        active: 1,\n        crit_min: config.alerts.hum_crit_low,\n        warn_min: config.alerts.hum_warn_low,\n        warn_max: config.alerts.hum_warn_high,\n        crit_max: config.alerts.hum_crit_high,\n        ...sharedRules\n    }\n];\n\n// Pass the prepared payload to the next node (HTTP Request)\nmsg.payload = rulePayload;\nreturn msg;",
+        "func": "// Function to process config from device and prepare it for the database API\n\nconst config = msg.payload || {};\nconst mac = config.mac_address || null;\n\n// Ensure the payload has the required structure\nif (!mac || !config.alerts) {\n    node.warn('Invalid config payload received. Missing mac_address or alerts object. Skipping DB update.');\n    return null;\n}\n\n// --- ✨ 1. กำหนดค่า Default ทั้งหมดไว้ที่นี่ ---\nconst defaultRules = {\n    // ค่า Default ที่ดึงมาจากโค้ด eval_alert_v6.1\n    warn_open_consec: 1,\n    crit_open_consec: 1,\n    clear_consec: 1,\n\n    // ค่า Default ที่แนะนำสำหรับคอลัมน์อื่นๆ ที่มีในตาราง\n    min_gap_seconds_warning: 60,\n    min_gap_seconds_critical: 60,\n    repeat_minutes_warning: 60,\n    repeat_minutes_critical: 15,\n    group_window_seconds: 0,\n    heartbeat_timeout_minutes: 15\n};\n\n// --- ✨ 2. สร้าง Object ที่รวมค่าจากอุปกรณ์กับค่า Default ---\n// ถ้าอุปกรณ์ไม่ได้ส่งค่าไหนมา จะใช้ค่า Default แทนโดยอัตโนมัติ\nconst sharedRules = {\n    warn_open_consec: config.alerts.warn_open_consec ?? defaultRules.warn_open_consec,\n    crit_open_consec: config.alerts.crit_open_consec ?? defaultRules.crit_open_consec,\n    clear_consec: config.alerts.clear_consec ?? defaultRules.clear_consec,\n    min_gap_seconds_warning: config.alerts.min_gap_seconds_warning ?? defaultRules.min_gap_seconds_warning,\n    min_gap_seconds_critical: config.alerts.min_gap_seconds_critical ?? defaultRules.min_gap_seconds_critical,\n    repeat_minutes_warning: config.alerts.repeat_minutes_warning ?? defaultRules.repeat_minutes_warning,\n    repeat_minutes_critical: config.alerts.repeat_minutes_critical ?? defaultRules.repeat_minutes_critical,\n    group_window_seconds: config.alerts.group_window_seconds ?? defaultRules.group_window_seconds,\n    heartbeat_timeout_minutes: config.alerts.heartbeat_timeout_minutes ?? defaultRules.heartbeat_timeout_minutes\n};\n\n\n// Prepare the payload in the format expected by our /api/alert-rules endpoint\nconst rulePayload = [\n    {\n        scope: \"room\",\n        mac: mac,\n        sensor_name: \"overall\",\n        metric: \"temp\",\n        active: 1,\n        crit_min: config.alerts.temp_crit_low,\n        warn_min: config.alerts.temp_warn_low,\n        warn_max: config.alerts.temp_warn_high,\n        crit_max: config.alerts.temp_crit_high,\n        ...sharedRules\n    },\n    {\n        scope: \"room\",\n        mac: mac,\n        sensor_name: \"overall\",\n        metric: \"hum\",\n        active: 1,\n        crit_min: config.alerts.hum_crit_low,\n        warn_min: config.alerts.hum_warn_low,\n        warn_max: config.alerts.hum_warn_high,\n        crit_max: config.alerts.hum_crit_high,\n        ...sharedRules\n    }\n];\n\n// Pass the prepared payload to the next node (HTTP Request)\nmsg.payload = rulePayload;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2820,
+        "x": 2880,
         "y": 580,
         "wires": [
             [
@@ -2578,7 +2433,7 @@
                 "valueValue": "application/json"
             }
         ],
-        "x": 3030,
+        "x": 3090,
         "y": 580,
         "wires": [
             []
@@ -2591,7 +2446,7 @@
         "g": "3405bc2648d0e0c4",
         "name": "Sync Alerts from Device to DB",
         "info": "",
-        "x": 2660,
+        "x": 2720,
         "y": 480,
         "wires": []
     },
@@ -2636,7 +2491,7 @@
         "name": "OK",
         "statusCode": "200",
         "headers": {},
-        "x": 3310,
+        "x": 3370,
         "y": 640,
         "wires": []
     },
@@ -2658,7 +2513,7 @@
         "g": "f11085f09044723f",
         "name": "อัพเดทเงื่อนไขในการใช้กับ Alert",
         "info": "",
-        "x": 2660,
+        "x": 2720,
         "y": 780,
         "wires": []
     },
@@ -2825,14 +2680,14 @@
         "z": "640c6734fdac3595",
         "g": "c7e3510948f6624e",
         "name": "Toast Alert",
-        "func": "// Function: สร้าง msg สำหรับส่งไปทำ Alert Toast (v2)\n\nconst p = msg.payload;\nconst deviceMap = flow.get('device_map', 'file') || {};\n\nfunction getRoomName(mac) {\n    try {\n        const macStr = String(mac || '');\n        for (const key in deviceMap) {\n            if (key.startsWith('room') && deviceMap[key] === macStr) {\n                const roomLetter = key.slice(-1).toUpperCase();\n                const roomName = deviceMap[`name${roomLetter}`];\n                return roomName || macStr;\n            }\n        }\n        return macStr;\n    } catch (e) {\n        return String(mac || 'UNKNOWN_MAC');\n    }\n}\n\nif (!p || !p.type) {\n    return null;\n}\n\n// ✨✨ จุดแก้ไขสำคัญอยู่ตรงนี้ครับ ✨✨\n// สร้าง payload พื้นฐานขึ้นมาก่อน\nconst newPayload = {\n    type: p.type === 'open' || p.type === 'upgrade' ? 'triggered' : 'recovered',\n    level: p.level,\n    room_name: getRoomName(p.mac),\n    metric: p.metric\n};\n\n// ตรวจสอบว่ามีค่า value ที่เป็นตัวเลขส่งมาด้วยหรือไม่ (จะเกิดขึ้นเฉพาะตอน triggered/upgrade)\nif (typeof p.value === 'number' && isFinite(p.value)) {\n    // ถ้ามีค่า value ถึงจะเพิ่มเข้าไปใน payload\n    newPayload.value = p.value;\n}\n// ถ้าเป็น recovery (p.value ไม่มี) ก็จะไม่เพิ่ม key นี้เข้าไปเลย\n\n// สร้าง msg ที่จะส่งไปหน้าเว็บ\nconst newMsg = {\n    topic: 'alert_event',\n    payload: newPayload\n};\n\nreturn newMsg;",
+        "func": "// Function: Toast Alert (v4 - pass-through event_id, accept status=recovery)\n\nconst p = msg.payload;\nconst deviceMap = flow.get('device_map', 'file') || {};\n\nfunction getRoomName(mac) {\n    try {\n        const macStr = String(mac || '');\n        for (const key in deviceMap) {\n            if (key.startsWith('room') && deviceMap[key] === macStr) {\n                const roomLetter = key.slice(-1).toUpperCase();\n                const roomName = deviceMap[`name${roomLetter}`];\n                return roomName || macStr;\n            }\n        }\n        return macStr;\n    } catch (e) {\n        return String(mac || 'UNKNOWN_MAC');\n    }\n}\n\nif (!p) return null;\n\nlet inferredType = null;\nif (p.type === 'open' || p.type === 'upgrade') inferredType = 'triggered';\nelse if (p.type === 'recovery' || p.status === 'recovery') inferredType = 'recovered';\n\nif (!inferredType) return null;\n\nconst out = {\n    type: inferredType,\n    room_name: getRoomName(p.mac),\n    metric: p.metric\n};\n\nif (p.level) out.level = p.level;\nif (typeof p.value === 'number' && isFinite(p.value)) out.value = p.value;\nif (p.event_id) out.event_id = p.event_id;\nif (p.sensor || p.sensor_name) out.sensor_name = p.sensor_name || p.sensor;\nif (p.ts) out.ts = p.ts;\nif (p.opened_at) out.opened_at = p.opened_at;\nif (p.closed_at) out.closed_at = p.closed_at;\n\nconst newTopic = inferredType === 'recovered' ? 'alert_recovered' : 'alert_event';\n\nreturn { topic: newTopic, payload: out };\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 850,
+        "x": 870,
         "y": 860,
         "wires": [
             [
@@ -2944,7 +2799,7 @@
         "z": "640c6734fdac3595",
         "g": "c7e3510948f6624e",
         "name": "Adapt Offline Status for Alert",
-        "func": "// Function Node: (NEW) Adapt Offline Status for Alert\n// ทำหน้าที่แปลง msg จากระบบ Ping/MQTT check ให้อยู่ในรูปแบบที่ระบบ Alert เข้าใจได้\n\nconst p = msg.payload;\n\n// 1. ตรวจสอบว่ามีข้อมูล mac และ status มาหรือไม่\nif (!p || !p.mac || !p.status) {\n    return null; // ถ้าไม่มีข้อมูลที่จำเป็น ก็ไม่ต้องทำอะไรต่อ\n}\n\n// 2. เราสนใจแค่ตอนที่สถานะเป็น 'offline'\n// ถ้า 'online' เราจะส่งค่า value = 1 เพื่อให้ระบบใช้ในการ Recovery (ปิด Alert)\nconst isOffline = (p.status.toLowerCase() === 'offline');\nconst alertValue = isOffline ? 0 : 1;\n\n// 3. สร้าง payload ใหม่ในรูปแบบที่ Function 'Check condition and insert' (ID: 676bd48cd34d868a) ต้องการ\nconst newPayload = {\n    mac: p.mac,\n    sensor_name: 'device_status', // ชื่อเซ็นเซอร์เสมือนสำหรับสถานะอุปกรณ์\n    metric: 'connectivity',     // Metric ใหม่สำหรับ Alert ประเภทนี้\n    value: alertValue,          // 0 = offline, 1 = online\n    ts: new Date().toISOString()\n};\n\nmsg.payload = newPayload;\n\nreturn msg;",
+        "func": "// Function Node: (NEW) Adapt Offline Status for Alert\n// ทำหน้าที่แปลง msg จากระบบ Ping/MQTT check ให้อยู่ในรูปแบบที่ระบบ Alert เข้าใจได้\n\nconst p = msg.payload;\n// เอา event_id และ level จาก Flow context มาใช้\nconst states = flow.get('alert_states') || {};\nconst state = states[p.mac + '|device_status|connectivity'] || {};\n\n// 1. ตรวจสอบว่ามีข้อมูล mac และ status มาหรือไม่\nif (!p || !p.mac || !p.status) {\n    return null; // ถ้าไม่มีข้อมูลที่จำเป็น ก็ไม่ต้องทำอะไรต่อ\n}\n\n// 2. เราสนใจแค่ตอนที่สถานะเป็น 'offline'\n// ถ้า 'online' เราจะส่งค่า value = 1 เพื่อให้ระบบใช้ในการ Recovery (ปิด Alert)\nconst isOffline = (p.status.toLowerCase() === 'offline');\nconst alertValue = isOffline ? 0 : 1;\n\n// 3. สร้าง payload ใหม่ในรูปแบบที่ Function 'Check condition and insert' (ID: 676bd48cd34d868a) ต้องการ\nconst newPayload = {\n    mac: p.mac,\n    sensor_name: 'device_status', // ชื่อเซ็นเซอร์เสมือนสำหรับสถานะอุปกรณ์\n    metric: 'connectivity',     // Metric ใหม่สำหรับ Alert ประเภทนี้\n    value: alertValue,          // 0 = offline, 1 = online\n    ts: new Date().toISOString()\n};\n\n// 4. ถ้าสถานะเป็น 'online' และมี event_id ของ alert ที่เปิดอยู่ ให้แนบ event_id นั้นไปกับ payload ด้วย\n// เพื่อให้ Alert Engine รู้ว่าต้องปิด alert ตัวไหน\nif (!isOffline && state.event_id) {\n    newPayload.event_id = state.event_id;\n    newPayload.level = state.level;\n    newPayload.status = state.status;\n}\n\nmsg.payload = newPayload;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -2968,7 +2823,7 @@
         "props": [],
         "repeat": "1",
         "crontab": "",
-        "once": true,
+        "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "x": 240,
@@ -2992,7 +2847,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 420,
+        "x": 460,
         "y": 1320,
         "wires": [
             [
@@ -3013,7 +2868,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 760,
+        "x": 800,
         "y": 1320,
         "wires": [
             []
@@ -3026,7 +2881,7 @@
         "g": "be536ff9b21472e1",
         "mydb": "5e560f07cfec117a",
         "name": "alert_events",
-        "x": 590,
+        "x": 630,
         "y": 1320,
         "wires": [
             [
@@ -3047,7 +2902,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 450,
+        "x": 670,
         "y": 860,
         "wires": [
             [
@@ -3065,8 +2920,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 1760,
-        "y": 1580,
+        "x": 2720,
+        "y": 1320,
         "wires": [
             [
                 "82779c738ad44c4b"
@@ -3085,8 +2940,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2040,
-        "y": 1580,
+        "x": 2950,
+        "y": 1320,
         "wires": [
             [
                 "258f6bf27fc6e1cf"
@@ -3100,8 +2955,8 @@
         "g": "37e675817144b486",
         "mydb": "5e560f07cfec117a",
         "name": "Query Sensors",
-        "x": 2270,
-        "y": 1580,
+        "x": 3180,
+        "y": 1320,
         "wires": [
             [
                 "57fe4cea096dc9a9"
@@ -3120,8 +2975,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 2480,
-        "y": 1580,
+        "x": 3380,
+        "y": 1320,
         "wires": [
             [
                 "417fa61902dccc67"
@@ -3135,8 +2990,8 @@
         "g": "37e675817144b486",
         "mydb": "5e560f07cfec117a",
         "name": "Query Alerts",
-        "x": 2690,
-        "y": 1580,
+        "x": 2730,
+        "y": 1380,
         "wires": [
             [
                 "dc55c89f0ab0fef9"
@@ -3157,7 +3012,7 @@
         "finalize": "",
         "libs": [],
         "x": 2900,
-        "y": 1580,
+        "y": 1380,
         "wires": [
             [
                 "f3110649b75fa1f6"
@@ -3187,8 +3042,8 @@
         "checkall": "false",
         "repair": false,
         "outputs": 2,
-        "x": 3100,
-        "y": 1580,
+        "x": 3080,
+        "y": 1380,
         "wires": [
             [
                 "3e79a8b6fddc2caf"
@@ -3208,8 +3063,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 3320,
-        "y": 1580,
+        "x": 3280,
+        "y": 1380,
         "wires": [
             [
                 "7f021b2b6bf737d9"
@@ -3224,8 +3079,8 @@
         "name": "File Response",
         "statusCode": "",
         "headers": {},
-        "x": 3740,
-        "y": 1580,
+        "x": 3700,
+        "y": 1380,
         "wires": []
     },
     {
@@ -3248,61 +3103,13 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 3540,
-        "y": 1580,
+        "x": 3500,
+        "y": 1380,
         "wires": [
             [
                 "a7081151ab3a2ad4"
             ]
         ]
-    },
-    {
-        "id": "31251e21fea34fbb",
-        "type": "debug",
-        "z": "640c6734fdac3595",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 5420,
-        "y": 2740,
-        "wires": []
-    },
-    {
-        "id": "961d0888478e84f5",
-        "type": "debug",
-        "z": "640c6734fdac3595",
-        "name": "debug 4",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 4420,
-        "y": 2440,
-        "wires": []
-    },
-    {
-        "id": "1e04fc1c0cea8913",
-        "type": "debug",
-        "z": "640c6734fdac3595",
-        "name": "debug 3",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 2700,
-        "y": 1900,
-        "wires": []
     },
     {
         "id": "d1b0a1c3da91e3c6",
@@ -3319,25 +3126,518 @@
         "correl": "",
         "expiry": "",
         "broker": "8301192ec347dbc9",
-        "x": 3200,
+        "x": 3260,
         "y": 880,
         "wires": []
     },
     {
-        "id": "f8c27a77ce0c77f9",
-        "type": "debug",
+        "id": "31093562cb7659a0",
+        "type": "http in",
         "z": "640c6734fdac3595",
-        "g": "3405bc2648d0e0c4",
-        "name": "debug 7",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 3640,
-        "y": 540,
+        "g": "48904a14f4cbefb3",
+        "name": "GET /unseen_recoveries",
+        "url": "/unseen_recoveries",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 1790,
+        "y": 1000,
+        "wires": [
+            [
+                "f253a7b1c4d4eb47"
+            ]
+        ]
+    },
+    {
+        "id": "f253a7b1c4d4eb47",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "Query recoverd",
+        "func": "// 🎯 GOAL: Query DB for unseen recovery events within the last 7 days.\nmsg.topic = `\n    SELECT event_id \n    FROM alert_events \n    WHERE status = 'recovery' AND closed_at >= NOW() - INTERVAL 7 DAY;\n`;\nmsg.payload = []; // No params\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2000,
+        "y": 1000,
+        "wires": [
+            [
+                "297a1b865a994b0b"
+            ]
+        ]
+    },
+    {
+        "id": "297a1b865a994b0b",
+        "type": "mysql",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "mydb": "5e560f07cfec117a",
+        "name": "alert_events",
+        "x": 2170,
+        "y": 1000,
+        "wires": [
+            [
+                "3981f0f3d29a470c"
+            ]
+        ]
+    },
+    {
+        "id": "3981f0f3d29a470c",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "format",
+        "func": "// 🎯 GOAL: Format the result into a simple array of event_ids.\nmsg.payload = msg.payload.map(item => item.event_id);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2310,
+        "y": 1000,
+        "wires": [
+            [
+                "ee048f67cf4fa1d6"
+            ]
+        ]
+    },
+    {
+        "id": "ee048f67cf4fa1d6",
+        "type": "http response",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "Response",
+        "statusCode": "",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 2440,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "b8274aa11208401e",
+        "type": "switch",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "mark_as_seen",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1730,
+        "y": 960,
+        "wires": [
+            [
+                "5d0f5e25fa5197c3"
+            ]
+        ]
+    },
+    {
+        "id": "5d0f5e25fa5197c3",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "Update recoverd(seen)",
+        "func": "// 🎯 GOAL: Update status from 'recovery' to 'closed' for a given event_id.\nconst eventId = msg.payload;\nif (typeof eventId !== 'string' || !eventId) {\n    node.warn(\"Invalid event_id for mark_as_seen\");\n    return null;\n}\nmsg.topic = \"UPDATE alert_events SET status = 'closed' WHERE event_id = ? AND status = 'recovery';\";\nmsg.payload = [eventId];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1900,
+        "y": 960,
+        "wires": [
+            [
+                "6373aa23303841cf"
+            ]
+        ]
+    },
+    {
+        "id": "6373aa23303841cf",
+        "type": "mysql",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "mydb": "5e560f07cfec117a",
+        "name": "alert_events",
+        "x": 2090,
+        "y": 960,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "15d9dbfd0c8ce0cb",
+        "type": "comment",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "Alert recovery จากระบบที่ผู้ใช้ไม่เห็น",
+        "info": "",
+        "x": 1820,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "2a5b63a94c933684",
+        "type": "inject",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "Auto-Clear",
+        "props": [],
+        "repeat": "3600",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 1770,
+        "y": 1040,
+        "wires": [
+            [
+                "734ded21c1daba8b"
+            ]
+        ]
+    },
+    {
+        "id": "734ded21c1daba8b",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "name": "Auto clear alert 7 days",
+        "func": "// 🎯 GOAL: Close all 'recovery' events older than 7 days.\nmsg.topic = `\n    UPDATE alert_events\n    SET status = 'closed'\n    WHERE status = 'recovery' AND closed_at < NOW() - INTERVAL 7 DAY;\n`;\nmsg.payload = [];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1960,
+        "y": 1040,
+        "wires": [
+            [
+                "33ca16f0ac839ca5"
+            ]
+        ]
+    },
+    {
+        "id": "6e94b291e5b12d2d",
+        "type": "comment",
+        "z": "640c6734fdac3595",
+        "g": "37e675817144b486",
+        "name": "สำหรับสร้าง Report CSV",
+        "info": "",
+        "x": 2740,
+        "y": 1280,
+        "wires": []
+    },
+    {
+        "id": "33ca16f0ac839ca5",
+        "type": "mysql",
+        "z": "640c6734fdac3595",
+        "g": "48904a14f4cbefb3",
+        "mydb": "5e560f07cfec117a",
+        "name": "alert_events",
+        "x": 2170,
+        "y": 1040,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e6ece526bf9c5d21",
+        "type": "http in",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "GET /api/notification-settings",
+        "url": "/api/notification-settings",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 1800,
+        "y": 1320,
+        "wires": [
+            [
+                "eb744f586a753274"
+            ]
+        ]
+    },
+    {
+        "id": "eb744f586a753274",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "Load Notification Settings",
+        "func": "const settings = flow.get('notificationSettings') || {\n    recipients: {\n        email: [],\n        telegram: []\n    },\n    schedule: {\n        weekdays: [true, true, true, true, true, true, true],\n        times: [\"08:00\", \"17:00\"]\n    }\n};\nmsg.payload = settings;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2050,
+        "y": 1320,
+        "wires": [
+            [
+                "745071770a1a0681"
+            ]
+        ]
+    },
+    {
+        "id": "745071770a1a0681",
+        "type": "http response",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 2240,
+        "y": 1320,
+        "wires": []
+    },
+    {
+        "id": "3733a98c8c4bb892",
+        "type": "http in",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "POST /api/notification-settings",
+        "url": "/api/notification-settings",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 1800,
+        "y": 1360,
+        "wires": [
+            [
+                "2856459866b453a6"
+            ]
+        ]
+    },
+    {
+        "id": "2856459866b453a6",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "Validate & Set Defaults",
+        "func": "// msg.payload จะเป็น JSON ที่ UI ส่งมา\nlet payload = msg.payload;\n\n// --- 1. ตรวจสอบ Recipients ---\n// ถ้าไม่มี object recipients มา ให้สร้างอันว่างๆ ขึ้นมา\nif (!payload.recipients) {\n    payload.recipients = { email: [], telegram: [] };\n}\nif (!Array.isArray(payload.recipients.email)) {\n    payload.recipients.email = [];\n}\nif (!Array.isArray(payload.recipients.telegram)) {\n    payload.recipients.telegram = [];\n}\n\n// --- 2. ตรวจสอบ Schedule และบังคับใช้ค่า Default ถ้าจำเป็น ---\nconst defaults = {\n    times: [\"08:00\", \"17:00\"],\n    weekdays: [true, true, true, true, true, true, true]\n};\n\nlet schedule = payload.schedule;\nlet isScheduleInvalid = true; // ตั้งธงไว้ก่อนว่าข้อมูลน่าจะผิด\n\n// เช็คว่าข้อมูล schedule ที่ส่งมา hợp lệ (valid) หรือไม่\nif (schedule && Array.isArray(schedule.weekdays) && schedule.weekdays.length === 7 && Array.isArray(schedule.times) && schedule.times.length > 0) {\n    // ถ้าข้อมูลโครงสร้างถูก ต้องเช็คต่อว่ามีการเลือกวันไว้อย่างน้อย 1 วันหรือไม่\n    if (schedule.weekdays.some(dayIsSelected => dayIsSelected === true)) {\n        isScheduleInvalid = false; // ถ้ามีวันถูกเลือกอย่างน้อย 1 วัน ถือว่าข้อมูลถูกต้อง\n    }\n}\n\n// ถ้าธงยังเป็น true (ข้อมูลไม่ถูกต้อง/ว่างเปล่า) ให้แทนที่ด้วยค่า Default\nif (isScheduleInvalid) {\n    node.warn(\"Received empty or invalid schedule. Applying default settings.\");\n    payload.schedule = defaults;\n}\n\n// จัดเรียงเวลาเพื่อให้สร้าง Cron Expression ได้ถูกต้องเสมอ\npayload.schedule.times.sort();\n\nmsg.payload = payload;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2060,
+        "y": 1360,
+        "wires": [
+            [
+                "980e30697c2aab77"
+            ]
+        ]
+    },
+    {
+        "id": "980e30697c2aab77",
+        "type": "change",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "Save to Flow Context",
+        "rules": [
+            {
+                "t": "set",
+                "p": "notificationSettings",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 2310,
+        "y": 1360,
+        "wires": [
+            [
+                "b86f5c06d6692e5c",
+                "96f558ac37e73c8c"
+            ]
+        ]
+    },
+    {
+        "id": "b86f5c06d6692e5c",
+        "type": "http response",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "200 OK",
+        "statusCode": "200",
+        "headers": {},
+        "x": 2510,
+        "y": 1360,
+        "wires": []
+    },
+    {
+        "id": "c7f125caa48b240c",
+        "type": "inject",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "On Deploy",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str",
+                "v": "load_schedule"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1770,
+        "y": 1400,
+        "wires": [
+            [
+                "96f558ac37e73c8c"
+            ]
+        ]
+    },
+    {
+        "id": "96f558ac37e73c8c",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "Update Cron Schedule",
+        "func": "// ดึงค่า settings ที่บันทึกไว้ล่าสุด\nconst settings = flow.get(\"notificationSettings\");\n\nif (!settings || !settings.schedule) {\n    node.error(\"Notification settings not found. Cannot update cron jobs.\");\n    return null;\n}\n\n// แปลง array [true, false, ...] เป็น string \"0,2,...\" (0=Sun, 1=Mon, ...)\nconst weekdays = settings.schedule.weekdays || [];\nconst daysOfWeekStr = weekdays\n    .map((isSelected, idx) => isSelected ? idx : -1)\n    .filter(idx => idx !== -1)\n    .join(',');\n\n// ถ้าไม่มีวันไหนถูกเลือกเลย ให้ลบงานทั้งหมดแล้วหยุด\nif (!daysOfWeekStr) {\n    node.warn(\"No days selected in schedule. Removing all cron jobs.\");\n    const removeAll = { payload: { command: \"remove-all\" } };\n    return [ [removeAll], null ];\n}\n\n// สร้างข้อความลบงานเก่าก่อน (output 1)\nconst removeAll = { payload: { command: \"remove-all\" } };\n\n// เตรียมข้อความ add ทีละงาน (output 2)\n// หมายเหตุ: cron-plus ต้องการ 1 message ต่อ 1 job และต้องมี payload.name, payload.expression, payload.type\nconst times = Array.isArray(settings.schedule.times) ? [...settings.schedule.times] : [];\ntimes.sort(); // กันพลาด เรียงเวลาไว้เสมอ\n\nconst addMsgs = times.map(t => {\n    const parts = String(t).split(':');\n    const hour = parts[0]?.padStart(2, '0') || '00';\n    const minute = parts[1]?.padStart(2, '0') || '00';\n\n    return {\n        payload: {\n            command: \"add\",\n            name: `digest-${hour}-${minute}`,   // ต้องมี name ที่ root\n            type: \"cron\",\n            expression: `${minute} ${hour} * * ${daysOfWeekStr}`, // m h dom mon dow\n            payload: { type: \"digest\", time: `${hour}:${minute}` } // payload ที่จะยิงออกจาก cron ตอนถึงเวลา\n        }\n    };\n});\n\n// ส่งเป็นหลายข้อความในเอาต์พุตที่ 2 ได้ด้วยการ return เป็น array\nreturn [ [removeAll], addMsgs ];\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1980,
+        "y": 1400,
+        "wires": [
+            [
+                "9ad2c3a4daf2d865"
+            ],
+            [
+                "9ad2c3a4daf2d865"
+            ]
+        ]
+    },
+    {
+        "id": "9ad2c3a4daf2d865",
+        "type": "cronplus",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "Daily Digest Scheduler",
+        "outputField": "payload",
+        "timeZone": "",
+        "storeName": "",
+        "commandResponseMsgOutput": "output1",
+        "defaultLocation": "",
+        "defaultLocationType": "default",
+        "outputs": 1,
+        "options": [],
+        "x": 2220,
+        "y": 1400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e43561653a2a4834",
+        "type": "comment",
+        "z": "640c6734fdac3595",
+        "g": "764e306119ec0e9d",
+        "name": "สำหรับ Daily Report",
+        "info": "",
+        "x": 1770,
+        "y": 1280,
+        "wires": []
+    },
+    {
+        "id": "f2842a624679d5ca",
+        "type": "inject",
+        "z": "640c6734fdac3595",
+        "name": "Click to Send Test Email",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1810,
+        "y": 1560,
+        "wires": [
+            [
+                "3696bdcbfa58e61b"
+            ]
+        ]
+    },
+    {
+        "id": "3696bdcbfa58e61b",
+        "type": "function",
+        "z": "640c6734fdac3595",
+        "name": "Create Email Content",
+        "func": "// === แก้ไขอีเมลผู้รับตรงนี้ ===\n// ใส่ Email ที่คุณต้องการทดสอบส่งไปถึง\nmsg.topic = \"armtanayuts@gmail.com\";\n\n// === เนื้อหาอีเมล ===\nmsg.payload = \"เค้าเอง รักเธอนะครับจุ๊บๆ\";\n\n// === หัวข้ออีเมล ===\nmsg.subject = \"ก๊อกๆๆ\";\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2040,
+        "y": 1560,
+        "wires": [
+            [
+                "1266f5ba2466133a"
+            ]
+        ]
+    },
+    {
+        "id": "1266f5ba2466133a",
+        "type": "e-mail",
+        "z": "640c6734fdac3595",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "authtype": "BASIC",
+        "saslformat": false,
+        "token": "oauth2Response.access_token",
+        "secure": true,
+        "tls": false,
+        "name": "armtanayuts@gmail.com",
+        "dname": "Send Email",
+        "x": 2250,
+        "y": 1560,
         "wires": []
     },
     {
@@ -3360,14 +3660,24 @@
         "title": "",
         "descr": "",
         "editurl": "vscode://file\\Users\\PCSGH\\.node-red\\uibuilder/dashboard/?windowId=_blank",
-        "x": 1310,
+        "x": 1330,
         "y": 680,
         "wires": [
             [
-                "c46318095bd096a9"
+                "c46318095bd096a9",
+                "b8274aa11208401e"
             ],
             []
         ]
+    },
+    {
+        "id": "9765ef1ce4746213",
+        "type": "subflow:c392309919969efb",
+        "z": "640c6734fdac3595",
+        "name": "",
+        "x": 1190,
+        "y": 940,
+        "wires": []
     },
     {
         "id": "8301192ec347dbc9",
@@ -3404,9 +3714,9 @@
         "id": "5e560f07cfec117a",
         "type": "MySQLdatabase",
         "name": "",
-        "host": "192.168.42.10",
+        "host": "192.168.42.9",
         "port": "33061",
-        "db": "Server Monitoring",
+        "db": "Server Monitoring Environment",
         "tz": "",
         "charset": "UTF8"
     }
