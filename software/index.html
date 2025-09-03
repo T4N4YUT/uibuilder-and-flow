@@ -2249,7 +2249,7 @@
                 </div>
                 <div class="config-body grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
                     <div class="flex flex-col gap-4 h-full min-h-0">
-                        <!-- Room Alerts: กินพื้นที่ที่เหลือ -->
+                        <!-- Room Alerts -->
                         <div class="detail-card flex-1 min-h-0" id="detail-card-alerts">
                             <h6 class="detail-card-title">🔔 Room Alerts</h6>
                             <div class="detail-card-content overflow-y-auto">
@@ -2706,15 +2706,74 @@
             </div>
             <div class="config-body">
                 <div class="config-tabs">
-                    <button class="config-tab" data-tab="alerts"><i
+                    <button class="config-tab active" data-tab="alerts"><i
                             class="fa-solid fa-bell mr-2 opacity-80"></i>Alerts</button>
-                    <button class="config-tab active" data-tab="ethernet"><i
+                    <button class="config-tab" data-tab="ethernet"><i
                             class="fa-solid fa-ethernet mr-2 opacity-80"></i>Ethernet</button>
                     <button class="config-tab" data-tab="mqtt"><i
                             class="fa-solid fa-server mr-2 opacity-80"></i>MQTT</button>
                 </div>
+                <!-- ALERTS -->
+                <section id="tab-alerts" class="config-section active">
+                    <h6 class="mb-2 font-semibold">
+                        <span class="icon text-red-400"><i class="fa-solid fa-temperature-half"
+                                aria-hidden="true"></i></span>Temperature (°C)
+                    </h6>
+                    <div class="config-row">
+                        <label class="config-label">
+                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-down"
+                                    aria-hidden="true"></i></span>Critical Low
+                            <input id="temp-crit-low" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                        <label class="config-label">
+                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-down"
+                                    aria-hidden="true"></i></span>Warning Low
+                            <input id="temp-warn-low" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                    </div>
+                    <div class="config-row" style="margin-top:.75rem">
+                        <label class="config-label">
+                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-up"
+                                    aria-hidden="true"></i></span>Warning High
+                            <input id="temp-warn-high" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                        <label class="config-label">
+                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-up"
+                                    aria-hidden="true"></i></span>Critical High
+                            <input id="temp-crit-high" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                    </div>
+                    <h6 class="mt-4 mb-2 font-semibold">
+                        <span class="icon text-blue-400"><i class="fa-solid fa-droplet"
+                                aria-hidden="true"></i></span>Humidity (%)
+                    </h6>
+                    <div class="config-row">
+                        <label class="config-label">
+                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-down"
+                                    aria-hidden="true"></i></span>Critical Low
+                            <input id="hum-crit-low" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                        <label class="config-label">
+                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-down"
+                                    aria-hidden="true"></i></span>Warning Low
+                            <input id="hum-warn-low" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                    </div>
+                    <div class="config-row" style="margin-top:.75rem">
+                        <label class="config-label">
+                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-up"
+                                    aria-hidden="true"></i></span>Warning High
+                            <input id="hum-warn-high" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                        <label class="config-label">
+                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-up"
+                                    aria-hidden="true"></i></span>Critical High
+                            <input id="hum-crit-high" type="number" step="0.1" class="config-input mt-1">
+                        </label>
+                    </div>
+                </section>
                 <!-- ETHERNET -->
-                <section id="tab-ethernet" class="config-section active space-y-3">
+                <section id="tab-ethernet" class="config-section space-y-3">
                     <div class="cfg-mac-row">
                         <div class="cfg-mac-left">
                             <span class="icon text-sky-400"><i class="fa-solid fa-network-wired"
@@ -2778,65 +2837,7 @@
                         <input id="mqtt-pass" type="password" class="config-input mt-1" placeholder="">
                     </label>
                 </section>
-                <!-- ALERTS -->
-                <section id="tab-alerts" class="config-section">
-                    <h6 class="mb-2 font-semibold">
-                        <span class="icon text-red-400"><i class="fa-solid fa-temperature-half"
-                                aria-hidden="true"></i></span>Temperature (°C)
-                    </h6>
-                    <div class="config-row">
-                        <label class="config-label">
-                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Critical Low
-                            <input id="temp-crit-low" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                        <label class="config-label">
-                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Warning Low
-                            <input id="temp-warn-low" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                    </div>
-                    <div class="config-row" style="margin-top:.75rem">
-                        <label class="config-label">
-                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Warning High
-                            <input id="temp-warn-high" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                        <label class="config-label">
-                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Critical High
-                            <input id="temp-crit-high" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                    </div>
-                    <h6 class="mt-4 mb-2 font-semibold">
-                        <span class="icon text-blue-400"><i class="fa-solid fa-droplet"
-                                aria-hidden="true"></i></span>Humidity (%)
-                    </h6>
-                    <div class="config-row">
-                        <label class="config-label">
-                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Critical Low
-                            <input id="hum-crit-low" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                        <label class="config-label">
-                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-down"
-                                    aria-hidden="true"></i></span>Warning Low
-                            <input id="hum-warn-low" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                    </div>
-                    <div class="config-row" style="margin-top:.75rem">
-                        <label class="config-label">
-                            <span class="icon text-amber-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Warning High
-                            <input id="hum-warn-high" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                        <label class="config-label">
-                            <span class="icon text-red-400"><i class="fa-solid fa-arrow-up"
-                                    aria-hidden="true"></i></span>Critical High
-                            <input id="hum-crit-high" type="number" step="0.1" class="config-input mt-1">
-                        </label>
-                    </div>
-                </section>
+
             </div>
             <div class="config-footer">
                 <div class="flex items-center justify-end gap-3"> <button id="btn-edit-settings"
@@ -3148,11 +3149,11 @@
                 const selectedSensors = Array.from(exportForm.querySelectorAll('input[name="sensors"]:checked')).map(cb => cb.value).join(',');
                 const roomName = exportRoomSelect.options[exportRoomSelect.selectedIndex].text;
                 if (!from || !to) {
-                    showPopup('❌ Please select a start and end date.', { type: 'fail' });
+                    showPopup('Please select a start and end date', { type: 'fail' });
                     return;
                 }
                 if (room !== 'all' && !selectedSensors) {
-                    showPopup('❌ Please select at least one sensor.', { type: 'fail' });
+                    showPopup('Please select at least one sensor', { type: 'fail' });
                     return;
                 }
                 const confirmed = await showConfirmationModal(
@@ -3174,7 +3175,7 @@
                     sensors: selectedSensors
                 });
                 window.open(`/api/export?${params.toString()}`);
-                showPopup(`✅ Generating your ${type.toUpperCase()} report...`, { type: 'success' });
+                showPopup(`Generating your ${type.toUpperCase()} report...`, { type: 'success' });
                 closeModal('modal-export');
             });
             uibuilder.start();
@@ -3736,7 +3737,7 @@
                 const macs = Object.values(dataToSave).filter(v => typeof v === 'string' && v.includes(':'));
                 const uniqueMacs = new Set(macs);
                 if (macs.length !== uniqueMacs.size) {
-                    showPopup('❌ มี MAC Address ซ้ำกัน', { type: 'fail' });
+                    showPopup('Conflicting MAC Address', { type: 'fail' });
                     return false;
                 }
                 try {
@@ -3751,11 +3752,11 @@
                     updateGlobalMappings(dataToSave);
                     applyRoomNames();
                     updateMainDashboardUI();
-                    showPopup('✅ บันทึก Device Map สำเร็จ!', { type: 'success' });
+                    showPopup('Device Map saved successfully', { type: 'success' });
                     return true;
                 } catch (error) {
                     console.error('[Device Map] Error saving to server:', error);
-                    showPopup(`❌ บันทึกไม่สำเร็จ: ${error.message}`, { type: 'fail' });
+                    showPopup(`Failed to save Device Map: ${error.message}`, { type: 'fail' });
                     return false;
                 }
             }
@@ -4173,7 +4174,7 @@
                 const roomToMac = (typeof getRoomToMacFromStorage === 'function') ? getRoomToMacFromStorage() : {};
                 const mac = normalizeMAC(roomToMac?.[room] || '');
                 if (!mac) {
-                    showPopup(`❌ ห้อง ${room.toUpperCase()} ยังไม่มี MAC (กรุณาตั้งค่าใน Device Map)`, { type: 'fail' });
+                    showPopup(`No MAC assigned for Room ${room.toUpperCase()} (set it in Device Map)`, { type: 'fail' });
                     if (saveBtn) saveBtn.disabled = false;
                     if (cancelBtn) cancelBtn.disabled = false;
                     return;
@@ -4198,11 +4199,12 @@
                         const error = await response.json();
                         throw new Error(error.error || "Failed to save rules to database.");
                     }
-                    showPopup(`✅ บันทึกการตั้งค่าทั้งหมดสำเร็จ!`, { type: 'success' });
+                    showPopup(`Configuration saved successfully!`, { type: 'success' });
+                    closeModal('modal-settings');
                     lockSettingsForm();
                 } catch (error) {
                     console.error("Failed to save settings:", error);
-                    showPopup(`❌ บันทึกไม่สำเร็จ: ${error.message}`, { type: 'fail' });
+                    showPopup(`Failed to save configuration: ${error.message}`, { type: 'fail' });
                 } finally {
                     if (!settingsModalPanel.classList.contains('settings-locked')) {
                         if (saveBtn) saveBtn.disabled = false;
@@ -4250,7 +4252,7 @@
                     applyConfigFieldsToUI(configData, mac);
                 } catch (error) {
                     console.warn(`[Settings] Could not fetch live config for ${room}. Error: ${error.message}`);
-                    showPopup(`ไม่สามารถดึงข้อมูลจาก ${room} ได้ อาจจะออฟไลน์อยู่`, { type: 'warn' });
+                    showPopup(`Unable to fetch data from ${room}. The device may be offline.`, { type: 'warn' });
                 } finally {
                     if (sel) { sel.disabled = false; sel.classList.remove('opacity-60', 'cursor-not-allowed'); }
                 }
@@ -5196,7 +5198,7 @@
                 const statusEl = document.getElementById('recipients-status');
                 statusEl.textContent = 'Saving...';
                 if (!scheduleWeekdays.some(day => day === true) || scheduleTimes.length === 0) {
-                    showPopup('⚠️ Schedule was empty, applying default settings.', { type: 'warn' });
+                    showPopup('Schedule was empty, applying default settings.', { type: 'warn' });
                     const defaults = getDefaultSchedule();
                     scheduleWeekdays = defaults.weekdays;
                     scheduleTimes = defaults.times;
@@ -5223,12 +5225,12 @@
                         throw new Error(errorMsg);
                     }
                     const result = await res.json();
-                    showPopup('✅ Notification settings saved successfully!', { type: 'success' });
+                    showPopup('Notification settings saved successfully!', { type: 'success' });
                     closeModal('modal-recipients');
 
                 } catch (err) {
                     console.error('[Notifications] Save failed:', err);
-                    showPopup(`❌ Save failed: ${err.message}`, { type: 'fail' });
+                    showPopup(`Save failed: ${err.message}`, { type: 'fail' });
                 } finally {
                     statusEl.textContent = '';
                 }
@@ -5318,7 +5320,7 @@
                         if (value && validationFn(value)) {
                             itemsArray.push(value);
                         } else if (value) {
-                            showPopup('⚠️ Invalid format.', { type: 'warn' });
+                            showPopup('Invalid format.', { type: 'warn' });
                         }
                     }
                     inputEl.value = '';
@@ -5397,7 +5399,7 @@
                             scheduleTimes[index] = newTime;
                             renderScheduleTimes();
                         } else if (scheduleTimes.includes(newTime)) {
-                            showPopup('⚠️ This time already exists.', { type: 'warn' });
+                            showPopup('This time already exists.', { type: 'warn' });
                             e.target.value = oldTime;
                         }
                     });
@@ -5441,7 +5443,7 @@
                     const uniqueTimes = [...new Set(newTimes)];
                     scheduleTimes = uniqueTimes;
                     if (newTimes.length !== uniqueTimes.length) {
-                        showPopup('⚠️ Duplicate times are not allowed.', { type: 'warn' });
+                        showPopup('Duplicate times are not allowed.', { type: 'warn' });
                         renderScheduleTimes();
                     }
                 }
@@ -5610,7 +5612,7 @@
                 );
                 const mac = roomToMac[roomId];
                 if (!mac) {
-                    showPopup(`ไม่พบ MAC Address สำหรับ ${roomId} ใน Device Map`, { type: 'fail' });
+                    showPopup(`MAC address for ${roomId} not found in Device Map`, { type: 'fail' });
                     console.error(`fetchAndRenderRange: ไม่มี MAC Address สำหรับห้อง ${roomId}`);
                     return;
                 }
@@ -5634,38 +5636,50 @@
                         feedChartsFromRows([], true);
                     }
                 } catch (err) {
-                    showPopup(`โหลดข้อมูลกราฟไม่สำเร็จ: ${err.message}`, { type: 'fail', timeout: 5000 });
+                    showPopup(`Failed to load chart data: ${err.message}`, { type: 'fail', timeout: 5000 });
                     console.error("Fetch data failed:", err);
                 }
             }
-            async function sendAction(cmd, payload = {}) {
+            async function sendAction(cmd, payload = {}, roomName = '') {
                 if (typeof uibuilder === 'undefined') {
                     console.warn('uibuilder is undefined');
                     return false;
                 }
+
                 const actionId = uuid();
-                const unlock = lockQA(`กำลังส่งคำสั่ง ${cmd}…`);
-                uibuilder.send({
-                    topic: `actions/${cmd}`,
-                    payload: {
-                        cmd,
-                        actionId,
-                        ...payload,
-                        meta: { by: 'web', ts: Date.now(), ver: 1 }
+                const unlock = lockQA(`Sending command ${cmd}...`);
+
+                try {
+                    uibuilder.send({
+                        topic: `actions/${cmd}`,
+                        payload: {
+                            cmd,
+                            actionId,
+                            ...payload,
+                            meta: { by: 'web', ts: Date.now(), ver: 1 }
+                        }
+                    });
+
+                    const res = await waitForAction(actionId, 60000);
+
+                    const target = roomName ? `${roomName}` : '';
+                    if (res?.ok) {
+                        showPopup(`${cmd} ${target} succeeded.`, { type: 'success' });
+                        return true;
+                    } else {
+                        const reason = res?.message || res?.status || 'unknown error';
+                        showPopup(`${cmd} ${target} failed: ${reason}`, { type: 'fail' });
+                        return false;
                     }
-                });
-                const res = await waitForAction(actionId, 60000);
-                unlock();
-                const statusEl = document.getElementById('qa-status');
-                if (res.ok) {
-                    const successMsg = `${cmd} สำเร็จ: ${res.status}${res.message ? ' • ' + res.message : ''}`;
-                    showPopup(`✅ ${successMsg}`, { type: 'success' });
-                } else {
-                    const errorMsg = `${cmd} ล้มเหลว: ${res.status}${res.message ? ' • ' + res.message : ''}`;
-                    showPopup(`❌ ${errorMsg}`, { type: 'fail' });
+                } catch (err) {
+                    const target = roomName ? ` for ${roomName}` : '';
+                    showPopup(`${cmd} ${target} failed: ${err?.message || err}`, { type: 'fail' });
+                    return false;
+                } finally {
+                    unlock();
                 }
-                return res.ok;
             }
+
             function getCommonChartOptions() {
                 return {
                     responsive: true,
@@ -6002,7 +6016,7 @@
                     }
                 } catch (error) {
                     console.warn(`Could not fetch live config for ${roomId}:`, error.message);
-                    showPopup(`ไม่สามารถดึงค่าล่าสุดจาก ${finalName} ได้, ใช้ค่าที่บันทึกไว้ล่าสุดแทน`, { type: 'warn' });
+                    showPopup(`Could not get latest value from ${finalName}, fallback to last saved value`, { type: 'warn' });
                 }
                 const roomData = window.roomDataStore[roomId];
                 if (roomData) {
@@ -6019,7 +6033,7 @@
             async function savePinMapToServer(roomId, formData) {
                 const mac = window.ROOM_TO_MAC_MAP?.[roomId];
                 if (!mac) {
-                    showPopup(`❌ ไม่พบ MAC Address สำหรับห้อง ${roomId}`, { type: 'fail' });
+                    showPopup(`MAC address for room ${roomId} was not found`, { type: 'fail' });
                     return false;
                 }
                 const payload = {
@@ -6038,11 +6052,11 @@
                     const result = await response.json();
                     if (!result.ok) throw new Error(result.error || 'Unknown error');
                     await loadPinMapFromServer();
-                    showPopup('✅ บันทึกชื่อเซ็นเซอร์สำเร็จ!', { type: 'success' });
+                    showPopup('Sensor name saved successfully!', { type: 'success' });
                     return true;
                 } catch (error) {
                     console.error('[Pin Map] Error saving to server:', error);
-                    showPopup(`❌ บันทึกไม่สำเร็จ: ${error.message}`, { type: 'fail' });
+                    showPopup(`Failed to save: ${error.message}`, { type: 'fail' });
                     return false;
                 }
             }
@@ -6096,6 +6110,12 @@
             document.getElementById('detail-btn-export')?.addEventListener('click', () => {
                 const detailRoomNameEl = document.getElementById('detail-room-name');
                 const roomId = detailRoomNameEl?.dataset.currentRoom;
+                const end = new Date();
+                const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+                if (exportForm) {
+                    exportForm.from.value = toLocalDatetimeInputValue(start);
+                    exportForm.to.value = toLocalDatetimeInputValue(end);
+                }
                 if (roomId) {
                     const exportForm = document.getElementById('form-export');
                     if (exportForm && exportForm.room) {
@@ -6140,43 +6160,70 @@
                 const form = e.currentTarget;
                 const roomId = new FormData(form).get('target') || 'room-a';
                 const roomName = roomId === 'all' ? 'All Devices' : (window.ROOM_NAMES?.[roomId] || roomId);
-                const confirmed = await showConfirmationModal(
-                    'Confirm Reboot',
-                    `Are you sure you want to reboot <strong>${roomName}</strong>? This action is irreversible.`,
-                    {
+                const safeClose = () => { try { closeModal('modal-reboot'); } catch { } };
+                const roomToMac = window.ROOM_TO_MAC_MAP || {};
+
+                if (roomId === 'all') {
+                    const onlineMacs = ['room-a', 'room-b', 'room-c', 'room-d']
+                        .map(rId => {
+                            const mac = normalizeMAC(roomToMac[rId] || '');
+                            const statusDot = document.getElementById(`status-dot-${rId}`);
+                            const isOnline = statusDot && statusDot.classList.contains('led--green');
+                            return (mac && isOnline) ? mac : null;
+                        })
+                        .filter(Boolean);
+
+                    if (onlineMacs.length === 0) {
+                        showPopup('No online devices to reboot.', { type: 'fail' });
+                        return;
+                    }
+
+                    const confirmed = await showConfirmationModal(
+                        'Confirm Reboot All',
+                        `This will send a reboot command to <strong>${onlineMacs.length} online device(s)</strong>. Are you sure?`, {
+                        confirmText: `Reboot ${onlineMacs.length} Devices`,
+                        confirmClass: 'btn-reset',
+                        iconClass: 'fa-power-off',
+                        iconColorClass: 'text-red-400'
+                    }
+                    );
+
+                    if (!confirmed) return;
+                    safeClose();
+                    showPopup(`Sending reboot command to ${onlineMacs.length} online device(s)...`, { type: 'info', timeout: 5000 });
+                } else {
+                    const mac = normalizeMAC(roomToMac[roomId] || '');
+
+                    if (!mac) {
+                        showPopup(`Device is not mapped for ${roomName}. Please check Device Map settings.`, { type: 'fail' });
+                        return;
+                    }
+
+                    const statusDot = document.getElementById(`status-dot-${roomId}`);
+                    const isOnline = statusDot && statusDot.classList.contains('led--green');
+                    if (!isOnline) {
+                        showPopup(`Cannot reboot: ${roomName} is offline.`, { type: 'fail' });
+                        return;
+                    }
+
+                    const confirmed = await showConfirmationModal(
+                        'Confirm Reboot',
+                        `Are you sure you want to reboot <strong>${roomName}</strong>? This action is irreversible.`, {
                         confirmText: 'Yes, Reboot',
                         confirmClass: 'btn-reset',
                         iconClass: 'fa-power-off',
                         iconColorClass: 'text-red-400'
                     }
-                );
-                if (!confirmed) return;
-                const roomToMac = Object.fromEntries(
-                    Object.entries(window.MAC_TO_ROOM_MAP || {}).map(([mac, rid]) => [rid, mac])
-                );
-                const safeClose = () => { try { closeModal('modal-reboot'); } catch { } };
-                if (roomId === 'all') {
-                    const mac_list = ['room-a', 'room-b', 'room-c', 'room-d']
-                        .map(r => normalizeMAC(roomToMac[r] || ''))
-                        .filter(Boolean);
-                    if (!mac_list.length) {
-                        safeClose();
-                        showPopup('❌ ยังไม่ได้ตั้งค่า MAC ใน Device Map', { type: 'fail' });
-                        return;
-                    }
+                    );
+
+                    if (!confirmed) return;
+
                     safeClose();
-                    sendAction('reboot_all', { mac_list });
-                    return;
+                    sendAction('Reboot', { room_id: roomId, mac }, roomName);
                 }
-                const mac = normalizeMAC(roomToMac[roomId] || '');
-                if (!mac) {
-                    safeClose();
-                    showPopup(`❌ ยังไม่ได้ตั้งค่า MAC ให้ ${roomName} (เปิด Device Map เพื่อตั้งค่า)`, { type: 'fail' });
-                    return;
-                }
-                safeClose();
-                sendAction('reboot', { room_id: roomId, mac });
             });
+
+
             document.querySelector('#form-export select[name="range"]')?.addEventListener('change', e => {
                 const block = document.getElementById('export-custom');
                 if (block) block.classList.toggle('hidden', e.target.value !== 'custom');
@@ -6191,7 +6238,7 @@
                 const to = fd.get('to') ? new Date(fd.get('to')).toISOString() : null;
                 const roomName = room === 'all' ? 'All Rooms' : (window.ROOM_NAMES?.[room] || room);
                 if (from && to && from >= to) {
-                    showPopup('❌ Error: Start date must be before end date.', { type: 'fail' });
+                    showPopup('Error: Start date must be before end date.', { type: 'fail' });
                     return;
                 }
                 const confirmed = await showConfirmationModal(
@@ -6211,7 +6258,7 @@
                         payload: { command: 'export', room: room, type: type.toLowerCase(), from, to }
                     });
                 }
-                showPopup(`✅ Export request for ${roomName} has been sent.`, { type: 'success' });
+                showPopup(`Export request for ${roomName} has been sent.`, { type: 'success' });
                 closeModal('modal-export');
             });
             document.getElementById('form-device-map')?.addEventListener('submit', async (e) => {
@@ -6240,7 +6287,7 @@
                 const detailRoomNameEl = document.getElementById('detail-room-name');
                 const roomId = detailRoomNameEl?.dataset.currentRoom;
                 if (!roomId) {
-                    showPopup('ไม่สามารถระบุห้องได้ (Could not determine room ID)', { type: 'fail' });
+                    showPopup('Could not determine room ID', { type: 'fail' });
                     return;
                 }
                 const pinMapModal = document.getElementById('modal-pin-map');
@@ -6263,7 +6310,7 @@
                 const roomId = modal?.dataset.currentRoom;
                 const roomName = window.ROOM_NAMES?.[roomId] || roomId;
                 if (!roomId) {
-                    showPopup('เกิดข้อผิดพลาด: ไม่พบ Room ID', { type: 'fail' });
+                    showPopup('Error: Could not find Room ID', { type: 'fail' });
                     return;
                 }
                 const confirmed = await showConfirmationModal(
@@ -6377,6 +6424,10 @@
                         return;
                     }
                     const topic = msg.topic || '';
+                    if (data.actionId || topic === 'actions/ack') {
+                        _dispatchQA(msg);
+                        return;
+                    }
                     if (topic === 'alert_event' || topic === 'alert_recovered') {
                         if (data.type) {
                             const roomName = data.room_name || 'Unknown Room';
@@ -6401,9 +6452,9 @@
                             } else if (data.type === 'recovered') {
                                 let message = '';
                                 if (data.metric === 'connectivity') {
-                                    message = `RECOVERY on ${roomName}: Device is back online.`;
+                                    message = `Recovery on ${roomName}: Device is back online.`;
                                 } else {
-                                    message = `RECOVERY on ${roomName}: ${metricText} is back to normal.`;
+                                    message = `Recovery on ${roomName}: ${metricText} is back to normal.`;
                                 }
                                 showPopup(message, { type: 'success', timeout: 7000 });
                             }
@@ -6420,10 +6471,7 @@
                         return;
                     }
                     if (topic === 'uibuilder') return;
-                    if (data.actionId || topic === 'actions/ack') {
-                        _dispatchQA(msg);
-                        return;
-                    }
+
                     if (topic === 'pin_status_update') {
                         const statuses = Array.isArray(msg.payload) ? msg.payload : [];
                         let changed = false;
@@ -6713,7 +6761,7 @@
                     const rows = await fetchSeriesForCurrentRoom();
                     feedChartsFromRows(rows, true);
                 } catch (e) {
-                    showPopup('โหลดข้อมูลไม่สำเร็จ: ' + e.message, { type: 'fail' });
+                    showPopup('Failed to load data: ' + e.message, { type: 'fail' });
                 }
             });
             document.getElementById('btn-reset-range')?.addEventListener('click', async () => {
@@ -6741,10 +6789,10 @@
             searchInput?.addEventListener('input', applyFilters);
             levelSelect?.addEventListener('change', applyFilters);
             statusSelect?.addEventListener('change', loadAndCacheAlerts);
-            applyButton?.addEventListener('click', applyFilters);
+            applyButton?.addEventListener('click', loadAndCacheAlerts);
             resetButton?.addEventListener('click', () => {
                 resetFilters();
-                applyFilters();
+                loadAndCacheAlerts();
             });
             async function loadAndCacheAlerts() {
                 if (isFetchingAlerts) {
@@ -6926,7 +6974,7 @@
                 if (selectedIds.length > 0) {
                     openAckModal(selectedIds);
                 } else {
-                    showPopup('⚠️ Please select at least one alert to acknowledge.', { type: 'warn' });
+                    showPopup('Please select at least one alert to acknowledge.', { type: 'warn' });
                 }
             });
             function updateBulkAckButtonState() {
@@ -6989,7 +7037,7 @@
                     const responses = await Promise.all(promises);
                     const allSuccess = responses.every(res => res.ok);
                     if (allSuccess) {
-                        showPopup(`✅ Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
+                        showPopup(`Acknowledged ${eventIds.length} alert(s).`, { type: 'success' });
                         closeModal('modal-ack');
                         await refreshVisibleAlertViews();
                     } else {
@@ -7002,7 +7050,7 @@
                         throw new Error(errorMessage);
                     }
                 } catch (err) {
-                    showPopup(`❌ Failed to acknowledge alerts: ${err.message}`, { type: 'fail' });
+                    showPopup(`Failed to acknowledge alerts: ${err.message}`, { type: 'fail' });
                     console.error("ACK Error:", err);
                 } finally {
                     btn.disabled = false;
@@ -7071,8 +7119,18 @@
             function handleAlertCardClick(levelFilter = '') {
                 openModal('modal-alert-center');
                 resetFilters();
-                document.getElementById('alert-filter-status').value = 'open,ack';
-                document.getElementById('alert-filter-level').value = levelFilter;
+                const statusSelect = document.getElementById('alert-filter-status');
+                const levelSelect = document.getElementById('alert-filter-level');
+                if (unseenRecoveryIds.size > 0) {
+                    statusSelect.value = 'closed';
+                    const startDateInput = document.getElementById('alert-filter-start-date');
+                    const endDateInput = document.getElementById('alert-filter-end-date');
+                    if (startDateInput) startDateInput.value = '';
+                    if (endDateInput) endDateInput.value = '';
+                } else {
+                    statusSelect.value = 'open,ack';
+                }
+                levelSelect.value = levelFilter;
                 loadAndCacheAlerts();
             }
             document.getElementById('qa-alert-card')?.addEventListener('click', (e) => {
@@ -7294,11 +7352,11 @@
                         const errData = await res.json();
                         throw new Error(errData.error || 'Server returned an error');
                     }
-                    showPopup('✅ Sensor rules saved successfully!', { type: 'success' });
+                    showPopup('Sensor rules saved successfully.', { type: 'success' });
                     closeModal('modal-sensor-rules');
                     await loadPinMapFromServer();
                 } catch (err) {
-                    showPopup(`❌ Failed to save rules: ${err.message}`, { type: 'fail' });
+                    showPopup(`Failed to save rules: ${err.message}`, { type: 'fail' });
                     console.error('Failed to save sensor rule:', err);
                 }
             }
