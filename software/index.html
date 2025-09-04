@@ -6450,6 +6450,16 @@
                     if (pinVal === 'OVERALL') {
                         updateRoomUI(roomId, data);
                         pushHistorySample(roomId, data);
+                        const detailModal = document.getElementById('modal-room-detail');
+                        const detailRoomNameEl = document.getElementById('detail-room-name');
+                        const isDetailModalOpenForThisRoom =
+                            detailModal &&
+                            !detailModal.classList.contains('hidden') &&
+                            detailRoomNameEl?.dataset.currentRoom === roomId;
+                        if (isDetailModalOpenForThisRoom) {
+                            console.log(`[Real-time Update] Refreshing open detail modal for ${roomId}`);
+                            updateAllDetailUI(store);
+                        }
                         const last = store.history.length ? store.history[store.history.length - 1] : {};
                         const newHistoryEntry = {
                             timestamp: data.timestamp,
@@ -6470,8 +6480,6 @@
                         };
                         store.history.push(newHistoryEntry);
                         if (store.history.length > 100) store.history.shift();
-                        const detailModal = document.getElementById('modal-room-detail');
-                        const detailRoomNameEl = document.getElementById('detail-room-name');
                         if (detailModal && !detailModal.classList.contains('hidden') && detailRoomNameEl?.dataset.currentRoom === roomId) {
                             if (window.chartApiData && newHistoryEntry) window.chartApiData.push(newHistoryEntry);
                             feedChartsFromRows(window.chartApiData, false);
