@@ -1992,6 +1992,11 @@
         .unseen-recovery:hover {
             background-color: rgba(59, 130, 246, 0.25) !important;
         }
+
+        #modal-alert-center .config-input,
+        #modal-alert-center .config-select {
+            height: 50px;
+        }
     </style>
 </head>
 
@@ -2841,7 +2846,6 @@
                         <input id="mqtt-pass" type="password" class="config-input mt-1" placeholder="">
                     </label>
                 </section>
-
             </div>
             <div class="config-footer">
                 <div class="flex items-center justify-end gap-3"> <button id="btn-edit-settings"
@@ -3035,7 +3039,6 @@
                         </div>
                     </div>
                 </section>
-
                 <section>
                     <h6 class="font-semibold text-base mb-3 text-slate-300">
                         <i class="fa-solid fa-calendar-day w-5 mr-1 text-amber-400"></i>Daily Report Notifications
@@ -4328,7 +4331,7 @@
             }
             console.table(window.MAC_TO_ROOM_MAP);
             window._roomTimeouts = {};
-            const ROOM_TIMEOUT_MS = 120000;
+            const ROOM_TIMEOUT_MS = 80000;
             window.RoomStore = {
                 'room-a': { selectedPin: 'OVERALL', sensors: {} },
                 'room-b': { selectedPin: 'OVERALL', sensors: {} },
@@ -4410,7 +4413,7 @@
                     const currentRoomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
                     const mac = window.ROOM_TO_MAC_MAP?.[currentRoomId];
                     const pinMap = mac ? (window.MAC_PIN_NAMES?.[mac] || {}) : {};
-                    const getDynamicPinLabel = (pin) => (pinMap[`name_pin_${pin}`]?.trim()) || `Pin ${pin}`;
+                    const getDynamicPinLabel = (pin) => (pinMap[`${pin}`]?.trim()) || `Pin ${pin}`;
                     combinedPoints.forEach(point => {
                         let dynamicLabel;
                         if (point.dataType === 'dew') {
@@ -4918,12 +4921,55 @@
                     if (pingTime) pingTime.classList.add('hidden');
                 }
             }
+            function resetDetailModalUI(roomId) {
+                console.log(`[UI Reset] Resetting detail modal for offline room: ${roomId}`);
+                const modal = document.getElementById('modal-room-detail');
+                if (!modal || modal.classList.contains('hidden') || modal.dataset.currentRoom !== roomId) {
+                    return;
+                }
+                const statusLed = document.getElementById('detail-room-status-led');
+                if (statusLed) setLed(statusLed, 'led--red');
+                const kpiIds = [
+                    'kpi-temp-min', 'kpi-temp-avg', 'kpi-temp-max',
+                    'kpi-rh-min', 'kpi-rh-avg', 'kpi-rh-max', 'kpi-dew-avg'
+                ];
+                kpiIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '—';
+                });
+                const uptimePctEl = document.getElementById('detail-uptime-pct');
+                if (uptimePctEl) uptimePctEl.textContent = '— %';
+                const uptimeChart = window._uptimeCharts ? window._uptimeCharts['detail-uptime-chart-canvas'] : null;
+                if (uptimeChart) {
+                    uptimeChart.data.datasets[0].data = [];
+                    uptimeChart.options.plugins.uptimeLabel.text = 'Offline';
+                    uptimeChart.update('none');
+                }
+                const sensorList = document.getElementById('detail-sensor-list');
+                if (sensorList) {
+                    sensorList.innerHTML = '<li class="text-center text-[var(--muted)] mt-4">Device is offline</li>';
+                }
+                if (window._detailCharts) {
+                    if (window._detailCharts.temp) {
+                        window._detailCharts.temp.data.datasets = [];
+                        window._detailCharts.temp.update('none');
+                    }
+                    if (window._detailCharts.rh) {
+                        window._detailCharts.rh.data.datasets = [];
+                        window._detailCharts.rh.update('none');
+                    }
+                }
+                const btnIdsToDisable = ['detail-btn-reboot', 'detail-btn-settings', 'open-pin-map'];
+                btnIdsToDisable.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.disabled = true;
+                });
+            }
             function resetRoomUI(roomId) {
                 console.warn(`[Offline] No data for ${roomId} in ${ROOM_TIMEOUT_MS / 1000}s. Setting UI to offline.`);
                 if (window.roomDataStore && window.roomDataStore[roomId]) {
                     window.roomDataStore[roomId].history = [];
                     window.roomDataStore[roomId].live = {};
-                    console.log(`[DataStore] Cleared history and live data for offline room: ${roomId}`);
                 }
                 const statusDot = document.getElementById(`status-dot-${roomId}`);
                 if (statusDot) {
@@ -4933,10 +4979,8 @@
                 if (updatedEl) {
                     updatedEl.textContent = '';
                 }
-                const tempValEl = document.getElementById(`temp-${roomId}`);
-                const rhValEl = document.getElementById(`rh-${roomId}`);
-                const tempCard = tempValEl?.closest('.metric-card');
-                const rhCard = rhValEl?.closest('.metric-card');
+                const tempCard = document.getElementById(`temp-${roomId}`)?.closest('.metric-card');
+                const rhCard = document.getElementById(`rh-${roomId}`)?.closest('.metric-card');
                 if (tempCard) {
                     const valueEl = tempCard.querySelector('.metric-value');
                     const statusEl = tempCard.querySelector('.metric-status');
@@ -4952,6 +4996,30 @@
                     rhCard.className = 'metric-card rounded-xl shadow p-4 bg-gradient-to-r from-slate-500 to-slate-600 text-white text-center flex flex-col justify-center';
                 }
                 setRoomCardsBlank(roomId, true);
+                console.log(`--- Starting Modal Offline Check for room: "${roomId}" ---`);
+                const detailModal = document.getElementById('modal-room-detail');
+                if (!detailModal) {
+                    console.error("DEBUG: Cannot find the modal element with ID 'modal-room-detail'.");
+                    return;
+                }
+                const isHidden = detailModal.classList.contains('hidden');
+                const modalRoomId = detailModal.dataset.currentRoom;
+                console.log(`DEBUG: Is modal hidden? ==> ${isHidden}`);
+                console.log(`DEBUG: Modal is currently open for room: ==> "${modalRoomId}"`);
+                console.log(`DEBUG: The offline event is for room: ==> "${roomId}"`);
+                if (!isHidden && modalRoomId === roomId) {
+                    console.log("%cSUCCESS: Conditions met. Calling resetDetailModalUI now.", "color: lightgreen; font-weight: bold;");
+                    resetDetailModalUI(roomId);
+                } else {
+                    console.error("FAILURE: Conditions NOT met. The modal UI will not be updated.");
+                    if (isHidden) {
+                        console.error("Reason: Modal is considered hidden.");
+                    }
+                    if (modalRoomId !== roomId) {
+                        console.error(`Reason: Mismatch in room IDs. Modal shows "${modalRoomId}", but event is for "${roomId}".`);
+                    }
+                }
+                console.log("--- Finished Modal Offline Check ---");
             }
             function pushHistorySample(roomId, sample) {
                 if (!window.roomDataStore) {
@@ -5109,7 +5177,7 @@
                 const currentRoomId = document.getElementById('detail-room-name')?.dataset.currentRoom;
                 const mac = window.ROOM_TO_MAC_MAP?.[currentRoomId];
                 const pinMap = mac ? (window.MAC_PIN_NAMES?.[mac] || {}) : {};
-                const pinLabel = (pin) => (pinMap[`name_pin_${pin}`]?.trim()) || `Pin ${pin}`;
+                const pinLabel = (pin) => (pinMap[`${pin}`]?.trim()) || `Pin ${pin}`;
                 let tempDatasets = [];
                 if (show('overall')) tempDatasets.push({ label: 'Temp (Overall)', data: t_overall, borderColor: 'rgba(239,68,68,1)', backgroundColor: 'rgba(239,68,68,0.2)', borderWidth: 3, fill: false, tension: 0.35, pinId: 'overall', dataType: 'temp' });
                 if (show('pin25')) tempDatasets.push({ label: `Temp ${pinLabel('25')}`, data: t25, borderColor: 'rgba(252,165,165,0.9)', backgroundColor: 'rgba(252,165,165,0.08)', borderWidth: 1.6, fill: false, tension: 0.35, pinId: '25', dataType: 'temp' });
@@ -5169,10 +5237,8 @@
                     const res = await fetch('/api/notification-settings', { cache: 'no-store' });
                     if (!res.ok) throw new Error('Failed to fetch settings');
                     const data = await res.json();
-
                     notificationEmails = data.recipients?.email || [];
                     telegramChatIds = data.recipients?.telegram || [];
-
                     const schedule = data.schedule;
                     if (schedule && schedule.weekdays?.length === 7 && Array.isArray(schedule.configs) && schedule.configs.length > 0) {
                         scheduleWeekdays = schedule.weekdays;
@@ -5202,15 +5268,12 @@
                     }
                 );
                 if (!confirmed) return;
-
                 const statusEl = document.getElementById('recipients-status');
                 statusEl.textContent = 'Saving...';
-
                 const payload = {
                     recipients: { email: notificationEmails, telegram: telegramChatIds },
                     schedule: { weekdays: scheduleWeekdays, configs: scheduleConfigs }
                 };
-
                 try {
                     const res = await fetch('/api/notification-settings', {
                         method: 'POST',
@@ -5242,7 +5305,6 @@
                 const inputEl = document.getElementById(`recipient-input-${type}`);
                 const panelEl = document.getElementById(`${type}-dropdown-panel`);
                 const actionBtn = document.getElementById(`recipient-action-${type}`);
-
                 const renderDropdown = () => {
                     panelEl.innerHTML = '';
                     itemsArray.forEach(item => {
@@ -5252,12 +5314,10 @@
                         panelEl.appendChild(itemEl);
                     });
                 };
-
                 inputEl.addEventListener('focus', () => {
                     renderDropdown();
                     panelEl.classList.remove('hidden');
                 });
-
                 actionBtn.addEventListener('click', () => {
                     const value = inputEl.value.trim();
                     if (value && validationFn(value)) {
@@ -5272,7 +5332,6 @@
                         showPopup('Invalid format.', { type: 'warn' });
                     }
                 });
-
                 panelEl.addEventListener('click', (e) => {
                     if (e.target.classList.contains('item-delete-btn')) {
                         const valueToDelete = e.target.dataset.value;
@@ -5283,13 +5342,11 @@
                         }
                     }
                 });
-
                 document.addEventListener('click', (e) => {
                     if (!container.contains(e.target)) {
                         panelEl.classList.add('hidden');
                     }
                 }, true);
-
                 renderDropdown();
             }
             function renderScheduleDays() {
@@ -5309,7 +5366,6 @@
                 const container = document.getElementById('schedule-list');
                 if (!container) return;
                 container.innerHTML = '';
-
                 scheduleConfigs.forEach((config, index) => {
                     const div = document.createElement('div');
                     div.className = 'p-3 bg-[var(--panel-2)] rounded-lg border border-[var(--border)] space-y-2';
@@ -5344,7 +5400,6 @@
                 loadNotificationSettings();
                 openModal('modal-recipients');
             });
-
             document.getElementById('schedule-weekdays')?.addEventListener('click', (e) => {
                 const btn = e.target.closest('.weekday-btn');
                 if (!btn) return;
@@ -5352,12 +5407,10 @@
                 scheduleWeekdays[index] = !scheduleWeekdays[index];
                 btn.classList.toggle('active');
             });
-
             document.getElementById('schedule-add-btn')?.addEventListener('click', () => {
                 scheduleConfigs.push({ sendAt: "17:00", rangeStart: "08:00", rangeEnd: "17:00" });
                 renderSchedules();
             });
-
             document.getElementById('schedule-list')?.addEventListener('change', (e) => {
                 if (e.target.classList.contains('schedule-input')) {
                     const index = parseInt(e.target.dataset.index, 10);
@@ -5367,7 +5420,6 @@
                     }
                 }
             });
-
             document.getElementById('schedule-list')?.addEventListener('click', e => {
                 const btn = e.target.closest('.remove-item-btn');
                 if (!btn) return;
@@ -5375,7 +5427,6 @@
                 scheduleConfigs.splice(index, 1);
                 renderSchedules();
             });
-
             document.getElementById('btn-save-notification-settings')?.addEventListener('click', saveNotificationSettings);
             function dewPointC_Magnus(Tc, RHpct) {
                 const T = Number(Tc), RH = Number(RHpct);
@@ -5573,10 +5624,8 @@
                     console.warn('uibuilder is undefined');
                     return false;
                 }
-
                 const actionId = uuid();
                 const unlock = lockQA(`Sending command ${cmd}...`);
-
                 try {
                     uibuilder.send({
                         topic: `actions/${cmd}`,
@@ -5587,9 +5636,7 @@
                             meta: { by: 'web', ts: Date.now(), ver: 1 }
                         }
                     });
-
                     const res = await waitForAction(actionId, 60000);
-
                     const target = roomName ? `${roomName}` : '';
                     if (res?.ok) {
                         showPopup(`${cmd} ${target} succeeded.`, { type: 'success' });
@@ -5607,7 +5654,6 @@
                     unlock();
                 }
             }
-
             function getCommonChartOptions() {
                 return {
                     responsive: true,
@@ -5653,6 +5699,13 @@
                 const statusClass = mainStatusDot ? Array.from(mainStatusDot.classList).find(c => c.startsWith('led--')) : 'led--red';
                 if (statusLed && statusClass) {
                     setLed(statusLed, statusClass);
+                }
+                if (statusClass === 'led--green') {
+                    const btnIdsToEnable = ['detail-btn-reboot', 'detail-btn-settings', 'open-pin-map'];
+                    btnIdsToEnable.forEach(id => {
+                        const btn = document.getElementById(id);
+                        if (btn) btn.disabled = false;
+                    });
                 }
                 updateDetailKPIs(roomData.history);
                 updateSensorList(roomData.live, roomId);
@@ -5797,7 +5850,10 @@
                 if (document.activeElement?.blur) document.activeElement.blur();
             }
             async function openRoomDetailModal(roomId) {
+                const modalEl = document.getElementById('modal-room-detail');
+                if (!modalEl) return;
                 openModal('modal-room-detail');
+                modalEl.dataset.currentRoom = roomId;
                 const roomToMacMap = {};
                 Object.entries(window.MAC_TO_ROOM_MAP || {}).forEach(([mac, rId]) => {
                     roomToMacMap[rId] = mac;
@@ -5947,9 +6003,7 @@
                     showPopup(`Could not get latest value from ${finalName}, fallback to last saved value`, { type: 'warn' });
                 }
                 const roomData = window.roomDataStore[roomId];
-                if (roomData) {
-                    updateAllDetailUI(roomData);
-                }
+                updateAllDetailUI(roomData);
                 const now = new Date().toISOString();
                 const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
                 setDefault24hRange();
@@ -6092,48 +6146,51 @@
                 const roomToMac = window.ROOM_TO_MAC_MAP || {};
 
                 if (roomId === 'all') {
-                    const onlineMacs = ['room-a', 'room-b', 'room-c', 'room-d']
-                        .map(rId => {
-                            const mac = normalizeMAC(roomToMac[rId] || '');
-                            const statusDot = document.getElementById(`status-dot-${rId}`);
-                            const isOnline = statusDot && statusDot.classList.contains('led--green');
-                            return (mac && isOnline) ? mac : null;
-                        })
-                        .filter(Boolean);
+                    const allPotentialRooms = ['room-a', 'room-b', 'room-c', 'room-d'];
+                    const roomsToReboot = allPotentialRooms.filter(rId => {
+                        const mac = normalizeMAC(roomToMac[rId] || '');
+                        const statusDot = document.getElementById(`status-dot-${rId}`);
+                        const isOnline = statusDot && statusDot.classList.contains('led--green');
+                        return mac && isOnline;
+                    });
 
-                    if (onlineMacs.length === 0) {
+                    if (roomsToReboot.length === 0) {
                         showPopup('No online devices to reboot.', { type: 'fail' });
                         return;
                     }
 
                     const confirmed = await showConfirmationModal(
                         'Confirm Reboot All',
-                        `This will send a reboot command to <strong>${onlineMacs.length} online device(s)</strong>. Are you sure?`, {
-                        confirmText: `Reboot ${onlineMacs.length} Devices`,
+                        `This will send a reboot command to <strong>${roomsToReboot.length} online device(s)</strong>. Are you sure?`, {
+                        confirmText: `Reboot ${roomsToReboot.length} Devices`,
                         confirmClass: 'btn-reset',
                         iconClass: 'fa-power-off',
                         iconColorClass: 'text-red-400'
                     }
                     );
-
                     if (!confirmed) return;
+
                     safeClose();
-                    showPopup(`Sending reboot command to ${onlineMacs.length} online device(s)...`, { type: 'info', timeout: 5000 });
+                    const success = await sendAction('Reboot', { room_id: 'all', mac: 'all' }, 'All Devices');
+                    if (success) {
+                        roomsToReboot.forEach(rId => {
+                            console.log(`Rebooting all: resetting UI for ${rId}`);
+                            resetRoomUI(rId);
+                        });
+                    }
+
                 } else {
                     const mac = normalizeMAC(roomToMac[roomId] || '');
-
                     if (!mac) {
                         showPopup(`Device is not mapped for ${roomName}. Please check Device Map settings.`, { type: 'fail' });
                         return;
                     }
-
                     const statusDot = document.getElementById(`status-dot-${roomId}`);
                     const isOnline = statusDot && statusDot.classList.contains('led--green');
                     if (!isOnline) {
                         showPopup(`Cannot reboot: ${roomName} is offline.`, { type: 'fail' });
                         return;
                     }
-
                     const confirmed = await showConfirmationModal(
                         'Confirm Reboot',
                         `Are you sure you want to reboot <strong>${roomName}</strong>? This action is irreversible.`, {
@@ -6143,15 +6200,16 @@
                         iconColorClass: 'text-red-400'
                     }
                     );
-
                     if (!confirmed) return;
 
                     safeClose();
-                    sendAction('Reboot', { room_id: roomId, mac }, roomName);
+                    const success = await sendAction('Reboot', { room_id: roomId, mac }, roomName);
+                    if (success) {
+                        console.log(`Reboot command successful for ${roomId}. Resetting UI.`);
+                        resetRoomUI(roomId);
+                    }
                 }
             });
-
-
             document.querySelector('#form-export select[name="range"]')?.addEventListener('change', e => {
                 const block = document.getElementById('export-custom');
                 if (block) block.classList.toggle('hidden', e.target.value !== 'custom');
@@ -6366,13 +6424,11 @@
                                 sensor_connectivity: 'Sensor Status'
                             };
                             const metricText = metricMap[data.metric] || data.metric;
-
                             if (data.type === 'triggered') {
                                 const level = data.level;
                                 const toastType = level === 'critical' ? 'fail' : 'warn';
                                 let message = '';
                                 const sensorName = data.sensor_name || 'Unknown Sensor';
-
                                 if (data.metric === 'connectivity') {
                                     message = `${level.toUpperCase()} in ${roomName}: Device is now Offline.`;
                                 } else if (data.metric === 'sensor_connectivity') {
@@ -6383,11 +6439,9 @@
                                     message = `${level.toUpperCase()} in ${roomName}: ${sensorName} ${metricText} is ${value}${unit}.`;
                                 }
                                 showPopup(message, { type: toastType, timeout: 10000 });
-
                             } else if (data.type === 'recovered') {
                                 let message = '';
                                 const sensorName = data.sensor_name || 'Unknown Sensor';
-
                                 if (data.metric === 'connectivity') {
                                     message = `Recovery in ${roomName}: Device is back online.`;
                                 } else if (data.metric === 'sensor_connectivity') {
@@ -6410,7 +6464,6 @@
                         return;
                     }
                     if (topic === 'uibuilder') return;
-
                     if (topic === 'pin_status_update') {
                         const statuses = Array.isArray(msg.payload) ? msg.payload : [];
                         let changed = false;
@@ -6441,6 +6494,12 @@
                         updateAlertCards(data);
                         return;
                     }
+                    if (window._roomTimeouts[roomId]) {
+                        clearTimeout(window._roomTimeouts[roomId]);
+                    }
+                    window._roomTimeouts[roomId] = setTimeout(() => {
+                        resetRoomUI(roomId);
+                    }, ROOM_TIMEOUT_MS);
                     if (!window.roomDataStore[roomId]) {
                         window.roomDataStore[roomId] = { history: [], live: {} };
                     }
@@ -6808,12 +6867,10 @@
                     connectivity: 'Connectivity',
                     sensor_connectivity: 'Sensor Connectivity'
                 };
-
                 const filteredAlerts = allAlertsCache.filter(alert => {
                     const pinMap = window.MAC_PIN_NAMES?.[alert.mac] || {};
                     const customSensorName = pinMap[`name_pin_${alert.sensor_name}`] || alert.sensor_name;
                     const displayMetric = (metricMap[alert.metric] || alert.metric).toLowerCase();
-
                     const inSearch = searchTerm === '' ||
                         (alert.opened_at?.toLowerCase().includes(searchTerm)) ||
                         (alert.room_name?.toLowerCase().includes(searchTerm)) ||
@@ -6826,12 +6883,9 @@
                         (alert.ack_by?.toLowerCase().includes(searchTerm)) ||
                         (alert.ack_note?.toLowerCase().includes(searchTerm)) ||
                         (alert.mac?.toLowerCase().includes(searchTerm));
-
                     const inLevel = level === '' || alert.level === level;
-
                     return inSearch && inLevel;
                 });
-
                 renderAlertTable(filteredAlerts);
             }
             function renderAlertTable(alerts) {
@@ -6977,6 +7031,12 @@
                 const ackNote = ackNoteInput.value.trim();
                 const eventIds = JSON.parse(modal.dataset.eventIds || '[]');
                 if (!ackBy) {
+                    errorEl.textContent = 'Please fill in the name of the acknowledge';
+                    errorEl.classList.remove('hidden');
+                    ackByInput.focus();
+                    return;
+                } else if (ackBy.toLowerCase() === 'system') {
+                    errorEl.textContent = 'The name ‘System’ cannot be used.';
                     errorEl.classList.remove('hidden');
                     ackByInput.focus();
                     return;
