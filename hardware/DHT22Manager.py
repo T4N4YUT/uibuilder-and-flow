@@ -168,8 +168,6 @@ class DHT22_Manager:
 
         data_row = []
         for pin_num, data in per_sensor.items():
-            temp_status = 'OK' if (data['temp'] is not None and self.min_temp_condition <= data['temp'] <= self.max_temp_condition) else 'ALARM'
-            hum_status = 'OK' if (data['hum'] is not None and self.min_hum_condition <= data['hum'] <= self.max_hum_condition) else 'ALARM'
             data_row.append(dict(
                 mac=mac,
                 pin=pin_num,
@@ -178,15 +176,10 @@ class DHT22_Manager:
                 max_temp=data['temp_max'],
                 min_temp=data['temp_min'],
                 max_hum=data['hum_max'],
-                min_hum=data['hum_min'],
-                temp_status=temp_status,
-                hum_status=hum_status
+                min_hum=data['hum_min']
             ))
-        
 
         ovr = self.calculate_overall_max_min(per_sensor)
-        temp_status = 'OK' if (overall['Temperature'] is not None and self.min_temp_condition <= overall['Temperature'] <= self.max_temp_condition) else 'ALARM'
-        hum_status = 'OK' if (overall['Humidity'] is not None and self.min_hum_condition <= overall['Humidity'] <= self.max_hum_condition) else 'ALARM'
         data_row.append(dict(
             mac=mac,
             pin='OVERALL',
@@ -195,34 +188,30 @@ class DHT22_Manager:
             max_temp=ovr['Temperature']['max'],
             min_temp=ovr['Temperature']['min'],
             max_hum=ovr['Humidity']['max'],
-            min_hum=ovr['Humidity']['min'],
-            temp_status=temp_status,
-            hum_status=hum_status
+            min_hum=ovr['Humidity']['min']
         ))
 
         if ready:
             timestamp = self.time_manager.now()
             await self.resend_backup(topic)
-            sent_count = 0
             failed = []
             for data in data_row:
                 data['timestamp'] = timestamp
                 for key in ('avg_temp', 'avg_hum', 'max_temp', 'min_temp', 'max_hum', 'min_hum'):
-                    if data[key] is not None:
+                    if data.get(key) is not None:
                         data[key] = float(data[key])
-                if await self.mqtt_manager.safe_publish(topic, data):
-                    sent_count += 1
-                else:
+                if not await self.mqtt_manager.safe_publish(topic, data):
                     failed.append((time.ticks_ms(), data.copy()))
             if failed:
                 self.backup_to_csv(failed)
             gc.collect()
             return
-            
+
         timestamp_anchor = time.ticks_ms()
         records = [(timestamp_anchor, data.copy()) for data in data_row]
         self.backup_to_csv(records)
         gc.collect()
+
 
     def backup_to_csv(self, records):
         first = self.backup_csv not in uos.listdir()
@@ -267,14 +256,6 @@ class DHT22_Manager:
 
     def send_result(self, per_sensor, overall, result):
         is_alarm = False
-        for pin, data in per_sensor.items():
-            loc = self.sensor_locations.get(pin, 'Unknown')
-            if data['temp'] is not None and not (self.min_temp_condition - self.per_temp_alarm <= data['temp'] <= self.max_temp_condition + self.per_temp_alarm):
-                print(f"[WARNING]: Alarm Pin{pin}({loc}) Temp {data['temp']}°C")
-                is_alarm = True
-            if data['hum'] is not None and not (self.min_hum_condition - self.per_hum_alarm <= data['hum'] <= self.max_hum_condition + self.per_hum_alarm):
-                print(f"[WARNING]: Alarm Pin{pin}({loc}) Hum {data['hum']}%")
-                is_alarm = True
 
         if overall['Temperature'] is not None and not (self.min_temp_condition <= overall['Temperature'] <= self.max_temp_condition):
             print(f"[WARNING]: Alarm Overall Temp {overall['Temperature']}°C")
@@ -282,9 +263,7 @@ class DHT22_Manager:
         if overall['Humidity'] is not None and not (self.min_hum_condition <= overall['Humidity'] <= self.max_hum_condition):
             print(f"[WARNING]: Alarm Overall Hum {overall['Humidity']}%")
             is_alarm = True
-
         self.led_manager.set_dht22_alarm(is_alarm)
-
         for pin, data in per_sensor.items():
             location = self.sensor_locations.get(pin, 'Unknown')
             print(
@@ -301,6 +280,7 @@ class DHT22_Manager:
         )
         print("[INFO]: Overall", overall_str, result_str)
         gc.collect()
+
 
     def reset_dht22_config(self):
         try:
@@ -334,3 +314,4 @@ class DHT22_Manager:
                 gc.collect()
             await asyncio.sleep(self.dht22_interval)
             gc.collect()
+
